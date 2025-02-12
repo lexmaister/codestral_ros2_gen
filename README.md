@@ -1,7 +1,7 @@
 # Codestral ROS2 AI Generator
 Generate ROS2 elements (nodes, interfaces, etc) with Codestral AI model
 
-## Generation block diagram
+## Generation + model's performance evaluation block diagram
 
 ```mermaid
 %%{ 
@@ -42,8 +42,8 @@ flowchart TD
 
         MainTimer[Initialize Main Timer] --> Counter[Initialize Attempt Counter]
         Counter --> Timer[Start Attempt Timer]
-        Timer --> GenCode[Generate Service Code]
-        GenCode --> SaveCode[Save to service_node file]
+        Timer --> GenCode[Generate Element Code]
+        GenCode --> SaveCode[Save to file inside ros2 package]
         SaveCode --> RunTests[Execute Tests]
         RunTests --> TestResult{Tests Passed?}:::diamond
         TestResult -->|No| RecordFail[Record Failed Attempt]
@@ -73,5 +73,5 @@ flowchart TD
     linkStyle 10,11,12,13,14 stroke:#2f4f4f,stroke-width:2px,stroke-dasharray:5,font-size:13pt
 ```
 
-[Mermais flowchart options](https://mermaid.js.org/config/schema-docs/config-defs-flowchart-diagram-config.html#flowchartdiagramconfig-properties)
+[Mermaid flowchart options](https://mermaid.js.org/config/schema-docs/config-defs-flowchart-diagram-config.html#flowchartdiagramconfig-properties)
 

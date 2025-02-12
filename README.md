@@ -16,15 +16,15 @@ source .venv/bin/activate
 ```
 
 * Clone the repository:
- ```bash
- git clone https://github.com/yourusername/codestral_ros2_gen.git
- cd codestral_ros2_gen
- ```
+```bash
+git clone https://github.com/lexmaister/codestral_ros2_gen.git
+cd codestral_ros2_gen
+```
 
 * Install the package in the editable mode:
- ```bash
- pip install -e .
- ```
+```bash
+pip install -e .
+```
 
 ## Usage
 

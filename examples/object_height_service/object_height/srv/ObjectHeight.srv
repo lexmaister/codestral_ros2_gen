@@ -1,0 +1,8 @@
+float32 focal_length      # Focal length in mm
+int32 image_height        # Image height in pixels
+float32 pixel_size        # Pixel size in micrometers
+float32 object_distance   # Object distance in meters
+---
+float32 object_height     # Object height in mm (response)
+bool success              # Indicates if the calculation was successful
+string feedback           # Feedback message or error details

@@ -1,6 +1,33 @@
 # Codestral ROS2 AI Generator
 Generate ROS2 elements (nodes, interfaces, etc) with Codestral AI model
 
+## Installation
+
+* Make a directory for the project and navigate to it:
+```bash
+mkdir test_gen
+cd test_gen
+```
+
+* Create a virtual environment:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+* Clone the repository:
+ ```bash
+ git clone https://github.com/yourusername/codestral_ros2_gen.git
+ cd codestral_ros2_gen
+ ```
+
+* Install the package in the editable mode:
+ ```bash
+ pip install -e .
+ ```
+
+## Usage
+
 ## Generation and Performance Evaluation Block Diagram
 
 ```mermaid

@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Exit immediately if a command exits with a non-zero status.
-set -e
-
 # Function to display help message
 usage() {
     echo "Usage: $0 -p <package_name>"

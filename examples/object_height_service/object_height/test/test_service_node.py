@@ -2,7 +2,7 @@
 import pytest
 import rclpy
 from rclpy.node import Node
-from ai_gen_interfaces.srv import ObjectHeight
+from object_height.srv import ObjectHeight
 import time
 
 

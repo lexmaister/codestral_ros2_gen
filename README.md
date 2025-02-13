@@ -23,10 +23,31 @@ cd codestral_ros2_gen
 
 * Install the package in the editable mode:
 ```bash
+pip install --upgrade pip
 pip install -e .
 ```
 
 ## Usage
+
+To use this project, you need to have ROS2 installed (it was designed for ROS2 Humble). Please refer to the [ROS 2 installation guide](https://docs.ros.org/en/humble/Installation.html) for instructions.
+
+### Examples
+
+To use examples, you also need to create a directory for ros2 workspace `ros2_ws` **near your project directory**:
+```bash
+mkdir test_ws
+```
+
+so your directory structure will look like this:
+
+```
+test_gen/
+├── .venv/
+├── codestral_ros2_gen/
+└── test_ws/
+```
+
+* [Generating a simple service node](docs/Example_object_height_service.md)
 
 ## Generation and Performance Evaluation Block Diagram
 

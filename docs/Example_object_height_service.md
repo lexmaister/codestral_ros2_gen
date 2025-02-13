@@ -28,16 +28,17 @@ chmod +x setup_pkg.sh
 ./setup_pkg.sh -p object_height
 ```
 
-* Source the workspace for the current shell:
+* Source the workspace for the current shell (for ROS2 humble):
 ```bash
 source /opt/ros/humble/setup.bash
 cd ../../test_ws
 source install/setup.bash
 ```
 
-* Check that package is in ros packages list:
+* Check that package is in ros packages list and service is in ros interfaces list:
 ```bash
 ros2 pkg list | grep object_height
+ros2 interface list | grep ObjectHeight
 ```
 
 ## Generate Object Height Service

@@ -6,89 +6,60 @@ set -e
 # Get the script's directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Function to display help message
-usage() {
-    echo "Usage: $0 -p <package_name> [-d <ros2_distro>]"
-    echo "  -p <package_name>   Specify the package name"
-    echo "  -d <ros2_distro>    Specify ROS2 distribution (default: humble)"
-    echo "  -h                  Display this help message"
-    exit 1
-}
-
-# Function to log messages with timestamp
-log() {
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
-}
-
-# Function to handle errors
-error_exit() {
-    log "ERROR: $1" >&2
-    exit 1
-}
-
-# Parse command line arguments
-while getopts ":p:d:h" opt; do
-    case ${opt} in
-        p)
-            PACKAGE_NAME=$OPTARG
-            ;;
-        d)
-            ROS_DISTRO=$OPTARG
-            ;;
-        h)
-            usage
-            ;;
-        \?)
-            error_exit "Invalid option: -$OPTARG"
-            ;;
-        :)
-            error_exit "Option -$OPTARG requires an argument."
-            ;;
-    esac
-done
-
-# Check if PACKAGE_NAME is set
-if [ -z "$PACKAGE_NAME" ]; then
-    error_exit "Package name is required."
-fi
-
-# Set default ROS2 distribution if not specified
-ROS_DISTRO=${ROS_DISTRO:-"humble"}
-
-# Define important directories
-EXAMPLES_DIR="${SCRIPT_DIR}/../examples/$PACKAGE_NAME"
-WS_DIR="${SCRIPT_DIR}/../../test_ws"
-PACKAGE_DIR="$WS_DIR/src/$PACKAGE_NAME"
-
-# Check if the examples directory exists
-if [ ! -d "$EXAMPLES_DIR" ]; then
-    error_exit "Examples directory for $PACKAGE_NAME does not exist at $EXAMPLES_DIR"
-fi
-
-# Check and source ROS2 setup
-ROS_SETUP="/opt/ros/$ROS_DISTRO/setup.bash"
-if [ ! -f "$ROS_SETUP" ]; then
-    error_exit "ROS2 $ROS_DISTRO not found at /opt/ros/$ROS_DISTRO"
-fi
-source "$ROS_SETUP"
-
-# Create and navigate to the workspace source directory
-log "Creating workspace directory structure..."
-mkdir -p "$WS_DIR/src"
-cd "$WS_DIR/src"
+# ... existing code until package creation ...
 
 # Create the package directory if it doesn't exist
 if [ ! -d "$PACKAGE_NAME" ]; then
     log "Creating new ROS2 package: $PACKAGE_NAME"
-    ros2 pkg create --build-type ament_python "$PACKAGE_NAME" \
+    ros2 pkg create --build-type ament_cmake "$PACKAGE_NAME" \
         --license MIT \
-        --dependencies rclpy pytest || error_exit "Failed to create package"
+        --dependencies rclpy pytest rosidl_default_generators || error_exit "Failed to create package"
 fi
 
 # Copy files from examples to package directory
 log "Copying package files..."
 find "$EXAMPLES_DIR" -type f ! -name 'generate.py' ! -name 'config.yaml' -exec cp --parents {} "$PACKAGE_NAME/" \; || \
     error_exit "Failed to copy package files"
+
+# Update package.xml if interface files exist
+if find "$PACKAGE_DIR" -type f \( -name "*.srv" -o -name "*.msg" -o -name "*.action" \) | grep -q .; then
+    log "Interface files found. Updating package.xml..."
+    
+    # Check if package.xml exists
+    if [ ! -f "$PACKAGE_DIR/package.xml" ]; then
+        error_exit "package.xml not found"
+    }
+
+    # Add necessary dependencies for interface generation if not already present
+    sed -i '/<\/package>/i \  <build_depend>rosidl_default_generators<\/build_depend>' "$PACKAGE_DIR/package.xml"
+    sed -i '/<\/package>/i \  <exec_depend>rosidl_default_runtime<\/exec_depend>' "$PACKAGE_DIR/package.xml"
+    sed -i '/<\/package>/i \  <member_of_group>rosidl_interface_packages<\/member_of_group>' "$PACKAGE_DIR/package.xml"
+
+    # Update CMakeLists.txt
+    log "Updating CMakeLists.txt for interface generation..."
+    CMAKE_FILE="$PACKAGE_DIR/CMakeLists.txt"
+    
+    # Add interface generation code if not already present
+    if ! grep -q "find_package(rosidl_default_generators REQUIRED)" "$CMAKE_FILE"; then
+        # Add after the first find_package line
+        sed -i '/find_package(ament_cmake REQUIRED)/a find_package(rosidl_default_generators REQUIRED)' "$CMAKE_FILE"
+        
+        # Add interface generation
+        echo "" >> "$CMAKE_FILE"
+        echo "# Generate interfaces" >> "$CMAKE_FILE"
+        echo "file(GLOB srv_files RELATIVE \${CMAKE_CURRENT_SOURCE_DIR} \"srv/*.srv\")" >> "$CMAKE_FILE"
+        echo "file(GLOB msg_files RELATIVE \${CMAKE_CURRENT_SOURCE_DIR} \"msg/*.msg\")" >> "$CMAKE_FILE"
+        echo "file(GLOB action_files RELATIVE \${CMAKE_CURRENT_SOURCE_DIR} \"action/*.action\")" >> "$CMAKE_FILE"
+        echo "" >> "$CMAKE_FILE"
+        echo "rosidl_generate_interfaces(\${PROJECT_NAME}" >> "$CMAKE_FILE"
+        echo "  \${srv_files}" >> "$CMAKE_FILE"
+        echo "  \${msg_files}" >> "$CMAKE_FILE"
+        echo "  \${action_files}" >> "$CMAKE_FILE"
+        echo ")" >> "$CMAKE_FILE"
+        echo "" >> "$CMAKE_FILE"
+        echo "ament_export_dependencies(rosidl_default_runtime)" >> "$CMAKE_FILE"
+    fi
+fi
 
 # Make any python files executable
 log "Setting executable permissions for Python files..."
@@ -109,12 +80,3 @@ colcon build --symlink-install --packages-select "$PACKAGE_NAME" || \
     error_exit "Failed to build workspace"
 
 log "Setup for $PACKAGE_NAME package completed successfully."
-
-# Source the local workspace
-WORKSPACE_SETUP="$WS_DIR/install/setup.bash"
-if [ -f "$WORKSPACE_SETUP" ]; then
-    log "To use the package, source the workspace:"
-    echo "source $WORKSPACE_SETUP"
-else
-    error_exit "Workspace setup file not found at $WORKSPACE_SETUP"
-fi

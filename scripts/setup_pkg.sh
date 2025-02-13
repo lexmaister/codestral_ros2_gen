@@ -56,10 +56,11 @@ cd "$WS_DIR/src"
 
 # Create the package directory if it doesn't exist
 if [ ! -d "$PACKAGE_NAME" ]; then
-    ros2 pkg create --build-type ament_cmake "$PACKAGE_NAME" --dependencies rclpy pytest
+    ros2 pkg create --build-type ament_python "$PACKAGE_NAME" --license MIT --dependencies rclpy pytest
 fi
 
 # Copy all files and folders recursively from examples to the package directory
+EXAMPLES_DIR="../../codestral_ros2_gen/examples/$PACKAGE_NAME"
 cp -r "$EXAMPLES_DIR"/* "$PACKAGE_NAME/"
 
 # Navigate to the workspace directory
@@ -68,8 +69,7 @@ cd "$WS_DIR"
 # Check if all dependencies are installed
 rosdep install --from-paths . --ignore-src -r -y
 
-# Build the workspace and source it
+# Build the workspace
 colcon build --symlink-install --packages-select $PACKAGE_NAME
-source install/setup.bash
 
 echo "Setup for $PACKAGE_NAME package completed successfully."

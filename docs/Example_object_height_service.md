@@ -21,12 +21,18 @@ Please refer to the [ROS 2 installation guide](https://docs.ros.org/en/humble/In
 
 ## Setup of test node
 
-Make executable and run setup script:
 
+* Make executable and run setup script:
 ```bash
 cd codestral_ros2_gen/scripts
 chmod +x setup_pkg.sh
 ./setup_pkg.sh -p object_height
+```
+
+* Source the workspace for the current shell:
+```bash
+source /opt/ros/humble/setup.bash
+source install/setup.bash
 ```
 
 

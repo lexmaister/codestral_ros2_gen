@@ -209,7 +209,7 @@ rm -rf "$WS_DIR/install/$PACKAGE_NAME"
 
 # Build the workspace
 log "Building workspace..."
-colcon build --symlink-install --packages-select "$PACKAGE_NAME" --event-handlers console_direct+ || \
+colcon build --symlink-install --packages-select "$PACKAGE_NAME" || \
     error_exit "Failed to build workspace"
 
 log "Setup for $PACKAGE_NAME package completed successfully."

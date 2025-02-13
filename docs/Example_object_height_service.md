@@ -36,9 +36,12 @@ source install/setup.bash
 ```
 
 * Check that package is in ros packages list and service is in ros interfaces list:
-```bash
-ros2 pkg list | grep object_height
-ros2 interface list | grep ObjectHeight
+```
+$ ros2 pkg list | grep object_height
+object_height
+
+$ ros2 interface list | grep ObjectHeight
+    object_height/srv/ObjectHeight
 ```
 
 ## Generate Object Height Service

@@ -37,6 +37,13 @@ if [ -z "$PACKAGE_NAME" ]; then
     usage
 fi
 
+# Check if the examples directory exists
+EXAMPLES_DIR="../examples/$PACKAGE_NAME"
+if [ ! -d "$EXAMPLES_DIR" ]; then
+    echo "Examples directory for $PACKAGE_NAME does not exist."
+    exit 1
+fi
+
 # Source the ROS2 setup script
 source /opt/ros/humble/setup.bash
 
@@ -46,13 +53,6 @@ WS_DIR="../../test_ws"
 # Create and navigate to the workspace source directory
 mkdir -p "$WS_DIR/src"
 cd "$WS_DIR/src"
-
-# Check if the examples directory exists
-EXAMPLES_DIR="../../examples/$PACKAGE_NAME"
-if [ ! -d "$EXAMPLES_DIR" ]; then
-    echo "Examples directory for $PACKAGE_NAME does not exist."
-    exit 1
-fi
 
 # Create the package directory if it doesn't exist
 if [ ! -d "$PACKAGE_NAME" ]; then

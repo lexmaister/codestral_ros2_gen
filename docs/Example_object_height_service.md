@@ -26,7 +26,7 @@ Make executable and run setup script:
 ```bash
 cd codestral_ros2_gen/scripts
 chmod +x setup_pkg.sh
-source setup_pkg.sh -p object_height
+./setup_pkg.sh -p object_height
 ```
 
 

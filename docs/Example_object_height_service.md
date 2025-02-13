@@ -19,8 +19,7 @@ rosdep update
 
 Please refer to the [ROS 2 installation guide](https://docs.ros.org/en/humble/Installation.html) for instructions on installing `rosdep` on other distributions.
 
-## Setup of test node
-
+## Setup Test Package
 
 * Make executable and run setup script:
 ```bash
@@ -32,7 +31,13 @@ chmod +x setup_pkg.sh
 * Source the workspace for the current shell:
 ```bash
 source /opt/ros/humble/setup.bash
+cd ../../test_ws
 source install/setup.bash
+```
+
+* Check that package is in ros packages list:
+```bash
+ros2 pkg list | grep object_height
 ```
 
 

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Exit immediately if a command exits with a non-zero status.
+set -e
+
 # Function to display help message
 usage() {
     echo "Usage: $0 -p <package_name>"
@@ -34,18 +37,14 @@ if [ -z "$PACKAGE_NAME" ]; then
     usage
 fi
 
-# Define the workspace directory
-WS_DIR="../../test_ws"
-
 # Source the ROS2 setup script
 source /opt/ros/humble/setup.bash
 
-# Create the workspace directory if it doesn't exist
-if [ ! -d "$WS_DIR" ]; then
-    mkdir -p "$WS_DIR/src"
-fi
+# Define the workspace directory
+WS_DIR="../../test_ws"
 
-# Navigate to the workspace source directory
+# Create and navigate to the workspace source directory
+mkdir -p "$WS_DIR/src"
 cd "$WS_DIR/src"
 
 # Check if the examples directory exists

@@ -1,5 +1,13 @@
 # Codestral ROS2 AI Generator
-Generate ROS2 elements (nodes, interfaces, etc) with Codestral AI model
+
+Generate ROS2 elements (nodes, interfaces, etc) with Codestral AI model. 
+
+This project includes:
+- 🛠️ **Generation Tools**: Scripts and utilities for creating ROS2 packages and generating ROS2 elements
+- 📊 **Evaluation Tools**: Tools for assessing generation quality and performance metrics
+- 💡 **Sample Implementation**: See [Examples](#examples) section for a complete use cases
+
+**Note: This is a personal project I created for learning purposes. Feel free to join my [Telegram channel](https://t.me/ai_code_developer) to follow along and contribute! Licensed under MIT.**
 
 ## Installation
 

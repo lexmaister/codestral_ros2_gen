@@ -18,6 +18,9 @@ dependencies = [
     "mistralai",
     "pytest",
     "pandas",
+    "pyyaml",
+    "black",
+    "lark",
 ]
 
 [project.urls]

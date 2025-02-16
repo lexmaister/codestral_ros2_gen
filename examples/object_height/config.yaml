@@ -16,7 +16,7 @@ generation:
 paths:
   interface_file: "srv/ObjectHeight.srv"
   test_file: "test/test_service_node.py"
-  output_file: "object_height_node.py"
+  output_file: "service_node.py"
 
 # Metrics Collection
 metrics:

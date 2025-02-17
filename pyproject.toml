@@ -17,6 +17,7 @@ classifiers = [
 dependencies = [
     "mistralai",
     "pytest",
+    "pytest-mock",
     "pandas",
     "pyyaml",
     "black",

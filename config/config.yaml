@@ -1,0 +1,25 @@
+# config/config.yaml
+
+# Model Configuration
+model:
+  type: "codestral-latest"
+  system_prompt: "You are a ROS2 expert. You will generate ROS2 elements based on user requirements. You will use the ROS2 API and follow the ROS2 conventions. You will use the ROS2 Python API for the generated code."
+  parameters:
+    temperature: 0.2
+
+# Generation Settings
+generation:
+  max_attempts: 3
+  timeout: 300  # seconds
+  evaluation_iterations: 30  # For performance metrics
+
+# Metrics Collection
+metrics:
+  collect:
+    generation_time: true
+    attempts_until_success: true
+    token_usage: true
+    test_execution_time: true
+    response_size: true
+    error_patterns: true
+  output_file: "generation_metrics.jsonl"

@@ -18,7 +18,9 @@ dependencies = [
     "mistralai",
     "pytest",
     "pytest-mock",
+    "pytest-cov",
     "pandas",
+    "matplotlib",
     "pyyaml",
     "black",
     "lark",
@@ -34,3 +36,5 @@ build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v --cov=codestral_ros2_gen --cov-report=term"

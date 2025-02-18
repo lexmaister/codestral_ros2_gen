@@ -26,7 +26,7 @@ def generator(tmp_path):
             "generation": {"max_attempts": 2},
             "metrics": {"output_file": str(metrics_file)},
         }
-        return MockGenerator(metrics_file=str(metrics_file))
+        return MockGenerator(metrics_file=str(metrics_file), api_key="test_key")
 
 
 def test_successful_generation(generator, tmp_path):

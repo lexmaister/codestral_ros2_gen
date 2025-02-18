@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 
-from codestral_ros2_gen import get_config_path
+from codestral_ros2_gen import get_config_path, load_config
 from codestral_ros2_gen.metrics.metrics_handler import MetricsHandler
 
 
@@ -16,9 +16,7 @@ def temp_metrics_file(tmp_path, project_config):
 @pytest.fixture
 def metrics_handler(temp_metrics_file, project_config) -> MetricsHandler:
     """Fixture to create MetricsHandler instance with project config."""
-    handler = MetricsHandler(
-        metrics_file=str(temp_metrics_file), config_file=get_config_path()
-    )
+    handler = MetricsHandler(config=project_config, metrics_file=str(temp_metrics_file))
     return handler
 
 
@@ -47,11 +45,9 @@ def sample_metrics(project_config):
     }
 
 
-def test_initialization(temp_metrics_file):
+def test_initialization(temp_metrics_file, project_config):
     """Test MetricsHandler initialization."""
-    handler = MetricsHandler(
-        metrics_file=str(temp_metrics_file), config_file=get_config_path()
-    )
+    handler = MetricsHandler(config=project_config, metrics_file=str(temp_metrics_file))
     assert handler.metrics_file == temp_metrics_file
     assert isinstance(handler.metrics_df, pd.DataFrame)
     assert handler.metrics_df.empty
@@ -72,13 +68,13 @@ def test_add_invalid_metric(metrics_handler):
         metrics_handler.add_metric("invalid")
 
 
-def test_save_and_load_metrics(metrics_handler, sample_metrics):
+def test_save_and_load_metrics(metrics_handler, sample_metrics, project_config):
     """Test saving and loading metrics."""
     metrics_handler.add_metric(sample_metrics)
 
     # Create new handler to test loading
     new_handler = MetricsHandler(
-        metrics_file=str(metrics_handler.metrics_file), config_file=get_config_path()
+        metrics_file=str(metrics_handler.metrics_file), config=project_config
     )
     new_handler.load_metrics()
 

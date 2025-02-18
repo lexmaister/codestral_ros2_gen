@@ -34,6 +34,26 @@ def get_config_path(config_name: str = "config.yaml") -> Path:
     return config_path
 
 
+def load_config(config_path: Path) -> dict:
+    """
+    Load configuration from YAML file.
+
+    Args:
+        config_path: Path to configuration file
+
+    Returns:
+        Dict: Configuration dictionary
+
+    Raises:
+        RuntimeError: If config file cannot be loaded
+    """
+    try:
+        with open(config_path, "r") as f:
+            return yaml.safe_load(f)
+    except Exception as e:
+        raise RuntimeError(f"Error loading config: {str(e)}")
+
+
 def setup_logger(
     name: str = "codestral_ros2_gen", config_path: Path = None
 ) -> logging.Logger:
@@ -57,8 +77,7 @@ def setup_logger(
     if config_path is None:
         config_path = get_config_path()
 
-    with open(config_path, "r") as f:
-        config = yaml.safe_load(f)
+    config = load_config(config_path)
 
     log_config = config.get("logging")
     if not log_config:
@@ -125,4 +144,5 @@ __all__ = [
     "logger_main",
     "get_project_root",
     "get_config_path",
+    "load_config",
 ]

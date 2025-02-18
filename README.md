@@ -1,7 +1,7 @@
 # Codestral ROS2 AI Generator
 
-[![Coverage Status](https://coveralls.io/repos/github/lexmaister/codestral_ros2_gen/badge.svg?branch=main)](https://coveralls.io/github/lexmaister/codestral_ros2_gen?branch=main)
 [![License](https://img.shields.io/github/license/lexmaister/codestral_ros2_gen.svg)](https://github.com/lexmaister/codestral_ros2_gen/blob/main/LICENSE)
+[![Coverage Status](https://coveralls.io/repos/github/lexmaister/codestral_ros2_gen/badge.svg?branch=main)](https://coveralls.io/github/lexmaister/codestral_ros2_gen?branch=main)
 
 Generate ROS2 elements (nodes, interfaces, etc) with Codestral AI model.
 

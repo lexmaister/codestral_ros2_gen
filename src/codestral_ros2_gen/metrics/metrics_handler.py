@@ -17,17 +17,15 @@ class MetricsHandler:
 
     PLOT_TYPES = Literal["hist", "box", "line"]
 
-    def __init__(
-        self, metrics_file: Optional[str] = None, config_file: str = "config.yaml"
-    ):
+    def __init__(self, config: Dict, metrics_file: Optional[str] = None):
         """
         Initialize metrics handler.
 
         Args:
+            config: Configuration dictionary
             metrics_file: Path to metrics file (optional)
-            config_file: Path to config file (default: config.yaml)
         """
-        self.config = self._load_config(config_file)
+        self.config = config
         self.metrics_file = (
             Path(metrics_file)
             if metrics_file

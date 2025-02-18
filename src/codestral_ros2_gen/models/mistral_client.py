@@ -2,6 +2,11 @@ import os
 from typing import Dict, Any, Tuple, Optional, List
 from dataclasses import dataclass
 from mistralai import Mistral
+import logging
+
+from codestral_ros2_gen import logger_main
+
+logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
 
 
 @dataclass
@@ -11,6 +16,14 @@ class ModelUsage:
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
+
+    def __str__(self):
+        return (
+            f"Used tokens:\n"
+            f"prompt:\t\t{self.prompt_tokens}\n"
+            f"completion:\t{self.completion_tokens}\n"
+            f"total:\t\t{self.total_tokens}"
+        )
 
 
 class MistralClient:
@@ -30,15 +43,19 @@ class MistralClient:
 
     def _get_api_key(self, api_key: Optional[str], config: Dict[str, Any]) -> str:
         """Get API key from provided sources in order of precedence."""
+        msg = "Create Mistral client with provided API key"
         if api_key:
+            logger.info(msg)
             return api_key
 
         env_key = os.getenv("MISTRAL_API_KEY")
         if env_key:
+            logger.info(f"{msg} from environment variable")
             return env_key
 
         config_key = config.get("api_key")
         if config_key and config_key != "YOUR_API_KEY_HERE":
+            logger.info(f"{msg} from config")
             return config_key
 
         raise RuntimeError(
@@ -73,6 +90,9 @@ class MistralClient:
             RuntimeError: If API returns error or invalid response
             ConnectionError: If connection to API fails
         """
+        logger.info(
+            f"Start generating completion for prompt:\n{'<'*3}\n{prompt.strip()}\n{'<'*3}"
+        )
         if not prompt or not prompt.strip():
             raise ValueError("Empty prompt provided")
 
@@ -80,6 +100,8 @@ class MistralClient:
             messages = self._prepare_messages(
                 prompt, system_prompt or self.config.get("system_prompt")
             )
+            logger.debug(f"Prepared messages:\n{messages}\n")
+
             response = self.client.chat.complete(
                 model=model_type
                 or self.config.get("type", self.DEFAULT_CONFIG["model"]["type"]),
@@ -94,23 +116,25 @@ class MistralClient:
             if not hasattr(response, "choices") or not response.choices:
                 raise RuntimeError("Invalid response format from API")
 
-            # Validate and fix usage statistics
+            completion = response.choices[0].message.content
+            if not completion:
+                raise RuntimeError("Empty completion response from API")
+
+            logger.info(f"Got completion response:\n{'>'*3}\n{completion}\n{'>'*3}")
+
+            # Update usage statistics
             prompt_tokens = max(0, getattr(response.usage, "prompt_tokens", 0))
             completion_tokens = max(0, getattr(response.usage, "completion_tokens", 0))
-
-            # Calculate total tokens as the sum of prompt and completion tokens
-            # if the reported total is invalid or less than the sum
-            calculated_total = prompt_tokens + completion_tokens
-            reported_total = getattr(response.usage, "total_tokens", 0)
-            total_tokens = max(calculated_total, max(0, reported_total))
+            total_tokens = prompt_tokens + completion_tokens
 
             usage = ModelUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
                 total_tokens=total_tokens,
             )
+            logger.info(f"Model usage:\n{usage}\n")
 
-            return response.choices[0].message.content, usage
+            return completion, usage
 
         except ConnectionError as e:
             raise ConnectionError(f"Failed to connect to Mistral API: {str(e)}")

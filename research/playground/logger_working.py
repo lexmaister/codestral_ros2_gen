@@ -1,4 +1,5 @@
 import codestral_ros2_gen.metrics.metrics_handler as mh
+import codestral_ros2_gen.models.mistral_client as mc
 from codestral_ros2_gen import logger, get_config_path
 
 
@@ -23,3 +24,11 @@ if __name__ == "__main__":
 
     logger.info("This is an info message from root")
     logger.debug("This is a debug message from root")
+
+    client = mc.MistralClient()
+    try:
+        client.complete("Hello, world!")
+    except Exception as e:
+        mc.logger.error(f"Error: {e}")
+
+    logger.info("App is closed")

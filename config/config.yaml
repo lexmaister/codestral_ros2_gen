@@ -26,7 +26,7 @@ metrics:
 
 # Logging configuration
 logging:
-  level: DEBUG
+  level: INFO
   file: "generation.log"
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
   handlers:

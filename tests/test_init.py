@@ -1,5 +1,5 @@
 import pytest
-from src.codestral_ros2_gen import (
+from codestral_ros2_gen import (
     get_project_root,
     get_config_path,
     load_config,

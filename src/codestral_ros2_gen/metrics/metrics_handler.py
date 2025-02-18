@@ -1,10 +1,15 @@
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional, Literal, Union
+from typing import Dict, List, Optional, Literal
 from pathlib import Path
 import matplotlib.pyplot as plt
 from datetime import datetime
 import yaml
+import logging
+
+from codestral_ros2_gen import logger_main
+
+logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
 
 
 class MetricsHandler:
@@ -46,20 +51,20 @@ class MetricsHandler:
 
         Returns:
             Dict: Configuration dictionary
+
+        Raises:
+            RuntimeError: If config file cannot be loaded
         """
         try:
             with open(config_file, "r") as f:
                 return yaml.safe_load(f)
         except Exception as e:
-            print(f"Error loading config: {str(e)}")
-            return {
-                "metrics": {"output_file": "generation_metrics.jsonl", "collect": {}}
-            }
+            raise RuntimeError(f"Error loading config: {str(e)}")
 
     def add_metric(self, metrics: Dict) -> None:
         """Add new metrics and save to file."""
         if not isinstance(metrics, dict):
-            raise TypeError("Metrics must be a dictionary")
+            raise RuntimeError("Metrics must be a dictionary")
 
         # Filter metrics based on config
         metrics_to_collect = self.config["metrics"]["collect"]
@@ -81,6 +86,8 @@ class MetricsHandler:
                 new_row[col] = pd.to_numeric(new_row[col])
 
         self.metrics_df = pd.concat([self.metrics_df, new_row], ignore_index=True)
+        logger.info(f"Added metrics: {filtered_metrics}")
+
         self._save_metrics()
 
     def _save_metrics(self) -> None:
@@ -89,8 +96,9 @@ class MetricsHandler:
             self.metrics_df.to_json(
                 self.metrics_file, orient="records", lines=True, date_format="iso"
             )
+            logger.debug(f"Metrics saved to {self.metrics_file}")
         except Exception as e:
-            print(f"Error saving metrics: {str(e)}")
+            raise RuntimeError(f"Error saving metrics: {str(e)}")
 
     def load_metrics(self) -> None:
         """Load metrics from existing JSONL file."""
@@ -98,8 +106,12 @@ class MetricsHandler:
             self.metrics_df = pd.read_json(
                 self.metrics_file, orient="records", lines=True
             )
-        except Exception as e:
-            print(f"Error loading metrics: {str(e)}")
+            logger.info(f"Metrics loaded from {self.metrics_file}")
+            logger.debug(f"Loaded metrics: {self.metrics_df}")
+        except FileNotFoundError:
+            logger.warning(
+                f"Metrics file {self.metrics_file} not found. Starting with an empty DataFrame."
+            )
             self.metrics_df = pd.DataFrame()
 
     @property
@@ -157,11 +169,11 @@ class MetricsHandler:
     ) -> Optional[Path]:
         """Create plot for specified metrics."""
         if self.metrics_df.empty:
-            print("No metrics data available for plotting")
+            logger.error("No metrics data available for plotting")
             return None
 
         if plot_type not in ["hist", "box", "line"]:
-            print(f"Unsupported plot type: {plot_type}")
+            logger.error(f"Unsupported plot type: {plot_type}")
             return None
 
         # Get numeric columns
@@ -169,7 +181,7 @@ class MetricsHandler:
         available = [col for col in numeric_cols if col != "timestamp"]
 
         if not available:
-            print("No numeric metrics available for plotting")
+            logger.error("No numeric metrics available for plotting")
             return None
 
         # Use provided metrics or all available numeric metrics
@@ -177,7 +189,7 @@ class MetricsHandler:
         valid_metrics = [m for m in metrics_to_plot if m in available]
 
         if not valid_metrics:
-            print(f"No valid metrics found. Available metrics: {available}")
+            logger.error(f"No valid metrics found. Available metrics: {available}")
             return None
 
         try:
@@ -189,7 +201,7 @@ class MetricsHandler:
                 data = self.metrics_df[metric].dropna()
 
                 if len(data) < 1:
-                    print(f"No data available for metric: {metric}")
+                    logger.warning(f"No data available for metric: {metric}")
                     continue
 
                 if plot_type == "hist":
@@ -217,12 +229,12 @@ class MetricsHandler:
 
             fig.savefig(plot_file, dpi=300, bbox_inches="tight")
             plt.close(fig)
-            print(f"Plot saved as: {plot_file}")
+            logger.info(f"Plot saved as: {plot_file}")
 
             return plot_file
 
         except Exception as e:
-            print(f"Error creating plot: {str(e)}")
+            logger.error(f"Error creating plot: {str(e)}")
             plt.close()
             return None
 
@@ -234,7 +246,7 @@ class MetricsHandler:
             pd.DataFrame: Report containing statistics for all metrics
         """
         if self.metrics_df.empty:
-            print("No metrics data available")
+            logger.error("No metrics data available")
             return pd.DataFrame()
 
         stats_df = self.get_summary_stats()

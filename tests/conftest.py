@@ -1,26 +1,13 @@
 import pytest
-from pathlib import Path
-import sys
-
-# Get project root directory
-PROJECT_ROOT = Path(__file__).parent.parent.resolve()
-
-# Add project root to Python path
-sys.path.insert(0, str(PROJECT_ROOT))
+from codestral_ros2_gen import logger, get_project_root, get_config_path
 
 
-@pytest.fixture
-def project_root():
-    """Fixture providing project root path."""
-    return PROJECT_ROOT
-
-
-@pytest.fixture
-def project_config(project_root):
+@pytest.fixture(scope="session")
+def project_config():
     """Fixture to load project config.yaml."""
     import yaml
 
-    config_path = project_root / "config" / "config.yaml"
+    config_path = get_config_path()
     if not config_path.exists():
         pytest.skip(f"Config file not found at {config_path}")
 

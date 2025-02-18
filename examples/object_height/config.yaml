@@ -12,7 +12,7 @@ generation:
   timeout: 300  # seconds
   evaluation_iterations: 30  # For performance metrics
 
-# File Structure 
+# File Structure
 paths:
   interface_file: "srv/ObjectHeight.srv"
   test_file: "test/test_service_node.py"

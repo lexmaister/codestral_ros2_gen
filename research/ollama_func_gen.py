@@ -33,7 +33,7 @@ for k in range(1, 31):
             model=model,
             prompt=f"""Create python function {f_name} which calculates object height
             by known image height in pixels
-            Input parameters: 
+            Input parameters:
             * f - focal length in mm, default 35 mm
             * h - image height in pixels, default 1152
             * p - pixel size in um, default 3.45 um

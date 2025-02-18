@@ -1,6 +1,6 @@
 # Codestral ROS2 AI Generator
 
-Generate ROS2 elements (nodes, interfaces, etc) with Codestral AI model. 
+Generate ROS2 elements (nodes, interfaces, etc) with Codestral AI model.
 
 This project includes:
 - 🛠️ **Generation Tools**: Scripts and utilities for creating ROS2 packages and generating ROS2 elements
@@ -60,8 +60,8 @@ test_gen/
 ## Generation and Performance Evaluation Block Diagram
 
 ```mermaid
-%%{ 
-init: { 
+%%{
+init: {
      'theme': 'base',
     'themeVariables': {
       'primaryColor': '#BB2528',
@@ -77,13 +77,13 @@ init: {
             "top": 5,
             "bottom": 20
             },
-        'nodeSpacing': 25, 
+        'nodeSpacing': 25,
         'rankSpacing': 25,
         'padding': 0,
         'wrappingWidth':1200,
         'defaultRenderer': 'dagre-wrapper'
-        } 
-    } 
+        }
+    }
 
 }%%
 flowchart TD
@@ -94,7 +94,7 @@ flowchart TD
     Start([Start]) ---> MainTimer
 
     subgraph Generation[<span style='font-size:20px; font-weight:bold; display:block; padding-right:250px; '>Generation Phase</span>]
-        direction TB       
+        direction TB
 
         MainTimer[Initialize Main Timer] --> Counter[Initialize Attempt Counter]
         Counter --> Timer[Start Attempt Timer]
@@ -130,4 +130,3 @@ flowchart TD
 ```
 
 [Mermaid flowchart options and customization](https://mermaid.js.org/config/schema-docs/config-defs-flowchart-diagram-config.html#flowchartdiagramconfig-properties)
-

@@ -45,5 +45,3 @@ $ ros2 interface list | grep ObjectHeight
 ```
 
 ## Generate Object Height Service
-
-

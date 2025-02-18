@@ -103,7 +103,7 @@ find "$EXAMPLES_DIR" -type d | while read dir; do
     # Create relative path by removing EXAMPLES_DIR prefix
     rel_dir="${dir#$EXAMPLES_DIR}"
     # Create directory in package
-    mkdir -p "$PACKAGE_NAME$rel_dir"    
+    mkdir -p "$PACKAGE_NAME$rel_dir"
     log "Created '$PACKAGE_NAME$rel_dir'"
 done
 
@@ -131,7 +131,7 @@ log "Directory structure and files copied successfully"
 # Update package.xml if interface files exist
 if find "$PACKAGE_DIR" -type f \( -name "*.srv" -o -name "*.msg" -o -name "*.action" \) | grep -q .; then
     log "Interface files found. Updating package.xml..."
-    
+
     # Check if package.xml exists
     if [ ! -f "$PACKAGE_DIR/package.xml" ]; then
         error_exit "package.xml not found"
@@ -147,10 +147,10 @@ if find "$PACKAGE_DIR" -type f \( -name "*.srv" -o -name "*.msg" -o -name "*.act
     # Update CMakeLists.txt
     log "Updating CMakeLists.txt for interface generation..."
     CMAKE_FILE="$PACKAGE_DIR/CMakeLists.txt"
-    
+
     # Backup original CMakeLists.txt
     cp "$CMAKE_FILE" "${CMAKE_FILE}.backup"
-    
+
     # Create new CMakeLists.txt with proper interface generation
     cat > "$CMAKE_FILE" << EOL
 cmake_minimum_required(VERSION 3.8)

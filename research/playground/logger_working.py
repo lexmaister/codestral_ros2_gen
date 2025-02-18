@@ -1,5 +1,6 @@
 import codestral_ros2_gen.metrics.metrics_handler as mh
 import codestral_ros2_gen.models.mistral_client as mc
+from codestral_ros2_gen.utils.code_parser import ROS2CodeParser as parser
 from codestral_ros2_gen import logger, get_config_path
 
 
@@ -27,8 +28,16 @@ if __name__ == "__main__":
 
     client = mc.MistralClient()
     try:
-        client.complete("Hello, world!")
+        resp, usage = client.complete(
+            "Create a simple python function to calculate the factorial of a number"
+        )
     except Exception as e:
         mc.logger.error(f"Error: {e}")
+
+    code = parser.parse(resp)
+    if code:
+        logger.info(f"Parsed code:\n{code}")
+    else:
+        logger.error("None code in response")
 
     logger.info("App is closed")

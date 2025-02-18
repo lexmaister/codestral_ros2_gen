@@ -1,6 +1,11 @@
 import re
 from typing import Optional
 from black import format_str, FileMode, InvalidInput
+import logging
+
+from codestral_ros2_gen import logger_main
+
+logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
 
 
 class ROS2CodeParser:
@@ -18,12 +23,14 @@ class ROS2CodeParser:
         Returns:
             Optional[str]: Formatted Python code or None if parsing failed
         """
+        logger.debug(f"Parsing response: {response!r}")
         # Extract code from code blocks (supports both markdown and [PYTHON] tags)
         pattern = r"(?:`{3}\w*|\[PYTHON\])\n(.+?)(?:`{3}|\[\/PYTHON\])"
         match = re.search(pattern, response, re.DOTALL)
 
         if match:
             code = match.group(1).strip()
+            logger.debug(f"Found markers, extracted code:\n{code}")
         else:
             # If no code blocks found and response looks like Python code, use as is
             if (
@@ -32,11 +39,19 @@ class ROS2CodeParser:
                 and any(keyword in response for keyword in ["import", "class", "def"])
             ):
                 code = response.strip()
+                logger.debug(f"No markers found, using response as is:\n{code}")
             else:
+                logger.warning("No code found in response")
                 return None
 
         # Format code
         try:
-            return format_str(code, mode=FileMode())
-        except (InvalidInput, Exception):
+            formatted_code = format_str(code, mode=FileMode())
+            logger.debug(f"Formatted code:\n{formatted_code}")
+            return formatted_code
+        except InvalidInput as e:
+            logger.error(f"Invalid input for code formatting: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Error formatting code: {e}")
             return None

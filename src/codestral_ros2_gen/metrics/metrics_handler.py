@@ -65,11 +65,11 @@ class MetricsHandler:
             raise RuntimeError("Metrics must be a dictionary")
 
         # Filter metrics based on config
-        metrics_to_collect = self.config["metrics"]["collect"]
+        metrics_to_collect = self.config["metrics"].get("collect", {})
         filtered_metrics = {
             k: v
             for k, v in metrics.items()
-            if k in metrics_to_collect and metrics_to_collect[k]
+            if metrics_to_collect.get(k, True)  # Default to True if not specified
         }
 
         # Add timestamp

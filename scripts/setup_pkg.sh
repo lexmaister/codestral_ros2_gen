@@ -91,8 +91,7 @@ cd "$WS_DIR"
 log "Installing dependencies..."
 rosdep install --from-paths . --ignore-src -r -y
 
-# Build the workspace
-log "Building workspace..."
-colcon build --symlink-install --packages-select "$PACKAGE_NAME"
-
-log "Setup completed successfully"
+log "Package setup completed successfully. Now you can:"
+log "1. cd test_ws"
+log "2. source /opt/ros/humble/setup.bash"
+log "3. colcon build --packages-select $PACKAGE_NAME"

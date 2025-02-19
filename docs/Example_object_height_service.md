@@ -28,25 +28,43 @@ object_height/
 
 ## Setup and Testing
 
-1. Setup the test workspace:
+1. Make setup script executable and run it:
 ```bash
 cd codestral_ros2_gen/scripts
+chmod +x setup_pkg.sh
 ./setup_pkg.sh -p object_height
 ```
 
-2. Build and source:
+This will:
+- Create package structure in test_ws
+- Copy service definition and test files
+- Install ROS2 dependencies
+
+2. Source ROS2 and build the package:
 ```bash
 cd ../../test_ws
+source /opt/ros/humble/setup.bash
 colcon build --packages-select object_height
 source install/setup.bash
 ```
 
-3. Run the service:
+3. Run the generator to create service implementation:
+```bash
+python3 ../codestral_ros2_gen/examples/object_height/generator.py
+```
+
+The generator will:
+- Create service implementation
+- Build the package automatically
+- Run tests to validate
+- Report performance metrics
+
+4. After successful generation, run the service:
 ```bash
 ros2 run object_height object_height_service
 ```
 
-4. Test in another terminal:
+5. Test in another terminal:
 ```bash
 ros2 service call /calculate_object_height object_height/srv/ObjectHeight \
 "{focal_length: 35.0, image_height: 1152, pixel_size: 3.45, object_distance: 6.5}"

@@ -14,16 +14,15 @@ The implementation must handle unit conversions and edge cases appropriately.
 ## Package Structure
 ```
 object_height/
-├── src/
-│   └── object_height/          # Python package
-│       ├── __init__.py
-│       └── service_node.py     # Service implementation
+├── object_height/              # Python package
+│   ├── __init__.py
+│   └── service_node.py         # Service implementation
 ├── srv/
 │   └── ObjectHeight.srv        # Service definition
 ├── test/
 │   └── test_service_node.py    # Unit tests
-├── CMakeLists.txt             # Build configuration
-└── package.xml                # Package metadata
+├── CMakeLists.txt              # Build configuration
+└── package.xml                 # Package metadata
 ```
 
 ## Setup and Testing
@@ -39,7 +38,7 @@ chmod +x setup_pkg.sh
 ```bash
 cd ../../test_ws
 source /opt/ros/humble/setup.bash
-colcon build --packages-select object_height
+colcon build
 source install/setup.bash
 ```
 

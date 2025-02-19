@@ -75,11 +75,38 @@ WS_DIR="$SCRIPT_DIR/../../test_ws"
 SRC_DIR="$WS_DIR/src"
 PACKAGE_DIR="$SRC_DIR/$PACKAGE_NAME"
 
+# Check workspace directories existance
+if [ ! -d "$EXAMPLES_DIR" ]; then
+    error_exit "Sources directory for package '$PACKAGE_NAME' not found at $EXAMPLES_DIR"
+fi
+
+if [ ! -d "$WS_DIR" ]; then
+    error_exit "ROS2 workspace directory not found at $WS_DIR"
+fi
+
 # Create workspace directories
 log "Creating workspace directories..."
-mkdir -p "$SRC_DIR/$PACKAGE_NAME"
+mkdir -p "$SRC_DIR" || error_exit "Failed to create workspace directories"
 
-# Copy package files
+# Navigate to the src directory
+cd "$SRC_DIR" || error_exit "Failed to navigate to src directory"
+
+# Create the package directory
+log "Creating new ROS2 package: $PACKAGE_NAME"
+ros2 pkg create --build-type ament_cmake "$PACKAGE_NAME" \
+    --license MIT \
+    --dependencies rclpy python3-pytest rosidl_default_generators || error_exit "Failed to create package"
+
+log "Copying package files and directories..."
+# First, create directory structure
+find "$EXAMPLES_DIR" -type d | while read dir; do
+    # Create relative path by removing EXAMPLES_DIR prefix
+    rel_dir="${dir#$EXAMPLES_DIR}"
+    # Create directory in package
+    mkdir -p "$PACKAGE_NAME$rel_dir"
+    log "Created '$PACKAGE_NAME$rel_dir'"
+done
+
 # Then copy all files (excluding generate.py and config.yaml)
 log "Finding files to copy..."
 mapfile -d $'\0' files < <(find "$EXAMPLES_DIR" -type f \
@@ -101,18 +128,27 @@ done
 
 log "Directory structure and files copied successfully"
 
-# Clean any existing build artifacts
-log "Cleaning previous build artifacts..."
-rm -rf "$WS_DIR/build/$PACKAGE_NAME"
-rm -rf "$WS_DIR/install/$PACKAGE_NAME"
+# Make any python files executable
+log "Setting executable permissions for Python files..."
+find "$PACKAGE_DIR" -type f -name "*.py" -exec chmod +x {} \; || \
+    error_exit "Failed to set executable permissions"
 
-# Make Python files executable
-find "$PACKAGE_DIR" -type f -name "*.py" -exec chmod +x {} \;
+# Navigate to the workspace directory
+cd "$WS_DIR" || error_exit "Failed to navigate to workspace directory"
 
 # Install dependencies
-cd "$WS_DIR"
 log "Installing dependencies..."
-rosdep install --from-paths . --ignore-src -r -y
+rosdep install --from-paths . --ignore-src -r -y || \
+    error_exit "Failed to install dependencies"
+
+# Verify interface files
+log "Verifying interface files..."
+find "$PACKAGE_DIR" -type f \( -name "*.srv" -o -name "*.msg" -o -name "*.action" \) -exec echo "Found interface file: {}" \;
+
+# Clean build directory
+log "Cleaning build directory..."
+rm -rf "$WS_DIR/build/$PACKAGE_NAME"
+rm -rf "$WS_DIR/install/$PACKAGE_NAME"
 
 log "Package setup completed successfully. Now you can:"
 log "1. cd test_ws"

@@ -35,15 +35,12 @@ chmod +x setup_pkg.sh
 ./setup_pkg.sh -p object_height
 ```
 
-This will:
-- Create package structure in test_ws
-- Copy service definition and test files
-- Install ROS2 dependencies
-
-2. Source ROS2 and build the package:
+2. Build the package:
 ```bash
 cd ../../test_ws
 source /opt/ros/humble/setup.bash
+# Clean build if needed
+rm -rf build/object_height install/object_height
 colcon build --packages-select object_height
 source install/setup.bash
 ```

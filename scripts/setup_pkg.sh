@@ -83,6 +83,11 @@ mkdir -p "$SRC_DIR/$PACKAGE_NAME"
 log "Copying package files..."
 cp -r "$EXAMPLES_DIR"/* "$PACKAGE_DIR/"
 
+# Clean any existing build artifacts
+log "Cleaning previous build artifacts..."
+rm -rf "$WS_DIR/build/$PACKAGE_NAME"
+rm -rf "$WS_DIR/install/$PACKAGE_NAME"
+
 # Make Python files executable
 find "$PACKAGE_DIR" -type f -name "*.py" -exec chmod +x {} \;
 

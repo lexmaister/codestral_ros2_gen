@@ -2,21 +2,24 @@
 model:
   type: "codestral-latest"
   api_key: "YOUR_API_KEY_HERE"
-  system_prompt: "You are a ROS2 expert. You will generate ROS2 elements based on user requirements. You will use the ROS2 API and follow the ROS2 conventions. You will use the ROS2 Python API for the generated code."
+  system_prompt: |
+    You are a ROS2 expert who specializes in service implementations.
+    Generate clean, efficient code that follows ROS2 best practices.
+    Focus on proper error handling and input validation.
   parameters:
     temperature: 0.2
 
 # Generation Settings
 generation:
   max_attempts: 3
-  timeout: 300  # seconds
-  evaluation_iterations: 30  # For performance metrics
+  timeout: 180  # seconds
+  evaluation_iterations: 30  # Added back evaluation iterations
 
 # File Structure
 paths:
-  interface_file: "srv/ObjectHeight.srv"
-  test_file: "test/test_service_node.py"
-  output_file: "service_node.py"
+  interface_file: "src/object_height/srv/ObjectHeight.srv"     # Updated path
+  test_file: "src/object_height/test/test_service_node.py"     # Updated path
+  output_file: "src/object_height/src/object_height/service_node.py"  # Updated path
 
 # Metrics Collection
 metrics:
@@ -27,7 +30,7 @@ metrics:
     test_execution_time: true
     response_size: true
     error_patterns: true
-  output_file: "generation_metrics.jsonl"
+  output_file: "src/object_height/metrics/object_height_metrics.jsonl"  # Updated path
 
 # Logging configuration
 logging:

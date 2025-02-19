@@ -39,8 +39,6 @@ chmod +x setup_pkg.sh
 ```bash
 cd ../../test_ws
 source /opt/ros/humble/setup.bash
-# Clean build if needed
-rm -rf build/object_height install/object_height
 colcon build --packages-select object_height
 source install/setup.bash
 ```

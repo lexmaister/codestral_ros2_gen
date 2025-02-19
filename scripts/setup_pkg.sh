@@ -80,8 +80,26 @@ log "Creating workspace directories..."
 mkdir -p "$SRC_DIR/$PACKAGE_NAME"
 
 # Copy package files
-log "Copying package files..."
-cp -r "$EXAMPLES_DIR"/* "$PACKAGE_DIR/"
+# Then copy all files (excluding generate.py and config.yaml)
+log "Finding files to copy..."
+mapfile -d $'\0' files < <(find "$EXAMPLES_DIR" -type f \
+    ! -name 'generate.py' \
+    ! -name 'config.yaml' -print0)
+
+if [ ${#files[@]} -eq 0 ]; then
+    log "No files found to copy"
+    exit 0
+fi
+
+log "Copying ${#files[@]} files to $PACKAGE_NAME..."
+for file in "${files[@]}"; do
+    rel_path="${file#$EXAMPLES_DIR/}"
+    mkdir -p "$PACKAGE_NAME/$(dirname "$rel_path")"
+    log "Copying file '$file'"
+    cp "$file" "$PACKAGE_NAME/$rel_path" || error_exit "Failed to copy: $file"
+done
+
+log "Directory structure and files copied successfully"
 
 # Clean any existing build artifacts
 log "Cleaning previous build artifacts..."

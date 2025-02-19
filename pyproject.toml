@@ -24,6 +24,7 @@ dependencies = [
     "pyyaml",
     "black",
     "lark",
+    "catkin_pkg",
 ]
 
 [project.urls]

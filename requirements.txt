@@ -1,9 +1,0 @@
-mistralai
-pytest
-pytest-mock
-pytest-cov
-pandas
-matplotlib
-pyyaml
-black
-lark

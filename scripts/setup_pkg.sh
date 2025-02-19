@@ -95,7 +95,7 @@ cd "$SRC_DIR" || error_exit "Failed to navigate to src directory"
 log "Creating new ROS2 package: $PACKAGE_NAME"
 ros2 pkg create --build-type ament_cmake "$PACKAGE_NAME" \
     --license MIT \
-    --dependencies rclpy python3-pytest rosidl_default_generators || error_exit "Failed to create package"
+    --dependencies rclpy ament_cmake_pytest rosidl_default_generators || error_exit "Failed to create package"
 
 log "Copying package files and directories..."
 # First, create directory structure
@@ -110,7 +110,7 @@ done
 # Then copy all files (excluding generate.py and config.yaml)
 log "Finding files to copy..."
 mapfile -d $'\0' files < <(find "$EXAMPLES_DIR" -type f \
-    ! -name 'generate.py' \
+    ! -name 'generator.py' \
     ! -name 'config.yaml' -print0)
 
 if [ ${#files[@]} -eq 0 ]; then
@@ -125,7 +125,6 @@ for file in "${files[@]}"; do
     log "Copying file '$file'"
     cp "$file" "$PACKAGE_NAME/$rel_path" || error_exit "Failed to copy: $file"
 done
-
 log "Directory structure and files copied successfully"
 
 # Make any python files executable
@@ -145,12 +144,19 @@ rosdep install --from-paths . --ignore-src -r -y || \
 log "Verifying interface files..."
 find "$PACKAGE_DIR" -type f \( -name "*.srv" -o -name "*.msg" -o -name "*.action" \) -exec echo "Found interface file: {}" \;
 
-# Clean build directory
+# Clean build if needed
 log "Cleaning build directory..."
 rm -rf "$WS_DIR/build/$PACKAGE_NAME"
 rm -rf "$WS_DIR/install/$PACKAGE_NAME"
 
-log "Package setup completed successfully. Now you can:"
-log "1. cd test_ws"
-log "2. source /opt/ros/humble/setup.bash"
-log "3. colcon build --packages-select $PACKAGE_NAME"
+# Build the workspace
+log "Building workspace..."
+colcon build --symlink-install --packages-select "$PACKAGE_NAME" || \
+    error_exit "Failed to build workspace"
+
+log "Setup for $PACKAGE_NAME package completed successfully."
+
+echo ">>> Now you can use these commands to build package:"
+echo "$ cd ../../test_ws/"
+echo "$ source /opt/ros/humble/setup.bash"
+echo "$ colcon build --packages-select $PACKAGE_NAME"

@@ -25,6 +25,7 @@ dependencies = [
     "black",
     "lark",
     "catkin_pkg",
+    "empy",
 ]
 
 [project.urls]

@@ -9,6 +9,8 @@ from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeoutError
 import pytest
 import subprocess
+import yaml
+from datetime import datetime
 
 from codestral_ros2_gen import *
 from codestral_ros2_gen.metrics.metrics_handler import MetricsHandler
@@ -287,6 +289,7 @@ class BaseGenerator(ABC):
     def _record_final_metrics(self, metrics: Dict[str, Any]) -> None:
         """Record final metrics for failed attempts."""
         metrics["main_timer"] = time.time() - metrics["main_timer"]
+        # Let MetricsHandler handle all formatting
         self.metrics_handler.add_metric(metrics)
 
     def _safe_model_complete(self, prompt: str) -> Tuple[str, ModelUsage]:

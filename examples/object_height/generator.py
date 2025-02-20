@@ -1,5 +1,6 @@
 from pathlib import Path
 import subprocess
+from typing import Optional
 
 from codestral_ros2_gen import logger
 from codestral_ros2_gen.generators.base_generator import BaseGenerator
@@ -8,9 +9,19 @@ from codestral_ros2_gen.generators.base_generator import BaseGenerator
 class ObjectHeightGenerator(BaseGenerator):
     """Generator for ObjectHeight service implementation."""
 
+    def __init__(
+        self,
+        config_path: Optional[Path] = None,
+        metrics_file: Optional[str] = None,
+        api_key: Optional[str] = None,
+    ):
+        """Initialize generator with config."""
+        super().__init__(
+            config_path=config_path, metrics_file=metrics_file, api_key=api_key
+        )
+
     def prepare_prompt(self, **kwargs) -> str:
         """Prepare generation prompt with service definition and test cases."""
-        # Get paths relative to workspace
         ws_path = Path.cwd()
 
         try:
@@ -38,27 +49,28 @@ class ObjectHeightGenerator(BaseGenerator):
                 "You are a ROS2 expert. Generate clean, efficient code that follows ROS2 best practices.",
             )
 
-            # Format prompt
-            return f"""{system_prompt}
+            # Use triple backticks on separate lines and strip extra indentation.
+            prompt = f"""{system_prompt}
 
-            1. Service Definition:
-            ```
-            {srv_def}
-            ```
+1. Service Definition:
+```
+{srv_def}
+```
 
-            2. Test Cases:
-            ```python
-            {test_code}
-            ```
+2. Test Cases:
+```python
+{test_code}
+```
 
-            Generate a complete implementation that:
-            - Uses proper ROS2 Python API
-            - Includes all necessary imports
-            - Handles edge cases (including invalid inputs)
-            - Follows ROS2 service implementation best practices
-            - Correctly processes input units and provides output in millimeters
-            - Passes all the provided test cases
-            """
+Generate a complete implementation that:
+- Uses proper ROS2 Python API
+- Includes all necessary imports
+- Handles edge cases (including invalid inputs)
+- Follows ROS2 service implementation best practices
+- Correctly processes input units and provides output in millimeters
+- Passes all the provided test cases
+"""
+            return prompt.strip()
 
         except Exception as e:
             logger.error(f"Error preparing prompt: {e}")
@@ -102,33 +114,26 @@ class ObjectHeightGenerator(BaseGenerator):
 def main():
     """Run generator within ROS2 workspace context."""
     try:
-        # Get config path relative to generator script
         config_path = Path(__file__).parent / "config.yaml"
         if not config_path.exists():
             raise FileNotFoundError(f"Config file not found: {config_path}")
 
-        # Initialize generator
         generator = ObjectHeightGenerator(config_path=config_path)
-
-        # Setup output path
         ws_path = Path.cwd()
         output_path = ws_path / generator.config["paths"]["output_file"]
 
-        # Run generation with config parameters
-        success, metrics = generator.generate(
+        success, _ = generator.generate(
             output_path=output_path,
             max_attempts=generator.config["generation"]["max_attempts"],
             timeout=generator.config["generation"]["timeout"],
         )
 
-        if success:
-            logger.info("Service generation successful!")
-            logger.info(f"Generation metrics:\n{metrics}")
-            return 0
-        else:
-            logger.error("Service generation failed!")
-            logger.error(f"Failure metrics:\n{metrics}")
-            return 1
+        logger.info(
+            "Service generation successful!"
+            if success
+            else "Service generation failed!"
+        )
+        return 0 if success else 1
 
     except Exception as e:
         logger.error(f"Generator failed: {e}")

@@ -156,7 +156,11 @@ colcon build --symlink-install --packages-select "$PACKAGE_NAME" || \
 
 log "Setup for $PACKAGE_NAME package completed successfully."
 
-echo ">>> Now you can use these commands to build package:"
-echo "$ cd ../../test_ws/"
-echo "$ source /opt/ros/humble/setup.bash"
-echo "$ colcon build --packages-select $PACKAGE_NAME"
+echo ">>> Now you can use these commands to check package is installed properly:"
+echo "cd ../../test_ws/"
+echo "source /opt/ros/$ROS_DISTRO/setup.bash"
+echo "source install/setup.bash"
+echo "ros2 pkg list | grep $PACKAGE_NAME"
+echo "ros2 interface package $PACKAGE_NAME"
+echo "ros2 pkg executables $PACKAGE_NAME"
+echo "ros2 run $PACKAGE_NAME object_height_service"

@@ -16,7 +16,7 @@ The implementation must handle unit conversions and edge cases appropriately.
 object_height/
 ├── object_height/              # Python package
 │   ├── __init__.py
-│   └── service_node.py         # Service implementation
+│   └── service_node.py         # Test service implementation for package init
 ├── srv/
 │   └── ObjectHeight.srv        # Service definition
 ├── test/
@@ -34,31 +34,48 @@ chmod +x setup_pkg.sh
 ./setup_pkg.sh -p object_height
 ```
 
-2. Build the package:
+2. Verify the package setup:
 ```bash
 cd ../../test_ws
 source /opt/ros/humble/setup.bash
-colcon build
 source install/setup.bash
+
+# Check if package is installed
+ros2 pkg list | grep object_height
+
+# Verify service interface
+ros2 interface package object_height
+
+# List available executables
+ros2 pkg executables object_height
+
+# Run test service
+ros2 run object_height object_height_service
 ```
 
-3. Run the generator to create service implementation:
+4. Open another terminal and test test that service publishes in topic `/service_status`:
+``` bash
+cd test_ws
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 topic echo /service_status
+```
+
+## Generating service with model
+
+1. Generate service implementation:
 ```bash
+# Make sure you're in test_ws directory
 python3 ../codestral_ros2_gen/examples/object_height/generator.py
 ```
 
-The generator will:
-- Create service implementation
-- Build the package automatically
-- Run tests to validate
-- Report performance metrics
-
-4. After successful generation, run the service:
+2. Run and test the service:
+Terminal 1:
 ```bash
 ros2 run object_height object_height_service
 ```
 
-5. Test in another terminal:
+Terminal 2:
 ```bash
 ros2 service call /calculate_object_height object_height/srv/ObjectHeight \
 "{focal_length: 35.0, image_height: 1152, pixel_size: 3.45, object_distance: 6.5}"
@@ -70,6 +87,28 @@ response:
   success: True
   object_height: 738.1
   feedback: ''
+```
+
+## Troubleshooting
+
+If you encounter any issues:
+
+1. Check ROS2 environment:
+```bash
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+```
+
+2. Verify the package is properly installed:
+```bash
+ros2 pkg list | grep object_height
+ros2 interface package object_height
+```
+
+3. Check service node status:
+```bash
+ros2 node list
+ros2 service list
 ```
 
 ## Generation Process

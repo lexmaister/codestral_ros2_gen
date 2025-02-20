@@ -11,7 +11,7 @@ class ObjectHeightService(Node):
     def __init__(self):
         super().__init__("object_height_service")
         self.status_publisher = self.create_publisher(String, "service_status", 10)
-        self.timer = self.create_timer(1.0, self.publish_status)
+        self.timer = self.create_timer(2.0, self.publish_status)
         self.get_logger().info("Object Height Service template initialized")
 
     def publish_status(self):

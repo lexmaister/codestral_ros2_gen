@@ -19,7 +19,7 @@ class ModelUsage:
 
     def __str__(self):
         return (
-            f"Used tokens:\n"
+            f"Model usage (tokens):\n"
             f"prompt:\t\t{self.prompt_tokens}\n"
             f"completion:\t{self.completion_tokens}\n"
             f"total:\t\t{self.total_tokens}"
@@ -50,7 +50,7 @@ class MistralClient:
 
         env_key = os.getenv("MISTRAL_API_KEY")
         if env_key:
-            logger.info(f"{msg} from environment variable")
+            logger.info(f"{msg} from the environment variable")
             return env_key
 
         config_key = config.get("api_key")
@@ -87,9 +87,8 @@ class MistralClient:
         Returns:
             Tuple of (generated_text, usage_stats)
         """
-        logger.info(
-            f"Start generating completion for prompt:\n{'<'*3}\n{prompt.strip()}\n{'<'*3}"
-        )
+        logger.info("Start generating completion from Mistral AI")
+        logger.debug(f"Prompt:\n{'<'*3}\n{prompt.strip()}\n{'<'*3}")
         if not prompt or not prompt.strip():
             raise ValueError("Empty prompt provided")
 
@@ -119,7 +118,8 @@ class MistralClient:
             if not completion:
                 raise RuntimeError("Empty completion response from API")
 
-            logger.info(f"Got completion response:\n{'>'*3}\n{completion}\n{'>'*3}")
+            logger.info("Completion generated successfully")
+            logger.debug(f"Response:\n{'>'*3}\n{completion}\n{'>'*3}")
 
             # Update usage statistics
             prompt_tokens = max(0, getattr(response.usage, "prompt_tokens", 0))
@@ -131,7 +131,7 @@ class MistralClient:
                 completion_tokens=completion_tokens,
                 total_tokens=total_tokens,
             )
-            logger.info(f"Model usage:\n{usage}\n")
+            logger.debug(str(usage))
 
             return completion, usage
 

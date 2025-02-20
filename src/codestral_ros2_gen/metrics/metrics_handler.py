@@ -59,33 +59,90 @@ class MetricsHandler:
         except Exception as e:
             raise RuntimeError(f"Error loading config: {str(e)}")
 
+    def _format_metrics(self, metrics: Dict) -> str:
+        """Format metrics for logging in a clear, structured way."""
+
+        def format_number(n: float) -> str:
+            return f"{n:.2f}" if isinstance(n, float) else str(n)
+
+        def safe_get(d: Dict, *keys: str, default: None):
+            """Safely get nested dictionary values."""
+            try:
+                result = d
+                for key in keys:
+                    result = result[key]
+                return result
+            except (KeyError, TypeError):
+                return default
+
+        sections = []
+
+        # Generation Summary
+        sections.append("=== Generation Summary ===")
+        sections.append(
+            f"Total Time: {format_number(safe_get(metrics, 'main_timer', default=0.0))}s"
+        )
+
+        attempts = safe_get(metrics, "attempts", default=0)
+        max_attempts = safe_get(metrics, "config_used", "max_attempts", default="?")
+        sections.append(f"Attempts: {attempts}/{max_attempts}")
+
+        timeouts = safe_get(metrics, "timeouts", "attempts", default=0)
+        sections.append(f"Timeouts: {timeouts}")
+
+        # Error Summary
+        errors = safe_get(metrics, "errors", default=[])
+        if errors:
+            sections.append("\n=== Errors ===")
+            unique_errors = set(errors)
+            for err in unique_errors:
+                count = errors.count(err)
+                sections.append(f"[x{count}] {err}")
+
+        # Timing Details
+        attempt_timers = safe_get(metrics, "attempt_timers", default=[])
+        if attempt_timers:
+            sections.append("\n=== Timing Details ===")
+            avg_attempt = sum(attempt_timers) / len(attempt_timers)
+            sections.append(f"Average per attempt: {format_number(avg_attempt)}s")
+            per_attempt_timeout = safe_get(
+                metrics, "config_used", "per_attempt_timeout", default=0.0
+            )
+            sections.append(
+                f"Per-attempt timeout: {format_number(per_attempt_timeout)}s"
+            )
+
+        # Token Usage
+        token_usage = safe_get(metrics, "token_usage", default={})
+        if token_usage and any(token_usage.values()):
+            sections.append("\n=== Token Usage ===")
+            for key, value in token_usage.items():
+                sections.append(f"{key}: {value}")
+
+        return "\n".join(sections)
+
     def add_metric(self, metrics: Dict) -> None:
         """Add new metrics and save to file."""
         if not isinstance(metrics, dict):
             raise RuntimeError("Metrics must be a dictionary")
 
-        # Filter metrics based on config
+        # Filter and prepare metrics
         metrics_to_collect = self.config["metrics"].get("collect", {})
         filtered_metrics = {
-            k: v
-            for k, v in metrics.items()
-            if metrics_to_collect.get(k, True)  # Default to True if not specified
+            k: v for k, v in metrics.items() if metrics_to_collect.get(k, True)
         }
-
-        # Add timestamp
         filtered_metrics["timestamp"] = datetime.now().isoformat()
 
-        # Convert to DataFrame
-        new_row = pd.DataFrame([filtered_metrics])
+        # Log formatted metrics
+        logger.info(f"\nMetrics Report:\n{self._format_metrics(filtered_metrics)}\n")
 
-        # Ensure numeric columns are properly typed
+        # Save to DataFrame
+        new_row = pd.DataFrame([filtered_metrics])
         for col in new_row.columns:
             if isinstance(new_row[col].iloc[0], (int, float)):
                 new_row[col] = pd.to_numeric(new_row[col])
 
         self.metrics_df = pd.concat([self.metrics_df, new_row], ignore_index=True)
-        logger.info(f"Added metrics: {filtered_metrics}")
-
         self._save_metrics()
 
     def _save_metrics(self) -> None:

@@ -17,8 +17,24 @@ from codestral_ros2_gen.utils.code_parser import ROS2CodeParser
 
 
 class BaseGenerator(ABC):
-    """Abstract base class for ROS2 code generators that follows the flowchart:
+    """Abstract base class for ROS2 code generators.
+
+    This class implements the generation flow:
     MainTimer -> Counter -> Timer -> GenCode -> SaveCode -> RunTests -> TestResult
+
+    The generation process follows these steps:
+    1. Initialize metrics and timers
+    2. For each attempt:
+        a. Generate code using AI model
+        b. Save code to filesystem
+        c. Optionally build workspace and run tests
+    3. Record metrics and results
+
+    Attributes:
+        config_path (Path): Path to configuration file
+        config (Dict): Loaded configuration
+        metrics_handler (MetricsHandler): Metrics collection and analysis
+        model (MistralClient): AI model client
     """
 
     def __init__(
@@ -74,28 +90,37 @@ class BaseGenerator(ABC):
         """
         pass
 
-    def run_tests(self, package_path: Path) -> Tuple[bool, str]:
-        """Execute tests for generated code."""
-        try:
-            # Run colcon build
-            build_cmd = f"cd {package_path.parent} && colcon build --packages-select {package_path.name}"
-            subprocess.run(build_cmd, shell=True, check=True)
-
-            # Run tests
-            result = pytest.main([str(package_path)])
-            return result == pytest.ExitCode.OK, ""
-        except Exception as e:
-            return False, str(e)
-
     def generate(
         self,
         output_path: Path,
         max_attempts: Optional[int] = None,
         timeout: Optional[float] = None,
+        build_workspace: bool = False,
         **kwargs,
     ) -> Tuple[bool, Dict[str, Any]]:
-        """Generate ROS2 code following the block diagram flow."""
+        """Generate ROS2 code with metrics collection and optional workspace building.
+
+        Args:
+            output_path: Where to save the generated code
+            max_attempts: Maximum generation attempts (default: from config)
+            timeout: Total timeout in seconds (default: from config)
+            build_workspace: Whether to build ROS2 workspace and run tests
+            **kwargs: Additional arguments passed to prepare_prompt()
+
+        Returns:
+            Tuple[bool, Dict[str, Any]]: (success, metrics_dict)
+
+        Metrics collected:
+            - main_timer: Total execution time
+            - attempts: Number of attempts made
+            - attempt_timers: List of per-attempt execution times
+            - timeouts: Count of timeout occurrences
+            - errors: List of error messages
+            - token_usage: Model token consumption statistics
+        """
         metrics = self._init_metrics(max_attempts, timeout)
+        metrics["build_workspace"] = build_workspace
+        self._current_metrics = metrics  # Store for stage tracking
 
         for attempt in range(1, metrics["config_used"]["max_attempts"] + 1):
             metrics["attempts"] = attempt
@@ -105,6 +130,7 @@ class BaseGenerator(ABC):
                 success, usage = self._execute_attempt(
                     output_path=output_path,
                     timeout=metrics["config_used"]["per_attempt_timeout"],
+                    build_workspace=build_workspace,
                     **kwargs,
                 )
 
@@ -113,16 +139,31 @@ class BaseGenerator(ABC):
                     return True, metrics
 
             except RuntimeError as e:
-                error_msg = str(e)
-                if "timeout" in error_msg.lower():
-                    metrics["timeouts"]["attempts"] += 1
-                metrics["errors"].append(error_msg)
-                metrics["error_patterns"].append(error_msg)
+                self._record_error(metrics, str(e))
 
             metrics["attempt_timers"].append(time.time() - attempt_start)
 
         self._record_final_metrics(metrics)
+        delattr(self, "_current_metrics")  # Cleanup
         return False, metrics
+
+    def run_tests(self, package_path: Path) -> Tuple[bool, str]:
+        """Execute ROS2 package tests."""
+        try:
+            # Check build_workspace attribute is set
+            build_workspace = getattr(self, "build_workspace", False)
+
+            # Only build if workspace building is enabled
+            if build_workspace:
+                logger.info(f"Building workspace for package: {package_path.name}")
+                build_cmd = f"cd {package_path.parent} && colcon build --packages-select {package_path.name}"
+                subprocess.run(build_cmd, shell=True, check=True)
+
+            # Run tests
+            result = pytest.main([str(package_path)])
+            return result == pytest.ExitCode.OK, ""
+        except Exception as e:
+            return False, str(e)
 
     def _init_metrics(
         self, max_attempts: Optional[int], timeout: Optional[float]
@@ -152,41 +193,64 @@ class BaseGenerator(ABC):
         }
 
     def _execute_attempt(
-        self, output_path: Path, timeout: float, **kwargs
+        self, output_path: Path, timeout: float, build_workspace: bool = False, **kwargs
     ) -> Tuple[bool, Optional[ModelUsage]]:
-        """Execute single attempt with simple timeout checking between stages."""
+        """Execute single generation attempt with timeouts.
+
+        Args:
+            output_path: Where to save generated code
+            timeout: Timeout for this attempt
+            build_workspace: Whether to build and test
+            **kwargs: Additional arguments for prompt preparation
+
+        Returns:
+            Tuple[bool, Optional[ModelUsage]]: (success, usage_stats)
+        """
+        self.build_workspace = build_workspace
         start = time.time()
         stage_time = timeout / 3
 
+        stage_results = []  # Track stages for testing
         try:
             # GenCode stage
             prompt = self.prepare_prompt(**kwargs)
             if time.time() - start > stage_time:
                 raise RuntimeError("Timeout: Model generation timed out")
             generated_code, usage = self.model.complete(prompt)
+            stage_results.append("GenCode")
 
-            # Parse code
+            # Parse and save code
             if time.time() - start > stage_time * 2:
                 raise RuntimeError("Timeout: Code parsing timed out")
             code = ROS2CodeParser.parse(generated_code)
             if not code:
                 raise RuntimeError("Failed to parse generated code")
-
-            # Save code
             if not self.save_output(code, output_path):
                 raise RuntimeError("Failed to save code")
+            stage_results.append("SaveCode")
 
-            # RunTests stage
-            if time.time() - start > timeout:
-                raise RuntimeError("Timeout: Test execution timed out")
-            tests_passed, error = self.run_tests(output_path.parent)
-            if not tests_passed:
-                raise RuntimeError(f"Tests failed: {error}")
+            # RunTests stage (conditional)
+            if build_workspace:
+                if time.time() - start > timeout:
+                    raise RuntimeError("Timeout: Test execution timed out")
+                tests_passed, error = self.run_tests(output_path.parent)
+                if not tests_passed:
+                    raise RuntimeError(f"Tests failed: {error}")
+                stage_results.append("RunTests")
+
+            # Store stage results for testing
+            metrics = getattr(self, "_current_metrics", {})
+            if metrics:
+                metrics["stage_results"] = stage_results
 
             return True, usage
 
         except Exception as e:
-            # Ensure we propagate timeout errors with consistent messages
+            # Store stage results even on failure
+            metrics = getattr(self, "_current_metrics", {})
+            if metrics:
+                metrics["stage_results"] = stage_results
+
             error_msg = str(e)
             if "timeout" in error_msg.lower():
                 logger.error(f"Timeout error: {error_msg}")
@@ -204,10 +268,18 @@ class BaseGenerator(ABC):
         metrics["main_timer"] = time.time() - metrics["main_timer"]
         self.metrics_handler.add_metric(metrics)
 
-    def _record_timeout(self, metrics: Dict[str, Any]) -> None:
-        """Record timeout metrics."""
-        metrics["timeouts"]["attempts"] += 1
-        metrics["errors"].append("Attempt timed out")
+    def _record_error(self, metrics: Dict[str, Any], error_msg: str) -> None:
+        """Record error in metrics.
+
+        Args:
+            metrics: Metrics dictionary to update
+            error_msg: Error message to record
+        """
+        logger.warning(error_msg)
+        metrics["errors"].append(error_msg)
+        metrics["error_patterns"].append(error_msg)
+        if "timeout" in error_msg.lower():
+            metrics["timeouts"]["attempts"] += 1
 
     def _record_final_metrics(self, metrics: Dict[str, Any]) -> None:
         """Record final metrics for failed attempts."""
@@ -220,15 +292,6 @@ class BaseGenerator(ABC):
             return self.model.complete(prompt)
         except Exception as e:
             raise RuntimeError(f"Model generation failed: {str(e)}")
-
-    def _record_error(
-        self, metrics: Dict[str, Any], error_type: str, error_msg: str
-    ) -> None:
-        """Record error in metrics with timestamp."""
-        logger.warning(error_msg)
-        metrics["error_patterns"].append(error_type)
-        metrics["error_details"].append(error_msg)
-        metrics["timestamps"].append(time.time())
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get collected metrics statistics."""

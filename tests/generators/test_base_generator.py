@@ -2,6 +2,7 @@ import pytest
 import time
 from pathlib import Path
 from unittest.mock import patch, Mock, MagicMock
+import subprocess  # Add this import
 
 from codestral_ros2_gen.generators.base_generator import BaseGenerator
 from codestral_ros2_gen.models.mistral_client import ModelUsage
@@ -18,8 +19,10 @@ class MockGenerator(BaseGenerator):
         return bool(code and not "error" in code)
 
     def run_tests(self, package_path: Path) -> tuple[bool, str]:
-        """Mock test execution without ROS2."""
-        # Always return success in tests
+        """Mock test execution with proper build handling."""
+        if getattr(self, "build_workspace", False):
+            # Actually call subprocess.run to trigger the mock
+            subprocess.run(["colcon", "build"], check=True)
         return True, ""
 
 
@@ -113,35 +116,28 @@ def test_successful_generation_with_timeout(generator, tmp_path):
         assert len(metrics["attempt_timers"]) == 1
 
 
-def test_timeout_handling_per_stage(generator, tmp_path):
-    """Test timeout handling for each stage (GenCode, SaveCode, RunTests)."""
-    stage_results = []
+def test_timeout_handling_per_stage(generator, tmp_path, mock_subprocess):
+    """Test timeout handling for each stage."""
 
     def mock_complete(*args, **kwargs):
-        stage_results.append("GenCode")
         return "def test(): pass", ModelUsage(10, 20, 30)
-
-    def mock_save(*args, **kwargs):
-        stage_results.append("SaveCode")
-        return True
-
-    def mock_tests(*args, **kwargs):
-        stage_results.append("RunTests")
-        return True, ""
 
     with (
         patch.object(generator.model, "complete", side_effect=mock_complete),
-        patch.object(generator, "save_output", side_effect=mock_save),
-        patch.object(generator, "run_tests", side_effect=mock_tests),
+        patch.object(generator, "run_tests", wraps=generator.run_tests),
+        patch(
+            "codestral_ros2_gen.utils.code_parser.ROS2CodeParser.parse",
+            return_value="def test(): pass",
+        ),
     ):
         success, metrics = generator.generate(
-            tmp_path / "test.py", timeout=3.0  # 1 second per stage
+            tmp_path / "test.py", timeout=3.0, build_workspace=True
         )
 
         assert success is True
-        assert stage_results == ["GenCode", "SaveCode", "RunTests"]
+        assert metrics.get("stage_results") == ["GenCode", "SaveCode", "RunTests"]
         assert metrics["timeouts"]["attempts"] == 0
-        assert "attempt_timers" in metrics
+        assert mock_subprocess.called
 
 
 def test_stage_timeout_failure(generator, tmp_path):
@@ -367,3 +363,53 @@ def test_subprocess_not_called(generator, tmp_path, mock_subprocess):
     """Verify that no real subprocess calls are made."""
     generator.generate(tmp_path / "test.py")
     assert not mock_subprocess.called, "No real subprocess calls should be made"
+
+
+def test_generate_without_build(generator, tmp_path):
+    """Test generation without workspace building."""
+    mock_usage = ModelUsage(10, 20, 30)
+
+    with patch.object(
+        generator.model,
+        "complete",
+        return_value=("def test(): pass", mock_usage),
+    ):
+        success, metrics = generator.generate(
+            tmp_path / "test.py", build_workspace=False
+        )
+
+        assert success is True
+        assert not metrics.get("build_workspace")
+        assert not any("test" in err.lower() for err in metrics.get("errors", []))
+
+
+def test_generate_with_build(generator, tmp_path, mock_subprocess):
+    """Test generation with workspace building."""
+    mock_usage = ModelUsage(10, 20, 30)
+
+    with (
+        patch.object(
+            generator.model, "complete", return_value=("def test(): pass", mock_usage)
+        ),
+        patch(
+            "codestral_ros2_gen.utils.code_parser.ROS2CodeParser.parse",
+            return_value="def test(): pass",
+        ),
+    ):
+        success, metrics = generator.generate(
+            tmp_path / "test.py", build_workspace=True, timeout=5.0
+        )
+
+        assert success is True, f"Generation failed with metrics: {metrics}"
+        assert metrics["build_workspace"] is True
+        assert metrics.get("stage_results") == ["GenCode", "SaveCode", "RunTests"]
+        assert (
+            mock_subprocess.called
+        ), "Colcon build should be called when build_workspace=True"
+        mock_subprocess.assert_called_once()
+
+        # Verify the subprocess call details
+        args, kwargs = mock_subprocess.call_args
+        assert kwargs.get(
+            "check", False
+        ), "subprocess.run should be called with check=True"

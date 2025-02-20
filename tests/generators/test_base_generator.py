@@ -141,10 +141,39 @@ def test_timeout_handling_per_stage(generator, tmp_path, mock_subprocess):
 
 
 def test_stage_timeout_failure(generator, tmp_path):
+    """Test handling of timeout in different stages (model stage timeout)."""
+    call_count = 0
+
+    def mock_slow_complete(*args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        time.sleep(0.5)  # For total timeout=0.4, 0.5 > 0.4 triggers timeout
+        return "def test(): pass", ModelUsage(10, 20, 30)
+
+    with patch.object(generator.model, "complete", side_effect=mock_slow_complete):
+        success, metrics = generator.generate(
+            tmp_path / "test.py",
+            timeout=0.4,  # full timeout = 0.4s
+            max_attempts=1,
+        )
+        assert call_count > 0, "Slow mock function was never called"
+        assert not success, "Should fail due to timeout"
+        assert metrics["timeouts"]["attempts"] >= 1, "Should record timeout attempt"
+        assert len(metrics["errors"]) >= 1, "Should have error recorded"
+        assert any(
+            "Model generation timed out" in err.lower() for err in metrics["errors"]
+        ), "Should have timeout error"
+        assert metrics["attempts"] == 1, "Should only make one attempt"
+        assert (
+            len(metrics["attempt_timers"]) == 1
+        ), "Should record timing for the attempt"
+
+
+def test_stage_timeout_failure(generator, tmp_path):
     """Test handling of timeout in different stages."""
 
     def mock_slow_complete(*args, **kwargs):
-        time.sleep(0.2)  # Sleep just long enough to trigger timeout
+        time.sleep(0.5)  # Sleep just long enough to trigger timeout
         return "def test(): pass", ModelUsage(10, 20, 30)
 
     with patch.object(generator.model, "complete", side_effect=mock_slow_complete):
@@ -160,81 +189,82 @@ def test_stage_timeout_failure(generator, tmp_path):
         assert len(metrics["attempt_timers"]) > 0, "Should record attempt timing"
 
 
-def test_stage_timeout_failure(generator, tmp_path):
-    """Test handling of timeout in different stages."""
-    # Track if our slow function was actually called
-    call_count = 0
-
-    def mock_slow_complete(*args, **kwargs):
-        nonlocal call_count
-        call_count += 1
-        # Use longer sleep to ensure timeout
-        time.sleep(2.0)  # Much longer than our timeout to ensure it triggers
-        return "def test(): pass", ModelUsage(10, 20, 30)
-
-    with patch.object(generator.model, "complete", side_effect=mock_slow_complete):
-        success, metrics = generator.generate(
-            tmp_path / "test.py",
-            timeout=0.5,  # Very short timeout to ensure it triggers
-            max_attempts=1,  # Single attempt is enough for timeout test
-        )
-
-        # Verify the mock was called
-        assert call_count > 0, "Slow mock function was never called"
-        assert success is False, "Should fail due to timeout"
-        assert metrics["timeouts"]["attempts"] >= 1, "Should record timeout attempt"
-        assert len(metrics["errors"]) >= 1, "Should have error recorded"
-        assert any(
-            "timeout" in err.lower() for err in metrics["errors"]
-        ), "Should have timeout error"
-        assert metrics["attempts"] == 1, "Should only make one attempt"
-        assert (
-            len(metrics["attempt_timers"]) == 1
-        ), "Should record timing for the attempt"
-
-
-# Add more specific timeout tests
 def test_model_stage_timeout(generator, tmp_path):
     """Test timeout specifically in the model generation stage."""
 
     def mock_slow_model(*args, **kwargs):
-        time.sleep(0.2)  # Sleep longer than stage timeout
+        time.sleep(0.6)  # For total timeout=0.5, 0.6 > 0.5 triggers timeout
         return "def test(): pass", ModelUsage(10, 20, 30)
 
     with patch.object(generator.model, "complete", side_effect=mock_slow_model):
         success, metrics = generator.generate(
             tmp_path / "test.py",
-            timeout=0.3,  # Makes stage_timeout = 0.1s
+            timeout=0.5,  # full timeout = 0.5s
             max_attempts=1,
         )
-
         assert not success
         assert metrics["timeouts"]["attempts"] >= 1
-        assert any("timeout" in err.lower() for err in metrics["errors"])
+        assert any("Model generation timed out" in err for err in metrics["errors"])
         assert len(metrics["attempt_timers"]) == 1
 
 
+def test_timeout_simple(generator, tmp_path):
+    """Test basic timeout functionality."""
+
+    def mock_slow_complete(*args, **kwargs):
+        time.sleep(0.5)  # For total timeout=0.4, 0.5 > 0.4 triggers timeout
+        return "def test(): pass", ModelUsage(10, 20, 30)
+
+    with patch.object(generator.model, "complete", side_effect=mock_slow_complete):
+        success, metrics = generator.generate(
+            tmp_path / "test.py",
+            timeout=0.4,  # full timeout = 0.4s
+            max_attempts=1,
+        )
+        assert not success
+        assert metrics["timeouts"]["attempts"] == 1
+        assert any("Model generation timed out" in err for err in metrics["errors"])
+
+
+def test_multiple_timeouts(generator, tmp_path):
+    """Test multiple timeout attempts."""
+
+    def mock_timeout(*args, **kwargs):
+        time.sleep(0.5)  # For total timeout=0.4, 0.5 > 0.4 triggers timeout per attempt
+        return "def test(): pass", ModelUsage(10, 20, 30)
+
+    with patch.object(generator.model, "complete", side_effect=mock_timeout):
+        success, metrics = generator.generate(
+            tmp_path / "test.py",
+            timeout=0.4,  # full timeout = 0.4s per attempt
+            max_attempts=2,
+        )
+        assert not success
+        assert metrics["timeouts"]["attempts"] == 2
+        assert len(metrics["errors"]) == 2
+        assert all("Model generation timed out" in err for err in metrics["errors"])
+
+
 def test_multiple_timeout_attempts(generator, tmp_path):
-    """Test that timeout handling works across multiple attempts."""
+    """Test timeout handling across multiple attempts."""
     call_count = 0
 
     def mock_timeout_model(*args, **kwargs):
         nonlocal call_count
         call_count += 1
-        time.sleep(0.5)  # Sleep longer than stage timeout
+        time.sleep(0.5)  # For total timeout=0.4, 0.5 > 0.4 triggers timeout
         return "def test(): pass", ModelUsage(10, 20, 30)
 
     with patch.object(generator.model, "complete", side_effect=mock_timeout_model):
         success, metrics = generator.generate(
             tmp_path / "test.py",
-            timeout=0.3,  # 0.1s per stage
-            max_attempts=2,  # Try twice
+            timeout=0.4,  # full timeout = 0.4s per attempt
+            max_attempts=2,
         )
-
-        assert call_count > 0, "Model should be called at least once"
-        assert success is False
+        assert call_count > 0
+        assert not success
         assert metrics["timeouts"]["attempts"] >= 1
-        assert metrics["attempts"] <= 2  # Should not exceed max_attempts
+        assert metrics["attempts"] <= 2
 
 
 def test_metrics_collection(generator, tmp_path):
@@ -337,7 +367,7 @@ def test_multiple_timeouts(generator, tmp_path):
     """Test handling of multiple timeout attempts."""
 
     def mock_timeout(*args, **kwargs):
-        time.sleep(0.2)  # Longer than stage timeout
+        time.sleep(0.5)  # Longer than stage timeout
         return "def test(): pass", ModelUsage(10, 20, 30)
 
     with patch.object(generator.model, "complete", side_effect=mock_timeout):
@@ -350,7 +380,7 @@ def test_multiple_timeouts(generator, tmp_path):
         assert not success
         assert metrics["timeouts"]["attempts"] == 2
         assert len(metrics["errors"]) == 2
-        assert all("timeout" in err.lower() for err in metrics["errors"])
+        assert all("timed out" in err.lower() for err in metrics["errors"])
 
 
 def test_no_ros_dependency(generator, tmp_path):

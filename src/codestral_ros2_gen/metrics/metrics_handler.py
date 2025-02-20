@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional, Literal
+from typing import Dict, List, Optional, Literal, Any
 from pathlib import Path
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -59,14 +59,33 @@ class MetricsHandler:
         except Exception as e:
             raise RuntimeError(f"Error loading config: {str(e)}")
 
-    def _format_metrics(self, metrics: Dict) -> str:
-        """Format metrics for logging in a clear, structured way."""
+    def format_attempt_metrics(self, metrics: Dict[str, Any]) -> str:
+        """Format per-attempt metrics for logging."""
+        sections = [
+            f"Time: {metrics['time']:.2f}s",
+            f"Success: {metrics['success']}",
+            f"Stages: {', '.join(metrics['stage_results'])}",
+        ]
+        if metrics["token_usage"]:
+            sections.extend(
+                [
+                    "Token Usage:",
+                    f"  Prompt: {metrics['token_usage'].get('prompt_tokens', 0)}",
+                    f"  Completion: {metrics['token_usage'].get('completion_tokens', 0)}",
+                    f"  Total: {metrics['token_usage'].get('total_tokens', 0)}",
+                ]
+            )
+        if metrics["errors"]:
+            sections.extend(["Errors:", *[f"  - {err}" for err in metrics["errors"]]])
+        return "\n".join(sections)
+
+    def format_generation_summary(self, metrics: Dict) -> str:
+        """Generate metrics summary in a detailed, original style."""
 
         def format_number(n: float) -> str:
             return f"{n:.2f}" if isinstance(n, float) else str(n)
 
         def safe_get(d: Dict, *keys: str, default: None):
-            """Safely get nested dictionary values."""
             try:
                 result = d
                 for key in keys:
@@ -76,21 +95,16 @@ class MetricsHandler:
                 return default
 
         sections = []
-
-        # Generation Summary
         sections.append("=== Generation Summary ===")
         sections.append(
             f"Total Time: {format_number(safe_get(metrics, 'main_timer', default=0.0))}s"
         )
-
         attempts = safe_get(metrics, "attempts", default=0)
         max_attempts = safe_get(metrics, "config_used", "max_attempts", default="?")
         sections.append(f"Attempts: {attempts}/{max_attempts}")
-
         timeouts = safe_get(metrics, "timeouts", "attempts", default=0)
         sections.append(f"Timeouts: {timeouts}")
 
-        # Error Summary
         errors = safe_get(metrics, "errors", default=[])
         if errors:
             sections.append("\n=== Errors ===")
@@ -99,7 +113,6 @@ class MetricsHandler:
                 count = errors.count(err)
                 sections.append(f"[x{count}] {err}")
 
-        # Timing Details
         attempt_timers = safe_get(metrics, "attempt_timers", default=[])
         if attempt_timers:
             sections.append("\n=== Timing Details ===")
@@ -112,7 +125,6 @@ class MetricsHandler:
                 f"Per-attempt timeout: {format_number(per_attempt_timeout)}s"
             )
 
-        # Token Usage
         token_usage = safe_get(metrics, "token_usage", default={})
         if token_usage and any(token_usage.values()):
             sections.append("\n=== Token Usage ===")
@@ -133,8 +145,10 @@ class MetricsHandler:
         }
         filtered_metrics["timestamp"] = datetime.now().isoformat()
 
-        # Log formatted metrics
-        logger.info(f"\nMetrics Report:\n{self._format_metrics(filtered_metrics)}\n")
+        # Log formatted metrics using the new generation summary method
+        logger.info(
+            f"Metrics report:\n\n{self.format_generation_summary(filtered_metrics)}\n"
+        )
 
         # Save to DataFrame
         new_row = pd.DataFrame([filtered_metrics])

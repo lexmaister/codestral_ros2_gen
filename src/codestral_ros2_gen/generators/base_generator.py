@@ -100,29 +100,10 @@ class BaseGenerator(ABC):
         build_workspace: bool = False,
         **kwargs,
     ) -> Tuple[bool, Dict[str, Any]]:
-        """Generate ROS2 code with metrics collection and optional workspace building.
-
-        Args:
-            output_path: Where to save the generated code
-            max_attempts: Maximum generation attempts (default: from config)
-            timeout: Total timeout in seconds (default: from config)
-            build_workspace: Whether to build ROS2 workspace and run tests
-            **kwargs: Additional arguments passed to prepare_prompt()
-
-        Returns:
-            Tuple[bool, Dict[str, Any]]: (success, metrics_dict)
-
-        Metrics collected:
-            - main_timer: Total execution time
-            - attempts: Number of attempts made
-            - attempt_timers: List of per-attempt execution times
-            - timeouts: Count of timeout occurrences
-            - errors: List of error messages
-            - token_usage: Model token consumption statistics
-        """
+        """Generate ROS2 code with metrics collection and optional workspace building."""
         metrics = self._init_metrics(max_attempts, timeout)
         metrics["build_workspace"] = build_workspace
-        self._current_metrics = metrics  # Store for stage tracking
+        self._current_metrics = metrics
 
         for attempt in range(1, metrics["config_used"]["max_attempts"] + 1):
             metrics["attempts"] = attempt
@@ -136,6 +117,20 @@ class BaseGenerator(ABC):
                     **kwargs,
                 )
 
+                # Log per-attempt metrics
+                attempt_metrics = {
+                    "attempt": attempt,
+                    "time": time.time() - attempt_start,
+                    "success": success,
+                    "token_usage": usage.__dict__ if usage else {},
+                    "stage_results": metrics.get("stage_results", []),
+                    "errors": metrics.get("errors", []),
+                }
+                logger.info(
+                    f"Attempt {attempt} Metrics:\n"
+                    + self.metrics_handler.format_attempt_metrics(attempt_metrics)
+                )
+
                 if success:
                     self._record_success(metrics, attempt_start, usage)
                     return True, metrics
@@ -146,7 +141,7 @@ class BaseGenerator(ABC):
             metrics["attempt_timers"].append(time.time() - attempt_start)
 
         self._record_final_metrics(metrics)
-        delattr(self, "_current_metrics")  # Cleanup
+        delattr(self, "_current_metrics")
         return False, metrics
 
     def run_tests(self, package_path: Path) -> Tuple[bool, str]:

@@ -55,6 +55,7 @@ ros2 run object_height object_height_service
 
 4. Open another terminal and test test that service publishes in topic `/service_status`:
 ``` bash
+# Navigate to the test_ws directory
 cd test_ws
 source /opt/ros/humble/setup.bash
 source install/setup.bash
@@ -68,6 +69,8 @@ ros2 topic echo /service_status
 # Make sure you're in test_ws directory
 python3 ../codestral_ros2_gen/examples/object_height/generator.py
 ```
+
+## Testing generated service
 
 2. Run and test the service:
 Terminal 1:

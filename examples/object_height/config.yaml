@@ -11,15 +11,15 @@ model:
 
 # Generation Settings
 generation:
-  max_attempts: 3
-  timeout: 180  # seconds
-  evaluation_iterations: 30  # Added back evaluation iterations
+  max_attempts: 10
+  timeout: 60  # seconds
+  evaluation_iterations: 1
 
-# File Structure
+# File Structure for running in the workspace directory
 paths:
-  interface_file: "src/object_height/srv/ObjectHeight.srv"     # Updated path
-  test_file: "src/object_height/test/test_service_node.py"     # Updated path
-  output_file: "src/object_height/src/object_height/service_node.py"  # Updated path
+  interface_file: "src/object_height/srv/ObjectHeight.srv"
+  test_file: "src/object_height/test/test_service_node.py"
+  output_file: "src/object_height/object_height/service_node.py"
 
 # Metrics Collection
 metrics:
@@ -30,7 +30,7 @@ metrics:
     test_execution_time: true
     response_size: true
     error_patterns: true
-  output_file: "src/object_height/metrics/object_height_metrics.jsonl"  # Updated path
+  output_file: "object_height_metrics.jsonl"
 
 # Logging configuration
 logging:

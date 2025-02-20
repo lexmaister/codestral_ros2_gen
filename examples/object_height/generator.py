@@ -1,7 +1,8 @@
 from pathlib import Path
+import subprocess
+
 from codestral_ros2_gen import logger
 from codestral_ros2_gen.generators.base_generator import BaseGenerator
-import subprocess
 
 
 class ObjectHeightGenerator(BaseGenerator):
@@ -10,18 +11,35 @@ class ObjectHeightGenerator(BaseGenerator):
     def prepare_prompt(self, **kwargs) -> str:
         """Prepare generation prompt with service definition and test cases."""
         # Get paths relative to workspace
-        ws_path = Path.cwd()  # Now using current directory (test_ws)
-        srv_path = ws_path / self.config["paths"]["interface_file"]
-        test_path = ws_path / self.config["paths"]["test_file"]
+        ws_path = Path.cwd()
 
         try:
-            with open(srv_path) as f:
-                srv_def = f.read().strip()
-            with open(test_path) as f:
-                test_code = f.read().strip()
+            # Validate required config paths
+            for path_key in ["interface_file", "test_file"]:
+                if path_key not in self.config["paths"]:
+                    raise KeyError(f"Missing required path in config: {path_key}")
 
-            # Format prompt with system prompt from config
-            return f"""{self.config['model']['system_prompt']}
+            srv_path = ws_path / self.config["paths"]["interface_file"]
+            test_path = ws_path / self.config["paths"]["test_file"]
+
+            # Validate files exist
+            if not srv_path.exists():
+                raise FileNotFoundError(f"Service definition not found: {srv_path}")
+            if not test_path.exists():
+                raise FileNotFoundError(f"Test file not found: {test_path}")
+
+            # Read files
+            srv_def = srv_path.read_text().strip()
+            test_code = test_path.read_text().strip()
+
+            # Get system prompt from config or use default
+            system_prompt = self.config.get("model", {}).get(
+                "system_prompt",
+                "You are a ROS2 expert. Generate clean, efficient code that follows ROS2 best practices.",
+            )
+
+            # Format prompt
+            return f"""{system_prompt}
 
             1. Service Definition:
             ```
@@ -42,9 +60,6 @@ class ObjectHeightGenerator(BaseGenerator):
             - Passes all the provided test cases
             """
 
-        except FileNotFoundError as e:
-            logger.error(f"Required file not found: {e}")
-            raise
         except Exception as e:
             logger.error(f"Error preparing prompt: {e}")
             raise
@@ -52,26 +67,33 @@ class ObjectHeightGenerator(BaseGenerator):
     def save_output(self, code: str, output_path: Path) -> bool:
         """Save generated code and verify it's importable in ROS2 workspace."""
         try:
-            # Using current directory as workspace
+            # Validate workspace structure
             ws_path = Path.cwd()
             if not (ws_path / "install").exists():
                 logger.error(f"ROS2 workspace not found at {ws_path}")
                 return False
 
+            # Ensure output directory exists
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+
             # Save new implementation
             output_path.write_text(code)
-            logger.info(f"Updated service implementation in {output_path}")
+            logger.info(f"Saved service implementation to {output_path}")
+
+            # Get package name from config or path
+            package_name = output_path.parent.parent.name
 
             # Rebuild package
-            build_cmd = f"cd {ws_path} && colcon build --packages-select object_height"
-            result = subprocess.run(build_cmd, shell=True, check=True)
-            if result.returncode != 0:
-                logger.error("Failed to build package with new implementation")
-                return False
-
-            logger.info("Successfully rebuilt package with new implementation")
+            build_cmd = f"cd {ws_path} && colcon build --packages-select {package_name}"
+            result = subprocess.run(
+                build_cmd, shell=True, check=True, capture_output=True, text=True
+            )
+            logger.info("Successfully rebuilt package")
             return True
 
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Build failed: {e.stderr}")
+            return False
         except Exception as e:
             logger.error(f"Failed to save and build code: {e}")
             return False
@@ -81,39 +103,32 @@ def main():
     """Run generator within ROS2 workspace context."""
     try:
         # Get config path relative to generator script
-        script_path = Path(__file__)
-        config_path = script_path.parent / "config.yaml"
+        config_path = Path(__file__).parent / "config.yaml"
+        if not config_path.exists():
+            raise FileNotFoundError(f"Config file not found: {config_path}")
+
+        # Initialize generator
         generator = ObjectHeightGenerator(config_path=config_path)
 
-        # Get path to service node using current directory as workspace
+        # Setup output path
         ws_path = Path.cwd()
         output_path = ws_path / generator.config["paths"]["output_file"]
 
-        if not output_path.exists():
-            logger.error(f"Service node template not found at {output_path}")
-            return 1
-
-        # Run performance evaluation
-        logger.info("Starting service generation with evaluation...")
-        metrics = generator.evaluate_performance(
-            output_path,
-            iterations=generator.config["generation"]["evaluation_iterations"],
+        # Run generation with config parameters
+        success, metrics = generator.generate(
+            output_path=output_path,
+            max_attempts=generator.config["generation"]["max_attempts"],
+            timeout=generator.config["generation"]["timeout"],
         )
 
-        # Log results
-        logger.info("\nPerformance Evaluation Results:")
-        logger.info(f"Total iterations: {metrics['total_iterations']}")
-        logger.info(f"Success rate: {metrics['success_rate']*100:.1f}%")
-        logger.info(f"Average generation time: {metrics['avg_generation_time']:.2f}s")
-        logger.info(f"Average attempts per success: {metrics['avg_attempts']:.1f}")
-        if metrics["failures"]:
-            logger.warning(f"Failed iterations: {len(metrics['failures'])}")
-            for failure in metrics["failures"]:
-                logger.warning(
-                    f"- Iteration {failure['iteration']}: {failure['error_patterns']}"
-                )
-
-        return 0 if metrics["success_rate"] > 0 else 1
+        if success:
+            logger.info("Service generation successful!")
+            logger.info(f"Generation metrics:\n{metrics}")
+            return 0
+        else:
+            logger.error("Service generation failed!")
+            logger.error(f"Failure metrics:\n{metrics}")
+            return 1
 
     except Exception as e:
         logger.error(f"Generator failed: {e}")

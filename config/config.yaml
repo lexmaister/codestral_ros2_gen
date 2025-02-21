@@ -7,8 +7,8 @@ model:
 
 # Generation Settings
 generation:
-  max_attempts: 3
-  timeout: 300  # seconds
+  max_attempts: 10
+  timeout: 30  # seconds
   evaluation_iterations: 30  # For performance metrics
 
 # Metrics Collection

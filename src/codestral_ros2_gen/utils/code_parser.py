@@ -14,35 +14,30 @@ class ROS2CodeParser:
     @staticmethod
     def parse(response: str) -> Optional[str]:
         """
-        Parse model response: extract code and format it.
-        Returns formatted code or None if parsing/formatting fails.
+        Parse model response: extract and format code only from code blocks with ```python markers.
+        Returns formatted code or None if formatting fails, markers are absent, or block is empty.
 
         Args:
-            response: Raw response from the model
+            response: Raw model response
 
         Returns:
-            Optional[str]: Formatted Python code or None if parsing failed
+            Optional[str]: Formatted Python code or None if parsing failed.
         """
         logger.debug(f"Parsing response: {response!r}")
-        # Extract code from code blocks (supports both markdown and [PYTHON] tags)
-        pattern = r"(?:`{3}\w*|\[PYTHON\])\n(.+?)(?:`{3}|\[\/PYTHON\])"
+        # Extract code from code blocks with "```python" at start and "```" at end.
+        pattern = r"```python\s*\n(.*?)```"
         match = re.search(pattern, response, re.DOTALL)
 
         if match:
             code = match.group(1).strip()
+            # Check for empty block
+            if not code:
+                logger.warning("Empty '```python' code block found in response")
+                return None
             logger.debug(f"Found markers, extracted code:\n{code}")
         else:
-            # If no code blocks found and response looks like Python code, use as is
-            if (
-                "```" not in response
-                and "[PYTHON]" not in response
-                and any(keyword in response for keyword in ["import", "class", "def"])
-            ):
-                code = response.strip()
-                logger.debug(f"No markers found, using response as is:\n{code}")
-            else:
-                logger.warning("No code found in response")
-                return None
+            logger.warning("No valid '```python' code markers found in response")
+            return None
 
         # Format code
         try:

@@ -1,6 +1,6 @@
 [project]
 name = "codestral_ros2_gen"
-version = "0.1.0"
+version = "0.2"
 keywords = ["ROS2", "Codestral", "AI", "Code Generation"]
 description = "Generate ROS2 elements (nodes, interfaces, etc) with Codestral AI model"
 authors = [
@@ -26,6 +26,12 @@ dependencies = [
     "lark",
     "catkin_pkg",
     "empy==3.3.4", # 3.3.4 for ros2 humble support
+    # for jupiter and research
+    "jupyter",
+    "jupyterlab",
+    "ipython",
+    "ipykernel",
+    'seaborn',
 ]
 
 [project.urls]

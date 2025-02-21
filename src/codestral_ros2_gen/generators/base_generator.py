@@ -1,328 +1,104 @@
-# src/codestral_ros2_gen/generators/base_generator.py
-
-from abc import ABC, abstractmethod
+import time
 from pathlib import Path
 from typing import Optional, Dict, Any, Tuple
-import time
-import pytest
-import subprocess
+from abc import ABC, abstractmethod
 
-from codestral_ros2_gen import *
+from codestral_ros2_gen import get_config_path, load_config, logger
 from codestral_ros2_gen.metrics.metrics_handler import MetricsHandler
 from codestral_ros2_gen.models.mistral_client import MistralClient, ModelUsage
-from codestral_ros2_gen.utils.code_parser import ROS2CodeParser
+from codestral_ros2_gen.generators.generation_attempt import GenerationAttempt
 
 
 class BaseGenerator(ABC):
-    """Abstract base class for ROS2 code generators.
-
-    This class implements the generation flow:
-    MainTimer -> Counter -> Timer -> GenCode -> SaveCode -> RunTests -> TestResult
-
-    The generation process follows these steps:
-    1. Initialize metrics and timers
-    2. For each attempt:
-        a. Generate code using AI model
-        b. Save code to filesystem
-        c. Optionally build workspace and run tests
-    3. Record metrics and results
-
-    Attributes:
-        config_path (Path): Path to configuration file
-        config (Dict): Loaded configuration
-        metrics_handler (MetricsHandler): Metrics collection and analysis
-        model (MistralClient): AI model client
-    """
-
     def __init__(
         self,
         config_path: Optional[Path] = None,
         metrics_file: Optional[str] = None,
         api_key: Optional[str] = None,
     ):
-        """
-        Initialize the generator.
-
-        Args:
-            config_path: Path to configuration file. If None, uses default config.
-            metrics_file: Path to metrics output file. If None, uses config value.
-            api_key: Mistral API key. If None, attempts to get from env or config.
-        """
-        # Load configuration
         self.config_path = config_path if config_path else get_config_path()
         self.config = load_config(self.config_path)
-
-        # Initialize metrics handler with loaded config
         self.metrics_handler = MetricsHandler(
             metrics_file=metrics_file, config=self.config
         )
-
-        # Initialize AI model client
         self.model = MistralClient(api_key=api_key, config=self.config)
+        # Load high-level settings from config (e.g., number of iterations)
+        self.max_attempts = self.config["generation"].get("max_attempts", 3)
+        self.evaluation_iterations = self.config["generation"].get(
+            "evaluation_iterations", 30
+        )
+        self.main_start_time = time.time()
+        self.attempt_counter = 0
 
     @abstractmethod
     def prepare_prompt(self, **kwargs) -> str:
-        """
-        Prepare the generation prompt based on provided parameters.
-
-        Args:
-            **kwargs: Generator-specific parameters
-
-        Returns:
-            str: Formatted prompt string
-        """
+        # ...to be implemented by subclasses...
         pass
 
     @abstractmethod
     def save_output(self, code: str, output_path: Path) -> bool:
-        """
-        Save the generated code to file.
-
-        Args:
-            code: Generated code to save
-            output_path: Path where to save the code
-
-        Returns:
-            bool: True if save successful, False otherwise
-        """
+        # ...to be implemented by subclasses...
         pass
 
-    def generate(
-        self,
-        output_path: Path,
-        max_attempts: Optional[int] = None,
-        timeout: Optional[float] = None,
-        build_workspace: bool = False,
-        **kwargs,
-    ) -> Tuple[bool, Dict[str, Any]]:
-        """Generate ROS2 code with metrics collection and optional workspace building."""
-        metrics = self._init_metrics(max_attempts, timeout)
-        metrics["build_workspace"] = build_workspace
-        self._current_metrics = metrics
-
-        for attempt in range(1, metrics["config_used"]["max_attempts"] + 1):
-            # Reset per-attempt stage_results
-            metrics["stage_results"] = []
-
-            # Snapshot cumulative errors prior to this attempt
-            prev_errors = set(metrics["errors"])
-
-            metrics["attempts"] = attempt
-            attempt_start = time.time()
-
-            try:
-                success, usage = self._execute_attempt(
-                    output_path=output_path,
-                    timeout=metrics["config_used"]["per_attempt_timeout"],
-                    build_workspace=build_workspace,
-                    **kwargs,
-                )
-
-                # Compute errors that occurred in this attempt only.
-                attempt_errors = [
-                    err for err in metrics["errors"] if err not in prev_errors
-                ]
-                attempt_metrics = {
-                    "attempt": attempt,
-                    "time": time.time() - attempt_start,
-                    "success": success,
-                    "token_usage": usage.__dict__ if usage else {},
-                    "stage_results": metrics.get("stage_results", []),
-                    "errors": attempt_errors,
-                }
-                logger.info(
-                    f"Attempt {attempt} Metrics:\n"
-                    + self.metrics_handler.format_attempt_metrics(attempt_metrics)
-                )
-
-                if success:
-                    self._record_success(metrics, attempt_start, usage)
-                    return True, metrics
-
-            except RuntimeError as e:
-                self._record_error(metrics, str(e))
-
-            metrics["attempt_timers"].append(time.time() - attempt_start)
-
-        self._record_final_metrics(metrics)
-        delattr(self, "_current_metrics")
-        return False, metrics
-
-    def run_tests(self, package_path: Path) -> Tuple[bool, str]:
-        """Execute ROS2 package tests."""
-        try:
-            # Check build_workspace attribute is set
-            build_workspace = getattr(self, "build_workspace", False)
-
-            # Only build if workspace building is enabled
-            if build_workspace:
-                logger.info(f"Building workspace for package: {package_path.name}")
-                build_cmd = f"cd {package_path.parent} && colcon build --packages-select {package_path.name}"
-                subprocess.run(build_cmd, shell=True, check=True)
-
-            # Run tests
-            result = pytest.main([str(package_path)])
-            return result == pytest.ExitCode.OK, ""
-        except Exception as e:
-            return False, str(e)
-
-    def _init_metrics(
-        self, max_attempts: Optional[int], timeout: Optional[float]
-    ) -> Dict[str, Any]:
-        """Initialize metrics dictionary with timing start."""
-        max_attempts = max_attempts or self.config["generation"]["max_attempts"]
-        timeout = timeout or self.config["generation"]["timeout"]
-        # Use the full timeout for each attempt instead of dividing by max_attempts
-        per_attempt_timeout = timeout
-
-        return {
-            "attempts": 0,
-            "errors": [],
-            "attempt_timers": [],
-            "error_counts": {},  # <-- New field for aggregating error counts
-            "timeouts": {"attempts": 0},
-            "token_usage": {
-                "prompt_tokens": 0,
-                "completion_tokens": 0,
-                "total_tokens": 0,
-            },
-            "main_timer": time.time(),  # Store start time directly
-            "error_patterns": [],  # For error tracking
-            "config_used": {
-                "timeout": timeout,
-                "max_attempts": max_attempts,
-                "per_attempt_timeout": per_attempt_timeout,
-            },
-        }
-
-    def _execute_attempt(
-        self, output_path: Path, timeout: float, build_workspace: bool = False, **kwargs
-    ) -> Tuple[bool, Optional[ModelUsage]]:
-        """Execute a single generation attempt with a full timeout for model generation.
-
-        If model.complete takes longer than 'timeout' seconds, add an error record to metrics
-        and return (False, None). Parsing, saving, and test execution are considered instant.
+    def _validate_environment(self, output_path: Path) -> bool:
         """
-        self.build_workspace = build_workspace
-        stage_results = []
-        try:
-            # GenCode stage with full timeout
-            prompt = self.prepare_prompt(**kwargs)
-            t0 = time.time()
-            generated_code, usage = self.model.complete(prompt)
-            t1 = time.time()
-            if (t1 - t0) > timeout:
-                error = "Model generation timed out"  # Updated error string exactly as expected by tests
-                self._current_metrics["stage_results"] = stage_results
-                self._current_metrics["errors"].append(error)
-                self._current_metrics["error_patterns"].append(error)
-                self._current_metrics["timeouts"]["attempts"] = (
-                    self._current_metrics["timeouts"].get("attempts", 0) + 1
-                )
-                return False, None
-            stage_results.append("GenCode")
+        Validate the environment for generation attempts.
 
-            # Parse and save code (assumed instant operations)
-            code = ROS2CodeParser.parse(generated_code)
-            if not code:
-                error = "Failed to parse generated code"
-                self._current_metrics["stage_results"] = stage_results
-                self._current_metrics["errors"].append(error)
-                self._current_metrics["error_patterns"].append(error)
-                return False, None
-            if not self.save_output(code, output_path):
-                error = "Failed to save code"
-                self._current_metrics["stage_results"] = stage_results
-                self._current_metrics["errors"].append(error)
-                self._current_metrics["error_patterns"].append(error)
-                return False, None
-            stage_results.append("SaveCode")
-
-            # RunTests stage: always run tests regardless of build_workspace flag
-            tests_passed, error = self.run_tests(output_path.parent)
-            if not tests_passed:
-                # Record detailed test failure information for tracing the issue
-                self._current_metrics["test_trace"] = error
-                error = f"Tests failed: {error}"
-                self._current_metrics["stage_results"] = stage_results
-                self._current_metrics["errors"].append(error)
-                self._current_metrics["error_patterns"].append(error)
-                logger.error(f"RunTests stage failed with error: {error}")
-                return False, None
-            stage_results.append("RunTests")
-            logger.info("RunTests stage succeeded.")
-
-            self._current_metrics["stage_results"] = stage_results
-            return True, usage
-
-        except Exception as e:
-            err_str = str(e)
-            self._current_metrics["stage_results"] = stage_results
-            self._current_metrics["errors"].append(err_str)
-            self._current_metrics["error_patterns"].append(err_str)
-            if "timeout" in err_str.lower():
-                self._current_metrics["timeouts"]["attempts"] = (
-                    self._current_metrics["timeouts"].get("attempts", 0) + 1
-                )
-            return False, None
-
-    def _record_success(
-        self, metrics: Dict[str, Any], attempt_start: float, usage: Optional[ModelUsage]
-    ) -> None:
-        """Record successful attempt metrics."""
-        metrics["attempt_timers"].append(time.time() - attempt_start)
-        if usage:
-            metrics["token_usage"].update(usage.__dict__)
-        metrics["main_timer"] = time.time() - metrics["main_timer"]
-        # Clear per-attempt errors and error_patterns, but keep cumulative error_counts intact
-        metrics["errors"] = []
-        metrics["error_patterns"] = []
-        self.metrics_handler.add_metric(metrics)
-
-    def _record_error(self, metrics: Dict[str, Any], error_msg: str) -> None:
-        """Record error in metrics.
-
-        Args:
-            metrics: Metrics dictionary to update
-            error_msg: Error message to record
-        """
-        logger.warning(error_msg)
-        metrics["errors"].append(error_msg)
-        metrics["error_patterns"].append(error_msg)
-        # Increment error count in error_counts dict
-        if "error_counts" not in metrics:
-            metrics["error_counts"] = {}
-        metrics["error_counts"][error_msg] = (
-            metrics["error_counts"].get(error_msg, 0) + 1
-        )
-        if "timeout" in error_msg.lower():
-            metrics["timeouts"]["attempts"] += 1
-
-    def _record_final_metrics(self, metrics: Dict[str, Any]) -> None:
-        """Record final metrics for failed attempts."""
-        metrics["main_timer"] = time.time() - metrics["main_timer"]
-        # Let MetricsHandler handle all formatting
-        self.metrics_handler.add_metric(metrics)
-
-    def _safe_model_complete(self, prompt: str) -> Tuple[str, ModelUsage]:
-        """Safely execute model completion with error handling."""
-        try:
-            return self.model.complete(prompt)
-        except Exception as e:
-            raise RuntimeError(f"Model generation failed: {str(e)}")
-
-    def get_metrics(self) -> Dict[str, Any]:
-        """Get collected metrics statistics."""
-        return self.metrics_handler.generate_report()
-
-    def plot_metrics(self, output_dir: Optional[Path] = None) -> Optional[Path]:
-        """
-        Create metrics visualization plots.
-
-        Args:
-            output_dir: Directory to save plots. If None, uses current directory.
+        Checks that the configuration contains required keys and that the output_path
+        is writable (creating parent directories if necessary).
 
         Returns:
-            Optional[Path]: Path to saved plot file, or None if plotting failed
+            bool: True if the environment is valid; otherwise, False.
         """
-        return self.metrics_handler.plot_metrics(output_dir=output_dir)
+        # Check required generation config keys.
+        if (
+            "generation" not in self.config
+            or "timeout" not in self.config["generation"]
+        ):
+            logger.error("Missing required 'generation' configuration or timeout.")
+            return False
+        # Ensure we can write to the output directory.
+        try:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            logger.error(f"Cannot create or access output directory: {str(e)}")
+            return False
+        return True
+
+    def run_generator(self, output_path: Path, **kwargs) -> Tuple[bool, Dict[str, Any]]:
+        # Validate environment before starting generation attempts.
+        if not self._validate_environment(output_path):
+            logger.error("Environment validation failed. Aborting generation process.")
+            return False, {"error": "Environment validation failed."}
+
+        overall_success = False
+        iteration = 0
+        aggregated_metrics = {"attempts": []}
+
+        logger.info("Starting high-level generation process")
+        while iteration < self.evaluation_iterations and not overall_success:
+            self.attempt_counter += 1
+            logger.info(f"--- Starting Attempt {self.attempt_counter} ---")
+            attempt_instance = GenerationAttempt(self.model, self.config)
+            prompt = self.prepare_prompt(**kwargs)
+            success, attempt_metrics = attempt_instance.run_attempt(
+                output_path, prompt, self.save_output
+            )
+            aggregated_metrics["attempts"].append(attempt_metrics)
+            logger.info(
+                f"Attempt {self.attempt_counter} finished with state: {attempt_metrics['final_state']}"
+            )
+            if success:
+                overall_success = True
+                logger.info("High-level process: Attempt succeeded")
+            else:
+                logger.info(
+                    "High-level process: Attempt failed, retrying if iterations remain"
+                )
+            iteration += 1
+
+        aggregated_metrics["total_time"] = time.time() - self.main_start_time
+        aggregated_metrics["final_result"] = "SUCCESS" if overall_success else "FAILURE"
+        logger.info("High-level generation process finished")
+        self.metrics_handler.add_metric(aggregated_metrics)
+        return overall_success, aggregated_metrics

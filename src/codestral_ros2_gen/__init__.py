@@ -125,7 +125,7 @@ def setup_logger(name: str = "root", config_path: Path = None) -> logging.Logger
 
 
 # Initialize package-level logger
-logger_main = "gen"
+logger_main = "root"
 try:
     logger = setup_logger(logger_main)
 except (FileNotFoundError, ValueError) as e:

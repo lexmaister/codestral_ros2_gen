@@ -75,10 +75,7 @@ def setup_logger(name: str = "root", config_path: Path = None) -> logging.Logger
     if config_path is None:
         config_path = get_config_path(config_name="logger_config.yaml")
 
-    print(config_path)
-
     log_config = load_config(config_path)
-    print(log_config)
 
     # Validate required fields
     required_fields = ["level", "file", "format", "handlers"]

@@ -29,7 +29,7 @@ def test_load_config():
 
 
 def test_setup_logger():
-    config_path = get_project_root() / "config" / "config.yaml"
+    config_path = get_project_root() / "config" / "logger_config.yaml"
     if config_path.exists():
         logger = setup_logger(config_path=config_path)
         assert logger is not None

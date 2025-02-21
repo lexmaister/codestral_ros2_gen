@@ -54,15 +54,13 @@ def load_config(config_path: Path) -> dict:
         raise RuntimeError(f"Error loading config: {str(e)}")
 
 
-def setup_logger(
-    name: str = "codestral_ros2_gen", config_path: Path = None
-) -> logging.Logger:
+def setup_logger(name: str = "root", config_path: Path = None) -> logging.Logger:
     """
     Setup centralized logger for the package. Exits program if setup fails.
-    Config file is expected to be in the 'config' directory.
+    Logger config file is expected to be in the 'config' directory.
     Args:
-        name: Logger name, default is "codestral_ros2_gen"
-        config_path: Path to the config file, default is None (uses default config path)
+        config_path: Path to the config file 'logger_config.yaml', default is None (search in config directory)
+        name: Logger name, default is "root"
 
     Returns:
         logging.Logger: Configured logger instance
@@ -75,13 +73,12 @@ def setup_logger(
         Error message will be printed to stdout before exit.
     """
     if config_path is None:
-        config_path = get_config_path()
+        config_path = get_config_path(config_name="logger_config.yaml")
 
-    config = load_config(config_path)
+    print(config_path)
 
-    log_config = config.get("logging")
-    if not log_config:
-        raise ValueError("Missing 'logging' section in configuration file")
+    log_config = load_config(config_path)
+    print(log_config)
 
     # Validate required fields
     required_fields = ["level", "file", "format", "handlers"]
@@ -120,7 +117,8 @@ def setup_logger(
     logger.info("=" * 50)
     logger.info("Logging session started")
     logger.info(f"Project root: {get_project_root()}")
-    logger.info(f"Using config: {config_path}")
+    logger.info(f"Log file: {get_project_root() / log_config['file']}")
+    logger.info(f"Logger level: {log_config['level']}")
     logger.info("=" * 50)
 
     return logger

@@ -105,13 +105,11 @@ class MetricsHandler:
         timeouts = safe_get(metrics, "timeouts", "attempts", default=0)
         sections.append(f"Timeouts: {timeouts}")
 
-        errors = safe_get(metrics, "errors", default=[])
-        if errors:
-            sections.append("\n=== Errors ===")
-            unique_errors = set(errors)
-            for err in unique_errors:
-                count = errors.count(err)
-                sections.append(f"[x{count}] {err}")
+        # Show aggregated errors via error_summary
+        error_summary = safe_get(metrics, "error_summary", default="")
+        if error_summary:
+            sections.append("\n=== Aggregated Errors ===")
+            sections.append(error_summary)
 
         attempt_timers = safe_get(metrics, "attempt_timers", default=[])
         if attempt_timers:
@@ -138,6 +136,12 @@ class MetricsHandler:
         if not isinstance(metrics, dict):
             raise RuntimeError("Metrics must be a dictionary")
 
+        # Compute error_summary from cumulative error_counts
+        error_counts = metrics.get("error_counts", {})
+        metrics["error_summary"] = ", ".join(
+            [f"{err}: {count}" for err, count in error_counts.items()]
+        )
+
         # Filter and prepare metrics
         metrics_to_collect = self.config["metrics"].get("collect", {})
         filtered_metrics = {
@@ -145,17 +149,14 @@ class MetricsHandler:
         }
         filtered_metrics["timestamp"] = datetime.now().isoformat()
 
-        # Log formatted metrics using the new generation summary method
         logger.info(
-            f"Metrics report:\n\n{self.format_generation_summary(filtered_metrics)}\n"
+            f"\nMetrics report:\n\n{self.format_generation_summary(filtered_metrics)}\n"
         )
 
-        # Save to DataFrame
         new_row = pd.DataFrame([filtered_metrics])
         for col in new_row.columns:
             if isinstance(new_row[col].iloc[0], (int, float)):
                 new_row[col] = pd.to_numeric(new_row[col])
-
         self.metrics_df = pd.concat([self.metrics_df, new_row], ignore_index=True)
         self._save_metrics()
 

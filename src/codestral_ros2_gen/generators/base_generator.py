@@ -4,13 +4,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional, Dict, Any, Tuple
 import time
-from functools import partial
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import TimeoutError as FutureTimeoutError
 import pytest
 import subprocess
-import yaml
-from datetime import datetime
 
 from codestral_ros2_gen import *
 from codestral_ros2_gen.metrics.metrics_handler import MetricsHandler
@@ -106,6 +101,12 @@ class BaseGenerator(ABC):
         self._current_metrics = metrics
 
         for attempt in range(1, metrics["config_used"]["max_attempts"] + 1):
+            # Reset per-attempt stage_results
+            metrics["stage_results"] = []
+
+            # Snapshot cumulative errors prior to this attempt
+            prev_errors = set(metrics["errors"])
+
             metrics["attempts"] = attempt
             attempt_start = time.time()
 
@@ -117,14 +118,17 @@ class BaseGenerator(ABC):
                     **kwargs,
                 )
 
-                # Log per-attempt metrics
+                # Compute errors that occurred in this attempt only.
+                attempt_errors = [
+                    err for err in metrics["errors"] if err not in prev_errors
+                ]
                 attempt_metrics = {
                     "attempt": attempt,
                     "time": time.time() - attempt_start,
                     "success": success,
                     "token_usage": usage.__dict__ if usage else {},
                     "stage_results": metrics.get("stage_results", []),
-                    "errors": metrics.get("errors", []),
+                    "errors": attempt_errors,
                 }
                 logger.info(
                     f"Attempt {attempt} Metrics:\n"
@@ -168,13 +172,14 @@ class BaseGenerator(ABC):
         """Initialize metrics dictionary with timing start."""
         max_attempts = max_attempts or self.config["generation"]["max_attempts"]
         timeout = timeout or self.config["generation"]["timeout"]
-        # Use timeout/max_attempts directly instead of enforcing a minimum of 0.3
-        per_attempt_timeout = timeout / max_attempts
+        # Use the full timeout for each attempt instead of dividing by max_attempts
+        per_attempt_timeout = timeout
 
         return {
             "attempts": 0,
             "errors": [],
             "attempt_timers": [],
+            "error_counts": {},  # <-- New field for aggregating error counts
             "timeouts": {"attempts": 0},
             "token_usage": {
                 "prompt_tokens": 0,
@@ -182,7 +187,7 @@ class BaseGenerator(ABC):
                 "total_tokens": 0,
             },
             "main_timer": time.time(),  # Store start time directly
-            "error_patterns": [],  # Add this for error tracking
+            "error_patterns": [],  # For error tracking
             "config_used": {
                 "timeout": timeout,
                 "max_attempts": max_attempts,
@@ -233,16 +238,19 @@ class BaseGenerator(ABC):
                 return False, None
             stage_results.append("SaveCode")
 
-            # RunTests stage (no timeout enforcement here)
-            if build_workspace:
-                tests_passed, error = self.run_tests(output_path.parent)
-                if not tests_passed:
-                    error = f"Tests failed: {error}"
-                    self._current_metrics["stage_results"] = stage_results
-                    self._current_metrics["errors"].append(error)
-                    self._current_metrics["error_patterns"].append(error)
-                    return False, None
-                stage_results.append("RunTests")
+            # RunTests stage: always run tests regardless of build_workspace flag
+            tests_passed, error = self.run_tests(output_path.parent)
+            if not tests_passed:
+                # Record detailed test failure information for tracing the issue
+                self._current_metrics["test_trace"] = error
+                error = f"Tests failed: {error}"
+                self._current_metrics["stage_results"] = stage_results
+                self._current_metrics["errors"].append(error)
+                self._current_metrics["error_patterns"].append(error)
+                logger.error(f"RunTests stage failed with error: {error}")
+                return False, None
+            stage_results.append("RunTests")
+            logger.info("RunTests stage succeeded.")
 
             self._current_metrics["stage_results"] = stage_results
             return True, usage
@@ -266,6 +274,9 @@ class BaseGenerator(ABC):
         if usage:
             metrics["token_usage"].update(usage.__dict__)
         metrics["main_timer"] = time.time() - metrics["main_timer"]
+        # Clear per-attempt errors and error_patterns, but keep cumulative error_counts intact
+        metrics["errors"] = []
+        metrics["error_patterns"] = []
         self.metrics_handler.add_metric(metrics)
 
     def _record_error(self, metrics: Dict[str, Any], error_msg: str) -> None:
@@ -278,6 +289,12 @@ class BaseGenerator(ABC):
         logger.warning(error_msg)
         metrics["errors"].append(error_msg)
         metrics["error_patterns"].append(error_msg)
+        # Increment error count in error_counts dict
+        if "error_counts" not in metrics:
+            metrics["error_counts"] = {}
+        metrics["error_counts"][error_msg] = (
+            metrics["error_counts"].get(error_msg, 0) + 1
+        )
         if "timeout" in error_msg.lower():
             metrics["timeouts"]["attempts"] += 1
 

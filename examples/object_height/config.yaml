@@ -4,7 +4,7 @@ model:
   api_key: "YOUR_API_KEY_HERE"
   system_prompt: |
     You are a ROS2 expert who specializes in service implementations.
-    Generate clean, efficient code that follows ROS2 best practices.
+    Generate clean, efficient python code that follows ROS2 best practices.
     Focus on proper error handling and input validation.
   parameters:
     temperature: 0.2
@@ -12,34 +12,15 @@ model:
 # Generation Settings
 generation:
   max_attempts: 10
-  timeout: 60  # seconds
   evaluation_iterations: 1
 
-# File Structure for running in the workspace directory
-paths:
-  interface_file: "src/object_height/srv/ObjectHeight.srv"
-  test_file: "src/object_height/test/test_service_node.py"
-  output_file: "src/object_height/object_height/service_node.py"
+# Test Settings
+test:
+  #! for ROS2 humble
+  ws_setup: "source /opt/ros/humble/setup.bash && source install/setup.bash"
+  node_command: "ros2 run object_height service_node"
+  test_command: "pytest -q -s -x src/object_height/test/test_service_node.py"
 
 # Metrics Collection
 metrics:
-  collect:
-    generation_time: true
-    attempts_until_success: true
-    token_usage: true
-    test_execution_time: true
-    response_size: true
-    error_patterns: true
   output_file: "object_height_metrics.jsonl"
-
-# Logging configuration
-logging:
-  level: INFO
-  file: "generation.log"
-  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-  handlers:
-    console:
-      enabled: true
-    file:
-      enabled: true
-      mode: w  # 'w' for write (overwrite), 'a' for append

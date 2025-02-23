@@ -8,16 +8,8 @@ model:
 # Generation Settings
 generation:
   max_attempts: 10
-  timeout: 30  # seconds
-  evaluation_iterations: 30  # For performance metrics
+  evaluation_iterations: 30
 
 # Metrics Collection
 metrics:
-  collect:
-    generation_time: true
-    attempts_until_success: true
-    token_usage: true
-    test_execution_time: true
-    response_size: true
-    error_patterns: true
   output_file: "generation_metrics.jsonl"

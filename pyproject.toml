@@ -31,7 +31,10 @@ dependencies = [
     "jupyterlab",
     "ipython",
     "ipykernel",
-    'seaborn',
+    "seaborn",
+    # for ros2
+    "flake8",
+    "pydocstyle",
 ]
 
 [project.urls]

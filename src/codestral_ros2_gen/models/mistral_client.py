@@ -72,7 +72,6 @@ class MistralClient:
         system_prompt: Optional[str] = None,
         model_type: Optional[str] = None,
         temperature: Optional[float] = None,
-        timeout: Optional[float] = None,  # Added timeout parameter
     ) -> Tuple[str, ModelUsage]:
         """
         Get completion from the model.
@@ -82,7 +81,6 @@ class MistralClient:
             system_prompt: Optional override for system prompt
             model_type: Optional override for model type
             temperature: Optional override for temperature
-            timeout: Optional timeout in seconds (not supported by Mistral API directly)
 
         Returns:
             Tuple of (generated_text, usage_stats)
@@ -98,8 +96,6 @@ class MistralClient:
             )
             logger.debug(f"Prepared messages:\n{messages}\n")
 
-            # Note: Mistral API doesn't support timeout directly
-            # The timeout is handled at the generator level
             response = self.client.chat.complete(
                 model=model_type
                 or self.config.get("type", self.DEFAULT_CONFIG["model"]["type"]),

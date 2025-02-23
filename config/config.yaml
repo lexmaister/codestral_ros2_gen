@@ -12,4 +12,4 @@ generation:
 
 # Metrics Collection
 metrics:
-  output_file: "generation_metrics.jsonl"
+  metrics_file: "generation_metrics.jsonl"

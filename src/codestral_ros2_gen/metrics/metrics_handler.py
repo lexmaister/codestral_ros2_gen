@@ -29,14 +29,14 @@ class MetricsHandler:
 
         Args:
             config (Dict): The configuration dictionary.
-            metrics_file (Optional[str]): Optional path to the metrics file.
-                If not provided, the output file specified in config is used.
+            metrics_file (Optional[str]): If provided, overrides the 'metrics_file' specified in the config.
+                Otherwise, uses self.config["metrics"]["metrics_file"].
         """
         self.config = config
         self.metrics_file = (
             Path(metrics_file)
             if metrics_file
-            else Path(self.config["metrics"]["output_file"])
+            else Path(self.config["metrics"]["metrics_file"])
         )
         self.metrics_df = pd.DataFrame()
 

@@ -23,4 +23,8 @@ test:
 
 # Metrics Collection
 metrics:
-  output_file: "object_height_metrics.jsonl"
+  metrics_file: "object_height_metrics.jsonl"
+
+# Path to the generated code
+output:
+  output_file: "src/object_height/object_height/service_node.py"

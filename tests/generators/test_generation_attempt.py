@@ -51,7 +51,16 @@ def test_generation_attempt_success(sample_config):
 
     dummy_client = DummyMistralClient(api_key="dummy", config=sample_config)
     print(sample_config)
-    attempt_instance = GenerationAttempt(dummy_client, sample_config)
+
+    class TestsGenerationAttempt(GenerationAttempt):
+        def __init__(self, client, config):
+            super().__init__(client, config)
+
+        # skip running tests for this test due unable run ros2 commands
+        def _test(self):
+            self.state = AttemptState.SUCCESS
+
+    attempt_instance = TestsGenerationAttempt(dummy_client, sample_config)
     success, metrics = attempt_instance.run(
         Path("dummy_output.py"), "dummy prompt", dummy_save_callback
     )

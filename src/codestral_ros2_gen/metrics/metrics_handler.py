@@ -1,12 +1,15 @@
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional, Literal, Any
+from typing import Dict, List, Optional, Literal
 from pathlib import Path
 import matplotlib.pyplot as plt
 from datetime import datetime
 import logging
+import json
 
 from codestral_ros2_gen import logger_main
+from codestral_ros2_gen.generators.generation_attempt import AttemptMetrics
+
 
 logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
 
@@ -79,7 +82,9 @@ class MetricsHandler:
         self.metrics_df = pd.concat([self.metrics_df, new_row], ignore_index=True)
         self._save_metrics()
 
-    def record_attempt(self, attempt_number: int, attempt_metrics) -> None:
+    def record_attempt(
+        self, attempt_number: int, attempt_metrics: AttemptMetrics
+    ) -> None:
         """
         Record the metrics for a single generation attempt.
 
@@ -93,7 +98,9 @@ class MetricsHandler:
             "final_state": attempt_metrics.final_state,
             "error": attempt_metrics.error,
         }
-        logger.info(f"Recording Attempt #{attempt_number}: {record}")
+        logger.info(
+            f"Recording Attempt #{attempt_number}: {json.dumps(record, indent=2)}"
+        )
         new_row = pd.DataFrame([record])
         for col in new_row.columns:
             if isinstance(new_row[col].iloc[0], (int, float)):
@@ -112,7 +119,7 @@ class MetricsHandler:
             overall_metrics (Dict): Dictionary containing overall metrics (e.g., total_time, final_result).
         """
         overall_metrics["timestamp"] = datetime.now().isoformat()
-        logger.info(f"Recording Overall Metrics: {overall_metrics}")
+        logger.debug(f"Recording Overall Metrics: {overall_metrics}")
         new_row = pd.DataFrame([overall_metrics])
         for col in new_row.columns:
             if isinstance(new_row[col].iloc[0], (int, float)):

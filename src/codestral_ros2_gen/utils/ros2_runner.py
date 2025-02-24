@@ -10,7 +10,7 @@ from codestral_ros2_gen import logger_main
 logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
 
 
-class TestRunner:
+class ROS2Runner:
     """
     TestRunner encapsulates methods to launch a ROS2 node, run pytest tests in the ROS2 environment,
     capture the test output for analysis, and terminate the node.
@@ -31,13 +31,32 @@ class TestRunner:
 
     def start_node(self) -> None:
         """
-        Start the ROS2 node using the node_command.
+        Start the ROS2 node and verify it launched successfully.
+
+        Raises:
+            RuntimeError: If node fails to start or register with ROS2
         """
         logger.info("Starting the ROS2 node...")
         self.node_process = subprocess.Popen(
-            self.node_command, shell=True, executable="/bin/bash"
+            self.node_command,
+            shell=True,
+            executable="/bin/bash",
+            stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            text=True,
         )
-        time.sleep(2)  # Allow time for the node to start
+
+        # Wait briefly for node to initialize
+        time.sleep(2)
+
+        # Check if process is still running
+        if self.node_process.poll() is not None:
+            # Process terminated - get error output
+            stdout, stderr = self.node_process.communicate()
+            error_msg = f"Node process terminated immediately.\nStdout: {stdout}\nStderr: {stderr}"
+            raise RuntimeError(error_msg)
+
+        logger.info("Node started successfully")
 
     def run_tests(self) -> int:
         """
@@ -103,8 +122,13 @@ class TestRunner:
         Returns:
             (bool, str): Tuple with overall test success status and captured test output.
         """
-        self.start_node()
-        return_code = self.run_tests()
-        self.kill_node()
-        success = return_code == 0
-        return success, self.test_output
+        try:
+            self.start_node()
+            return_code = self.run_tests()
+        except Exception as e:
+            self.test_output = f"Error running tests: {e}"
+            return_code = 1
+        finally:
+            self.kill_node()
+            success = return_code == 0
+            return success, self.test_output

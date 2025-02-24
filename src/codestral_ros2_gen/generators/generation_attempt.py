@@ -9,7 +9,7 @@ from typing import Optional
 from codestral_ros2_gen import logger_main
 from codestral_ros2_gen.models.mistral_client import MistralClient, ModelUsage
 from codestral_ros2_gen.utils.code_parser import ROS2CodeParser
-from codestral_ros2_gen.utils.test_runner import TestRunner
+from codestral_ros2_gen.utils.ros2_runner import ROS2Runner
 
 
 logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
@@ -102,7 +102,7 @@ class GenerationAttempt:
       - Generating code by interacting with the Mistral client's complete() method.
       - Parsing generated code via the ROS2CodeParser.
       - Saving parsed code using a provided callback.
-      - Running tests on the generated code using the TestRunner.
+      - Running tests on the generated code using the ROS2Runner.
 
     The overall attempt result along with metrics is returned as an AttemptMetrics object.
 
@@ -255,13 +255,13 @@ class GenerationAttempt:
     @attempt_state
     def _test(self):
         """
-        Execute tests on the saved code using TestRunner.
+        Execute tests on the saved code using ROS2Runner.
 
         Retrieves required test configuration (node_command, test_command, and ros2_version) from the config.
         Sources the ROS2 environment and runs tests. If tests pass, the attempt is marked SUCCESS,
         otherwise FAILURE.
         """
-        logger.info("Running tests via TestRunner...")
+        logger.info("Running tests via ROS2Runner...")
         test_section = self.config.get("test")
         if (
             not test_section
@@ -282,13 +282,13 @@ class GenerationAttempt:
         logger.info(f"Built node command: {node_command}")
         logger.info(f"Built test command: {test_command}")
 
-        test_runner = TestRunner(node_command=node_command, test_command=test_command)
+        test_runner = ROS2Runner(node_command=node_command, test_command=test_command)
         success, test_logs = test_runner.run()
-        logger.info(f"Test logs:\n{test_logs}")
+        logger.debug(f"Test logs:\n{test_logs}")
         if success:
-            logger.info("Tests passed successfully via TestRunner")
+            logger.info("Tests passed successfully via ROS2Runner")
             self.state = AttemptState.SUCCESS
         else:
-            logger.warning("Tests failed via TestRunner")
+            logger.warning("Tests failed via ROS2Runner")
             self.error = f"Tests failed. Logs:\n{test_logs}"
             self.state = AttemptState.FAILURE

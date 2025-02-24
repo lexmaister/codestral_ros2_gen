@@ -62,29 +62,48 @@ source install/setup.bash
 ros2 topic echo /service_status
 ```
 
-## Generating service with model
+## Generating Service with the Model
 
-1. Generate service implementation:
+Follow these steps to generate the service implementation using the AI model:
+
+### **Generate the Service Implementation:**
+
+Ensure you are in the test workspace directory (e.g., `test_ws`), then execute:
 ```bash
-# Make sure you're in test_ws directory
 python3 ../codestral_ros2_gen/examples/object_height/generator.py
 ```
+This command will:
+- Load the local configuration from `config.yaml`
+- Construct a detailed prompt by reading the service interface and test file (as specified in the input section)
+- Use the AI model to create a ROS2 service node implementation
+- Save the generated code to the output file defined in the configuration
 
-## Testing generated service
+### **Review the Generation Output:**
 
-2. Run and test the service:
-Terminal 1:
-```bash
-ros2 run object_height object_height_service
-```
+The generator will output summary metrics and status messages. Check the console for:
+- Success or failure status
+- Detailed metrics about generation time, attempt count, and any errors
 
-Terminal 2:
-```bash
-ros2 service call /calculate_object_height object_height/srv/ObjectHeight \
-"{focal_length: 35.0, image_height: 1152, pixel_size: 3.45, object_distance: 6.5}"
-```
+## Testing the Generated Service
+
+Once the code is generated, test it as described below:
+
+- **Start the Service Node:**
+  In Terminal 1, run:
+  ```bash
+  ros2 run object_height object_height_service
+  ```
+
+- **Call the Service:**
+  In Terminal 2, issue a service call with appropriate parameters:
+  ```bash
+  ros2 service call /calculate_object_height object_height/srv/ObjectHeight \
+  "{focal_length: 35.0, image_height: 1152, pixel_size: 3.45, object_distance: 6.5}"
+  ```
 
 ## Expected Output
+
+The service call should return a response similar to:
 ```
 response:
   success: True
@@ -94,50 +113,18 @@ response:
 
 ## Troubleshooting
 
-If you encounter any issues:
-
-1. Check ROS2 environment:
-```bash
-source /opt/ros/humble/setup.bash
-source install/setup.bash
-```
-
-2. Verify the package is properly installed:
-```bash
-ros2 pkg list | grep object_height
-ros2 interface package object_height
-```
-
-3. Check service node status:
-```bash
-ros2 node list
-ros2 service list
-```
-
-## Generation Process
-
-1. Navigate to the test workspace and source it:
-```bash
-cd test_ws
-source /opt/ros/humble/setup.bash
-source install/setup.bash
-```
-
-2. Run the generator:
-```bash
-python3 ../codestral_ros2_gen/examples/object_height/generator.py
-```
-
-The generator will:
-1. Read service definition and test files from the package
-2. Generate implementation using AI
-3. Save the code to `src/object_height/src/object_height/service_node.py`
-4. Build the package automatically
-5. Run tests to validate the implementation
-6. Perform multiple iterations for evaluation
-7. Report performance metrics
-
-After successful generation, you can immediately run the service:
-```bash
-ros2 run object_height object_height_service
-```
+If the service fails to generate or the output is not as expected, verify:
+- **ROS2 Environment:** Ensure you have sourced the ROS2 setup files:
+  ```bash
+  source /opt/ros/humble/setup.bash
+  source install/setup.bash
+  ```
+- **Package Status:** Confirm the `object_height` package is installed:
+  ```bash
+  ros2 pkg list | grep object_height
+  ```
+- **Node and Service Status:** Check active nodes and services:
+  ```bash
+  ros2 node list
+  ros2 service list
+  ```

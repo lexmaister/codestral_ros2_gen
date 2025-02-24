@@ -88,8 +88,13 @@ class BaseGenerator(ABC):
         self._check_ros2_workspace()
         try:
             # Use the metrics_file value from the "metrics" section.
+            # cleanup it first
+            metrics_file = self.config["metrics"]["metrics_file"]
+            if Path(metrics_file).exists():
+                Path(metrics_file).unlink()
+
             self.metrics_handler = MetricsHandler(
-                config=self.config, metrics_file=self.config["metrics"]["metrics_file"]
+                config=self.config, metrics_file=metrics_file
             )
             self.model = MistralClient(config=self.config)
             self.max_attempts = self.config["generation"]["max_attempts"]
@@ -186,8 +191,8 @@ class BaseGenerator(ABC):
         }
         logger.info("Stage: REPORT -> Generation process finished.")
         self.metrics_handler.record_overall(aggregated_metrics)
-        report: Dict[str, Any] = self.metrics_handler.generate_report().to_dict()
-        logger.info("Summary Report:\n" + str(report))
+        report = self.metrics_handler.generate_report()
+        logger.info(f"Summary Report:\n{report}")
         return aggregated_metrics
 
     def run(self, **kwargs) -> Tuple[bool, Dict[str, Any]]:

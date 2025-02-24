@@ -18,7 +18,7 @@ generation:
 test:
   #! for ROS2 humble
   ws_setup: "source /opt/ros/humble/setup.bash && source install/setup.bash"
-  node_command: "ros2 run object_height service_node"
+  node_command: "ros2 run object_height object_height_service"
   test_command: "pytest -q -s -x src/object_height/test/test_service_node.py"
 
 # Metrics Collection
@@ -28,3 +28,8 @@ metrics:
 # Path to the generated code
 output:
   output_file: "src/object_height/object_height/service_node.py"
+
+# Input files used for prompting
+input:
+  interface_file: "src/object_height/srv/ObjectHeight.srv"
+  test_file: "src/object_height/test/test_service_node.py"

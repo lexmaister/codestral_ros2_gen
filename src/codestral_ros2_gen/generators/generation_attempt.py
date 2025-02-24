@@ -268,11 +268,12 @@ class GenerationAttempt:
             or "ws_setup" not in test_section
             or "node_command" not in test_section
             or "test_command" not in test_section
+            or "test_timeout" not in test_section
         ):
             logger.error(
-                "Missing required 'ws_setup', 'node_command' or 'test_command' in test configuration."
+                "Missing required 'ws_setup', 'node_command', 'test_command' or 'test_timeout' in test configuration."
             )
-            self.error = "Missing required test configuration (ws_setup, node_command or test_command)."
+            self.error = "Missing required test configuration (ws_setup, node_command, test_command or test_timeout)."
             self.state = AttemptState.FAILURE
             return
 
@@ -282,7 +283,11 @@ class GenerationAttempt:
         logger.info(f"Built node command: {node_command}")
         logger.info(f"Built test command: {test_command}")
 
-        test_runner = ROS2Runner(node_command=node_command, test_command=test_command)
+        test_runner = ROS2Runner(
+            node_command=node_command,
+            test_command=test_command,
+            test_timeout=test_section["test_timeout"],
+        )
         success, test_logs = test_runner.run()
         logger.debug(f"Test logs:\n{test_logs}")
         if success:

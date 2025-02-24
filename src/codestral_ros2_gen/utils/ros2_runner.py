@@ -16,16 +16,18 @@ class ROS2Runner:
     capture the test output for analysis, and terminate the node.
     """
 
-    def __init__(self, node_command: str, test_command: str):
+    def __init__(self, node_command: str, test_command: str, test_timeout: int = 30):
         """
         Initialize the TestRunner.
 
         Args:
             node_command (str): Shell command to launch the ROS2 node.
             test_command (str): Shell command to run tests (pytest).
+            timeout_seconds (int): How many seconds to wait for the process before timing out. Defaults to 30 seconds.
         """
         self.node_command = node_command
         self.test_command = test_command
+        self.test_timeout = test_timeout
         self.node_process = None
         self.test_output = ""
 
@@ -60,13 +62,13 @@ class ROS2Runner:
 
     def run_tests(self) -> int:
         """
-        Run pytest using the test_command and print output live.
+        Run pytest using the test_command and capture the output.
 
         Returns:
-            int: The return code of the test command.
+            int: The return code of the test command. If the command times out,
+                 it returns 1 by default.
         """
-        logger.info("Running tests with live output...")
-        # Start the test process with live output (line-buffered)
+        logger.info("Running tests ...")
         process = subprocess.Popen(
             self.test_command,
             shell=True,
@@ -74,31 +76,20 @@ class ROS2Runner:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            bufsize=1,
         )
+        try:
+            stdout, stderr = process.communicate(timeout=self.test_timeout)
+            return_code = process.returncode
+        except subprocess.TimeoutExpired as e:
+            msg = f"Test process timed out after {self.test_timeout} seconds."
+            process.kill()  # Terminate the process
+            # Optionally catch partial output
+            stdout, stderr = e.output, msg
+            return_code = 1
 
-        stdout_lines = []
-        stderr_lines = []
-
-        # Stream stdout live
-        if process.stdout:
-            for line in iter(process.stdout.readline, ""):
-                print(line, end="")  # live printing to stdout
-                stdout_lines.append(line)
-            process.stdout.close()
-
-        # Stream stderr live (if needed)
-        if process.stderr:
-            for line in iter(process.stderr.readline, ""):
-                print(line, end="")  # live printing to stdout (or use sys.stderr)
-                stderr_lines.append(line)
-            process.stderr.close()
-
-        return_code = process.wait()
-        self.test_output = (
-            f"stdout:\n{''.join(stdout_lines)}\nstderr:\n{''.join(stderr_lines)}"
-        )
+        self.test_output = f"stdout:\n{stdout}\nstderr:\n{stderr}"
         logger.info("Test output captured.")
+
         return return_code
 
     def kill_node(self) -> None:

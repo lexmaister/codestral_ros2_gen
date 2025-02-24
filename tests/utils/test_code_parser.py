@@ -5,7 +5,7 @@ TEST_CASES = [
     # markdown_python: Uses proper ```python markers so should work.
     pytest.param(
         'Here is code:\n```python\ndef hello():\n    print("Hello")\n```',
-        'def hello():\n    print("Hello")\n',
+        '#!/usr/bin/env python3\ndef hello():\n    print("Hello")\n',
         id="markdown_python",
     ),
     # markdown_plain: Missing language marker, so now expect None.
@@ -29,7 +29,7 @@ TEST_CASES = [
     # multiple_blocks: Only the first valid block will be extracted.
     pytest.param(
         'Here is code:\n```python\ndef main():\n    print("main")\n```\nAnd extra:\n```python\ndef extra():\n    print("extra")\n```',
-        'def main():\n    print("main")\n',
+        '#!/usr/bin/env python3\ndef main():\n    print("main")\n',
         id="multiple_blocks",
     ),
     # complex_ros2: Valid markers.
@@ -49,13 +49,13 @@ TEST_CASES = [
     # extra_spaces: valid block using python markers.
     pytest.param(
         '```python\n        def spaced():\n                print("spaced")   \n```',
-        'def spaced():\n    print("spaced")\n',
+        '#!/usr/bin/env python3\ndef spaced():\n    print("spaced")\n',
         id="extra_spaces",
     ),
     # with_docstring: valid block.
     pytest.param(
         '```python\n# This is a comment\ndef documented():\n    """This is a docstring."""\n    pass\n```',
-        '# This is a comment\ndef documented():\n    """This is a docstring."""\n    pass\n',
+        '#!/usr/bin/env python3\n# This is a comment\ndef documented():\n    """This is a docstring."""\n    pass\n',
         id="with_docstring",
     ),
     # real_world_ai: Using [PYTHON] markers returns None.

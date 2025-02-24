@@ -42,6 +42,10 @@ class ROS2CodeParser:
         # Format code
         try:
             formatted_code = format_str(code, mode=FileMode())
+            # to be able to run in ros2 to avoid OSError: [Errno 8] Exec format error:
+            if not formatted_code.startswith("#!/usr/bin"):
+                formatted_code = "#!/usr/bin/env python3\n" + formatted_code
+
             logger.debug(f"Formatted code:\n{formatted_code}")
             return formatted_code
         except InvalidInput as e:

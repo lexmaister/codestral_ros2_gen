@@ -17,7 +17,7 @@ generation:
 # Test Settings
 test:
   #! for ROS2 humble
-  ws_setup: "source /opt/ros/humble/setup.bash && source install/setup.bash"
+  ws_setup: "source /opt/ros/humble/setup.bash && colcon build --packages-select object_height && source install/setup.bash"
   node_command: "ros2 run object_height object_height_service"
   test_command: "pytest -q -s -x src/object_height/test/test_service_node.py"
 

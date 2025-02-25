@@ -3,8 +3,9 @@ import time
 from pathlib import Path
 from functools import wraps
 import logging
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, asdict
+from typing import Any, Optional
+import pandas as pd
 
 from codestral_ros2_gen import logger_main
 from codestral_ros2_gen.models.mistral_client import MistralClient, ModelUsage
@@ -44,6 +45,28 @@ class AttemptMetrics:
     total_tokens: int
     error: Optional[str] = None
 
+    _fields_order = [
+        "attempt_time",
+        "success",
+        "final_state",
+        "tests_passed",
+        "tests_failed",
+        "tests_skipped",
+        "prompt_tokens",
+        "completion_tokens",
+        "total_tokens",
+        "error",
+    ]
+
+    @property
+    def as_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+    @property
+    def to_series(self) -> pd.Series:
+        # Create series with specific order
+        return pd.Series({field: self.as_dict[field] for field in self._fields_order})
+
     def __str__(self) -> str:
         """
         Return a formatted string of the attempt metrics.
@@ -52,8 +75,8 @@ class AttemptMetrics:
             str: Formatted string with final state, time (rounded to 0.1 sec), and error.
         """
         return (
-            f"Success:\t\t\t{self.success}\n"
-            + f"Time taken:\t\t\t{self.attempt_time:.1f} sec\n"
+            f"Success:\t\t{self.success}\n"
+            + f"Time taken:\t\t{self.attempt_time:.1f} sec\n"
             + f"Final state:\t\t{self.final_state}\n"
             + f"Tests passed:\t\t{self.tests_passed}\n"
             + f"Tests failed:\t\t{self.tests_failed}\n"

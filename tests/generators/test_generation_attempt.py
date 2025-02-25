@@ -1,4 +1,3 @@
-# ...existing imports...
 import pytest
 from pathlib import Path
 from codestral_ros2_gen.generators.generation_attempt import (
@@ -77,5 +76,5 @@ def test_generation_attempt_failure_in_parsing(sample_config):
     )
     assert success is False
     # Use attribute access for metric (for example, final_state attribute)
-    assert metrics.final_state == AttemptState.FAILURE.name
+    assert metrics.final_state == AttemptState.PARSE.name
     assert "Parsing failed" in attempt_instance.error

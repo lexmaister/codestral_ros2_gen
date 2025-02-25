@@ -195,3 +195,23 @@ def test_run_tests_timeout(mock_popen):
     # Verify timeout message is in output
     assert "Test process timed out after 30 seconds" in runner.test_output
     assert "Partial test output" in runner.test_output
+
+
+def test_get_tests_stat():
+    """Test parsing test output for statistics"""
+    runner = ROS2Runner(
+        node_command="ros2 run test_pkg test_node",
+        test_command="pytest",
+        test_timeout=30,
+    )
+    runner.test_output = """
+    ============================= short test summary info ==============================
+    FAILED test_pkg/test_node.py::test_failed - AssertionError: assert False
+    PASSED test_pkg/test_node.py::test_passed
+    SKIPPED test_pkg/test_node.py::test_skipped
+    ====================== 1 failed, 1 passed, 1 skipped in 0.12s =======================
+    """
+    runner._get_tests_stat()
+    assert runner.tests_passed == 1
+    assert runner.tests_failed == 1
+    assert runner.tests_skipped == 1

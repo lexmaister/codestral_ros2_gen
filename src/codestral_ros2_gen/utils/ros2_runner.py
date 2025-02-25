@@ -3,6 +3,7 @@ import time
 import os
 import signal
 import logging
+import re
 
 from codestral_ros2_gen import logger_main
 
@@ -30,6 +31,9 @@ class ROS2Runner:
         self.test_timeout = test_timeout
         self.node_process = None
         self.test_output = ""
+        self.tests_passed = 0
+        self.tests_failed = 0
+        self.tests_skipped = 0
 
     def start_node(self) -> None:
         """
@@ -58,7 +62,7 @@ class ROS2Runner:
             error_msg = f"Node process terminated immediately.\nStdout: {stdout}\nStderr: {stderr}"
             raise RuntimeError(error_msg)
 
-        logger.info("Node started successfully")
+        logger.info("Node started successfully.")
 
     def run_tests(self) -> int:
         """
@@ -88,7 +92,7 @@ class ROS2Runner:
             return_code = 1
 
         self.test_output = f"stdout:\n{stdout}\nstderr:\n{stderr}"
-        logger.info("Test output captured.")
+        logger.info(f"Test output captured:\n{self.test_output}")
 
         return return_code
 
@@ -106,7 +110,21 @@ class ROS2Runner:
                 os.kill(self.node_process.pid, signal.SIGKILL)
             self.node_process = None
 
-    def run(self) -> tuple[bool, str]:
+    def _get_tests_stat(self) -> None:
+        """
+        Parse the test output to get the number of tests passed, failed, and skipped.
+        """
+        logger.info("Parsing test output for statistics...")
+        for typ in ("passed", "failed", "skipped"):
+            m = re.search(rf"(\d+) {typ}.+?in", self.test_output)
+            if m:
+                setattr(self, f"tests_{typ}", int(m.group(1)))
+
+        logger.info(
+            f"Tests failed: {self.tests_failed!r}, passed: {self.tests_passed!r}, skipped: {self.tests_skipped!r}"
+        )
+
+    def run(self) -> tuple[bool, str, tuple[int, int, int]]:
         """
         Execute the full test run: start node, run tests, and terminate the node.
 
@@ -116,10 +134,15 @@ class ROS2Runner:
         try:
             self.start_node()
             return_code = self.run_tests()
+            self._get_tests_stat()
         except Exception as e:
             self.test_output = f"Error running tests: {e}"
             return_code = 1
         finally:
             self.kill_node()
             success = return_code == 0
-            return success, self.test_output
+            return (
+                success,
+                self.test_output,
+                (self.tests_passed, self.tests_failed, self.tests_skipped),
+            )

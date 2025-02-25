@@ -129,7 +129,8 @@ class ROS2Runner:
         Execute the full test run: start node, run tests, and terminate the node.
 
         Returns:
-            (bool, str): Tuple with overall test success status and captured test output.
+            (bool, str, tuple[int, int, int]): Tuple with overall test success status,
+            captured test output and a tuple with the number of tests passed, failed, and skipped.
         """
         try:
             self.start_node()

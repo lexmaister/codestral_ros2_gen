@@ -209,9 +209,9 @@ def test_get_tests_stat():
     FAILED test_pkg/test_node.py::test_failed - AssertionError: assert False
     PASSED test_pkg/test_node.py::test_passed
     SKIPPED test_pkg/test_node.py::test_skipped
-    ====================== 1 failed, 1 passed, 1 skipped in 0.12s =======================
+    ====================== 1 failed, 2 passed, 3 skipped in 0.12s =======================
     """
     runner._get_tests_stat()
-    assert runner.tests_passed == 1
     assert runner.tests_failed == 1
-    assert runner.tests_skipped == 1
+    assert runner.tests_passed == 2
+    assert runner.tests_skipped == 3

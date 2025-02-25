@@ -4,6 +4,7 @@ import os
 import signal
 import logging
 import re
+import psutil
 
 from codestral_ros2_gen import logger_main
 
@@ -101,13 +102,91 @@ class ROS2Runner:
         Terminate the running ROS2 node cleanly, and force-kill if necessary.
         """
         if self.node_process is not None:
-            logger.info("Terminating node process...")
+            logger.info(f"Terminating node process, pid {self.node_process.pid!r}...")
             try:
                 self.node_process.terminate()
                 self.node_process.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 logger.warning("Node did not shutdown gracefully; force killing.")
                 os.kill(self.node_process.pid, signal.SIGKILL)
+            self.node_process = None
+
+    def kill_node(self) -> None:
+        """Terminate the running ROS2 node cleanly, and force-kill if necessary.
+        Uses psutil to find and terminate the actual ROS2 node process, not just the shell.
+        """
+        if self.node_process is not None:
+            shell_pid = self.node_process.pid
+            logger.info(
+                f"Finding and terminating ROS2 node (shell pid: {shell_pid})..."
+            )
+
+            try:
+                # Get the shell process
+                shell_process = psutil.Process(shell_pid)
+
+                # Find all child processes (includes the ROS2 node)
+                children = shell_process.children(recursive=True)
+
+                # Find and terminate actual ROS2 nodes among children
+                ros2_nodes_found = False
+                for process in children:
+                    try:
+                        cmd_line = " ".join(process.cmdline())
+                        # Look for ROS2 node process - adjust pattern as needed for your specific node
+                        if (
+                            "ros2 run" in cmd_line
+                            or "object_height_service" in cmd_line
+                        ):
+                            logger.info(
+                                f"Found ROS2 node with PID: {process.pid}, cmd: {cmd_line[:60]}..."
+                            )
+                            ros2_nodes_found = True
+                            process.terminate()  # Send SIGTERM
+                    except (
+                        psutil.NoSuchProcess,
+                        psutil.AccessDenied,
+                        psutil.ZombieProcess,
+                    ) as e:
+                        logger.warning(f"Error accessing process: {e}")
+                        continue
+
+                # Wait for graceful termination (5 seconds)
+                gone, alive = psutil.wait_procs(children, timeout=5)
+
+                # Force kill any remaining processes
+                for process in alive:
+                    try:
+                        logger.warning(
+                            f"Process {process.pid} did not terminate gracefully, force killing"
+                        )
+                        process.kill()  # Send SIGKILL
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        pass
+
+                # Finally terminate the shell
+                if shell_process.is_running():
+                    shell_process.terminate()
+                    try:
+                        shell_process.wait(timeout=3)
+                    except psutil.TimeoutExpired:
+                        shell_process.kill()
+
+                if not ros2_nodes_found:
+                    logger.warning("No ROS2 node processes identified among children")
+
+            except psutil.NoSuchProcess:
+                logger.warning(f"Shell process {shell_pid} no longer exists")
+            except Exception as e:
+                logger.error(f"Error during process termination: {e}")
+                # Fallback to original method
+                try:
+                    self.node_process.terminate()
+                    self.node_process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    logger.warning("Node did not shutdown gracefully; force killing.")
+                    os.kill(self.node_process.pid, signal.SIGKILL)
+
             self.node_process = None
 
     def _get_tests_stat(self) -> None:

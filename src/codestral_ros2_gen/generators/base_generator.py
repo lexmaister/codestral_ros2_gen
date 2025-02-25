@@ -4,7 +4,7 @@ from typing import Optional, Dict, Any, Tuple
 from abc import ABC, abstractmethod
 
 from codestral_ros2_gen import get_config_path, load_config, logger
-from codestral_ros2_gen.metrics.metrics_handler import MetricsHandler
+from codestral_ros2_gen.utils.metrics_handler import MetricsHandler
 from codestral_ros2_gen.models.mistral_client import MistralClient
 from codestral_ros2_gen.generators.generation_attempt import GenerationAttempt
 from codestral_ros2_gen.utils.file_io import save_code
@@ -29,8 +29,7 @@ class BaseGenerator(ABC):
     def __init__(self, config_path: Optional[Path] = None) -> None:
         self.config_path: Path = config_path if config_path else get_config_path()
         self.config: dict = None  # Will be loaded in _initialization_phase
-        self.main_start_time: float = time.time()
-        self.attempt_counter: int = 0
+        self.start_time: float = time.time()
 
     @abstractmethod
     def prepare_prompt(self, **kwargs) -> str:
@@ -87,8 +86,8 @@ class BaseGenerator(ABC):
         self._validate_environment()
         self._check_ros2_workspace()
         try:
-            # Use the metrics_file value from the "metrics" section.
-            # cleanup it first
+            # Use the metrics_file value from the "metrics" section,
+            # cleanup it first if it exists.
             metrics_file = self.config["metrics"]["metrics_file"]
             if Path(metrics_file).exists():
                 Path(metrics_file).unlink()
@@ -106,119 +105,72 @@ class BaseGenerator(ABC):
                 f"Configuration error: Missing required generation setting: {e}"
             )
         logger.info(
-            "Stage: INITIALIZATION -> Environment OK. Starting generation process."
+            "Phase: INITIALIZATION -> Environment OK, model and metrics handler initialized. "
+            + "Moving to GENERATION phase."
         )
 
-    def _generation_phase(self, **kwargs) -> Tuple[bool, Dict[str, Any]]:
+    def _generation_phase(self) -> None:
         """
-        Execute the generation phase by performing multiple iterations and attempts.
-
-        Returns:
-            Tuple[bool, Dict[str, Any]]: Overall success flag and aggregated iteration metrics.
+        Execute the generation phase by performing multiple iterations and attempts. Update metrics.
         """
-        overall_success: bool = False
-        aggregated_main_metrics: Dict[str, list] = {"iterations": []}
-        for main_iter in range(1, self.evaluation_iterations + 1):
-            logger.info(f"Main Iteration {main_iter} started.")
-            iteration_success: bool = False
-            iteration_attempts: list = []
-            # Use the output file from the "output" section.
+        logger.info("Phase: GENERATION -> Starting generation process.")
+        logger.info(f"Max attempts: {self.max_attempts!r}")
+        logger.info(f"Evaluation iterations: {self.evaluation_iterations!r}")
+        prompt: str = self.prepare_prompt()
+        for iteration in range(1, self.evaluation_iterations + 1):
+            logger.info(f" Iteration {iteration} started.")
             output_path: Path = Path(self.config["output"]["output_file"])
             for attempt in range(1, self.max_attempts + 1):
-                self.attempt_counter += 1
                 logger.info(
-                    f"--- Starting Attempt {self.attempt_counter} (Main Iteration {main_iter}, Attempt {attempt}) ---"
+                    f"--- Starting Attempt {attempt} (Iteration {iteration}) ---"
                 )
                 attempt_instance = GenerationAttempt(self.model, self.config)
-                prompt: str = self.prepare_prompt(**kwargs)
                 success, attempt_metrics = attempt_instance.run(
                     output_path, prompt, save_code
                 )
                 self.metrics_handler.record_attempt(
-                    self.attempt_counter, attempt_metrics
+                    iteration_number=iteration,
+                    attempt_number=attempt,
+                    attempt_metrics=attempt_metrics,
                 )
                 logger.info(
-                    f"Attempt {self.attempt_counter} finished with metrics: {attempt_metrics}"
-                )
-                iteration_attempts.append(
-                    {
-                        "attempt_number": self.attempt_counter,
-                        "metrics": attempt_metrics,
-                        "success": success,
-                    }
+                    f"Attempt {attempt} finished with metrics:\n{attempt_metrics}"
                 )
                 if success:
-                    iteration_success = True
-                    logger.info(
-                        f"Main Iteration {main_iter}: Successful attempt achieved."
-                    )
+                    logger.info(f"Iteration {iteration}: Successful attempt achieved.")
                     break
                 else:
-                    logger.info(
-                        f"Main Iteration {main_iter}: Attempt {attempt} failed."
-                    )
-            aggregated_main_metrics["iterations"].append(
-                {
-                    "main_iteration": main_iter,
-                    "attempts": iteration_attempts,
-                    "iteration_result": "SUCCESS" if iteration_success else "FAILURE",
-                }
-            )
-            if iteration_success:
-                overall_success = True
-                break
-        return overall_success, aggregated_main_metrics
+                    logger.info(f"Iteration {iteration}: Attempt {attempt} failed.")
 
-    def _report_phase(self, aggregated_main_metrics: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Compute and record overall metrics, then generate a summary report.
+            logger.info(f" Iteration {iteration} finished.")
 
-        Returns:
-            Dict[str, Any]: Aggregated metrics including total run time and final result.
-        """
-        overall_time: float = time.time() - self.main_start_time
-        aggregated_metrics: Dict[str, Any] = {
-            "total_time": overall_time,
-            "final_result": (
-                "SUCCESS"
-                if any(
-                    iteration["iteration_result"] == "SUCCESS"
-                    for iteration in aggregated_main_metrics["iterations"]
-                )
-                else "FAILURE"
-            ),
-            "details": aggregated_main_metrics,
-        }
-        logger.info("Stage: REPORT -> Generation process finished.")
-        self.metrics_handler.record_overall(aggregated_metrics)
-        report = self.metrics_handler.generate_report()
-        logger.info(f"Summary Report:\n{report}")
-        return aggregated_metrics
+        logger.info(
+            "Phase: GENERATION -> Generation process finished. Moving to REPORT phase."
+        )
 
-    def run(self, **kwargs) -> Tuple[bool, Dict[str, Any]]:
+    def _report_phase(self) -> None:
         """
-        Wrap the complete generation process (initialization, generation, reporting)
-        in a try/except/finally block for unified error handling.
+        Analyse the metrics collected during the generation process and display a summary report.
+        """
+        logger.info("Phase: REPORT -> Start analyzing metrics.")
+        logger.info(f"Collected attempt metrics:\n{self.metrics_handler.metrics_df}")
 
-        Returns:
-            Tuple[bool, Dict[str, Any]]: Overall success flag and aggregated metrics.
+        logger.info("Phase: REPORT -> Metrics analysis finished.")
+
+    def run(self, **kwargs) -> None:
         """
-        overall_success: bool = False
-        gen_metrics: Dict[str, Any] = {}
+        Run the complete generation process (initialization, generation, reporting)
+        """
         try:
             self._initialization_phase()
-            overall_success, gen_metrics = self._generation_phase(**kwargs)
+            self._generation_phase()
         except Exception as e:
-            overall_success = False
-            gen_metrics = {"error": str(e)}
-            logger.error(f"Error during run phases: {e}")
+            logger.error(f"Error during generation process:\n\n{e}\n")
         finally:
             if hasattr(self, "metrics_handler"):
-                final_metrics: Dict[str, Any] = self._report_phase(gen_metrics)
+                self._report_phase()
             else:
-                final_metrics = {
-                    "total_time": time.time() - self.main_start_time,
-                    "final_result": "FAILURE",
-                    "error": "MetricsHandler not initialized: Check that required configuration sections (e.g. 'generation') are present.",
-                }
-            return overall_success, final_metrics
+                logger.warning("No metrics handler found. Skipping REPORT phase.")
+            logger.info(
+                f"Generation process finished in {time.time() - self.start_time:.0f} seconds."
+            )

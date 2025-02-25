@@ -126,8 +126,8 @@ def test_as_dict_property():
     assert result["error"] is None
 
 
-def test_to_series_property():
-    """Test the to_series property returns correct pandas Series"""
+def test_as_series_property():
+    """Test the as_series property returns correct pandas Series"""
     metrics = AttemptMetrics(
         attempt_time=1.5,
         success=True,
@@ -140,7 +140,7 @@ def test_to_series_property():
         total_tokens=150,
     )
 
-    result = metrics.to_series
+    result = metrics.as_series
     assert isinstance(result, pd.Series)
     assert list(result.index) == metrics._fields_order  # Check order
     assert result["attempt_time"] == 1.5
@@ -183,7 +183,7 @@ def sample_metrics():
 
 def test_series_order(sample_metrics):
     """Test that Series maintains the defined field order"""
-    series = sample_metrics.to_series
+    series = sample_metrics.as_series
     assert list(series.index) == AttemptMetrics._fields_order
 
 
@@ -199,7 +199,7 @@ def test_dict_values(sample_metrics):
 def test_field_presence(sample_metrics, field):
     """Test all fields are present in both dict and series"""
     assert field in sample_metrics.as_dict
-    assert field in sample_metrics.to_series
+    assert field in sample_metrics.as_series
 
 
 def test_dataframe_creation():
@@ -217,7 +217,7 @@ def test_dataframe_creation():
             completion_tokens=50,
             total_tokens=150,
         )
-        metrics_list.append(metric.to_series)
+        metrics_list.append(metric.as_series)
 
     df = pd.DataFrame(metrics_list)
     assert len(df) == 3

@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from codestral_ros2_gen import get_project_root, get_config_path, load_config
 from codestral_ros2_gen.generators.base_generator import BaseGenerator
-from codestral_ros2_gen.metrics.metrics_handler import MetricsHandler
+from codestral_ros2_gen.utils.metrics_handler import MetricsHandler
 
 
 # Dummy MistralClient substitute for testing.
@@ -210,7 +210,7 @@ class DummyGeneratorMultiIteration(BaseGenerator):
         self._validate_environment()
         self._check_ros2_workspace()
 
-        from codestral_ros2_gen.metrics.metrics_handler import MetricsHandler
+        from codestral_ros2_gen.utils.metrics_handler import MetricsHandler
 
         self.metrics_handler = MetricsHandler(
             config=self.config, metrics_file=self.config["metrics"]["metrics_file"]

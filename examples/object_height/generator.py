@@ -46,7 +46,7 @@ class ExampleServiceNodeGenerator(BaseGenerator):
                 f"File: {self.config['input'].get('test_file', 'N/A')}\n"
                 f"{parts.get('test_file', '')}"
             )
-            logger.info("ExampleServiceNodeGenerator prepared the prompt successfully.")
+            logger.info("The prompt has been prepared successfully.")
             return prompt
         except Exception as e:
             logger.error(f"Error preparing prompt: {str(e)}")
@@ -62,7 +62,7 @@ def main():
     generator = ExampleServiceNodeGenerator(config_path=config_path)
     generator.config = config
 
-    # Prepare prompt.
+    # Prepare prompt - also will be run during the generation process. This is here to debug.
     prompt = generator.prepare_prompt(
         service_name="object_height_service", node_name="service_node"
     )
@@ -70,15 +70,7 @@ def main():
     logger.debug(prompt)
 
     # Run generation process.
-    success, metrics = generator.run(
-        service_name="object_height_service", node_name="service_node"
-    )
-    if success:
-        logger.info("Service node generation succeeded with metrics:")
-    else:
-        logger.error("Service node generation failed with metrics:")
-
-    # logger.info(json.dumps(metrics, indent=2))
+    generator.run(service_name="object_height_service", node_name="service_node")
 
 
 if __name__ == "__main__":

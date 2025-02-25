@@ -43,88 +43,33 @@ class MetricsHandler:
         )
         self.metrics_df = pd.DataFrame()
 
-        # Load existing metrics if the file exists.
-        if self.metrics_file.exists():
-            self.load_metrics()
-
         # Ensure the metrics directory exists.
         self.metrics_file.parent.mkdir(parents=True, exist_ok=True)
 
-    def add_metric(self, metrics: Dict) -> None:
-        """
-        Add new raw metrics and save them to disk.
-
-        The provided metrics dictionary is augmented with an error summary and a timestamp
-        before appending it to the internal DataFrame and saving to a JSONL file.
-
-        Args:
-            metrics (Dict): Dictionary of metrics to record.
-
-        Raises:
-            RuntimeError: If the input is not a dictionary.
-        """
-        if not isinstance(metrics, dict):
-            raise RuntimeError("Metrics must be a dictionary")
-
-        error_counts = metrics.get("error_counts", {})
-        metrics["error_summary"] = ", ".join(
-            [f"{err}: {count}" for err, count in error_counts.items()]
-        )
-        metrics["timestamp"] = datetime.now().isoformat()
-
-        # Log the raw metrics.
-        logger.info(f"Attempt Metrics: {metrics}")
-
-        new_row = pd.DataFrame([metrics])
-        for col in new_row.columns:
-            if isinstance(new_row[col].iloc[0], (int, float)):
-                new_row[col] = pd.to_numeric(new_row[col])
-        self.metrics_df = pd.concat([self.metrics_df, new_row], ignore_index=True)
-        self._save_metrics()
-
     def record_attempt(
-        self, attempt_number: int, attempt_metrics: AttemptMetrics
+        self,
+        iteration_number: int,
+        attempt_number: int,
+        attempt_metrics: AttemptMetrics,
     ) -> None:
         """
         Record the metrics for a single generation attempt.
 
         Args:
+            iteration_number (int): The sequential number of the iteration.
             attempt_number (int): The sequential number of the attempt.
             attempt_metrics: An AttemptMetrics instance containing metrics for the attempt.
         """
-        record = {
-            "attempt_number": attempt_number,
-            "attempt_time": attempt_metrics.attempt_time,
-            "final_state": attempt_metrics.final_state,
-            "error": attempt_metrics.error,
-        }
-        logger.info(
-            f"Recording Attempt #{attempt_number}: {json.dumps(record, indent=2)}"
+        logger.debug(
+            f"Recording Attempt #{attempt_number}, Iteration #{iteration_number}:\n"
+            + f"{json.dumps(attempt_metrics.as_dict, indent=2)}"
         )
-        new_row = pd.DataFrame([record])
-        for col in new_row.columns:
-            if isinstance(new_row[col].iloc[0], (int, float)):
-                new_row[col] = pd.to_numeric(new_row[col])
-        self.metrics_df = pd.concat([self.metrics_df, new_row], ignore_index=True)
-        self._save_metrics()
-
-    def record_overall(self, overall_metrics: Dict) -> None:
-        """
-        Record overall aggregated metrics after all attempts.
-
-        The overall metrics dictionary is updated with a timestamp before appending
-        to the internal DataFrame and saving to disk.
-
-        Args:
-            overall_metrics (Dict): Dictionary containing overall metrics (e.g., total_time, final_result).
-        """
-        overall_metrics["timestamp"] = datetime.now().isoformat()
-        logger.debug(f"Recording Overall Metrics: {overall_metrics}")
-        new_row = pd.DataFrame([overall_metrics])
-        for col in new_row.columns:
-            if isinstance(new_row[col].iloc[0], (int, float)):
-                new_row[col] = pd.to_numeric(new_row[col])
-        self.metrics_df = pd.concat([self.metrics_df, new_row], ignore_index=True)
+        record = attempt_metrics.as_series
+        record["iteration"] = iteration_number
+        record["attempt"] = attempt_number
+        self.metrics_df = pd.concat(
+            [self.metrics_df, record.to_frame().T], ignore_index=True
+        )
         self._save_metrics()
 
     def _save_metrics(self) -> None:

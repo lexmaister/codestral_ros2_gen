@@ -4,7 +4,7 @@ import numpy as np
 from pathlib import Path
 
 from codestral_ros2_gen import get_config_path, load_config
-from codestral_ros2_gen.metrics.metrics_handler import MetricsHandler
+from codestral_ros2_gen.utils.metrics_handler import MetricsHandler
 from codestral_ros2_gen.generators.generation_attempt import AttemptMetrics
 
 

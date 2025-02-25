@@ -72,7 +72,7 @@ class ROS2Runner:
             int: The return code of the test command. If the command times out,
                  it returns 1 by default.
         """
-        logger.info("Running tests ...")
+        logger.info("Running tests...")
         process = subprocess.Popen(
             self.test_command,
             shell=True,

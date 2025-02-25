@@ -63,28 +63,26 @@ class AttemptMetrics:
         return asdict(self)
 
     @property
-    def to_series(self) -> pd.Series:
+    def as_series(self) -> pd.Series:
         # Create series with specific order
-        return pd.Series({field: self.as_dict[field] for field in self._fields_order})
+        s = pd.Series(
+            {field: self.as_dict[field] for field in self._fields_order},
+            name="value",
+        )
+        s.index.name = "metric"
+        return s
 
     def __str__(self) -> str:
         """
-        Return a formatted string of the attempt metrics.
+        Return a formatted string with all attempt metrics table without error message.
 
         Returns:
-            str: Formatted string with final state, time (rounded to 0.1 sec), and error.
+            str: Formatted metrics table excluding error message.
         """
-        return (
-            f"Success:\t\t{self.success}\n"
-            + f"Time taken:\t\t{self.attempt_time:.1f} sec\n"
-            + f"Final state:\t\t{self.final_state}\n"
-            + f"Tests passed:\t\t{self.tests_passed}\n"
-            + f"Tests failed:\t\t{self.tests_failed}\n"
-            + f"Tests skipped:\t\t{self.tests_skipped}\n"
-            + f"Prompt tokens:\t\t{self.prompt_tokens}\n"
-            + f"Completion tokens:\t{self.completion_tokens}\n"
-            + f"Total tokens:\t\t{self.total_tokens}\n"
-        )
+        s = self.as_series[:-1].copy()
+        s["attempt_time"] = round(s["attempt_time"], 1)
+        s["success"] = str(s["success"])
+        return s.to_markdown(tablefmt="grid")
 
 
 def attempt_state(func):

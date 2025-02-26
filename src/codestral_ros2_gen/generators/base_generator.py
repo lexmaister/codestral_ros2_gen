@@ -1,6 +1,6 @@
 import time
 from pathlib import Path
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any, Tuple, Type
 from abc import ABC, abstractmethod
 
 from codestral_ros2_gen import get_config_path, load_config, logger
@@ -13,7 +13,16 @@ from codestral_ros2_gen.utils.file_io import save_code
 def _missing_keys(
     config: Dict[str, Any], section: str, required: Tuple[str, ...]
 ) -> None:
-    """Raise error if any required keys are missing in the given section of config."""
+    """Raise error if any required keys are missing in the given section of config.
+
+    :param config: Configuration dictionary to inspect
+    :type config: Dict[str, Any]
+    :param section: The section name within the config to check
+    :type section: str
+    :param required: Tuple of required keys that must exist in the section
+    :type required: Tuple[str, ...]
+    :raises RuntimeError: If section is missing or any required keys are not found
+    """
     if section not in config:
         raise RuntimeError(
             f"Configuration error: Missing section '{section}' in configuration."
@@ -26,18 +35,65 @@ def _missing_keys(
 
 
 class BaseGenerator(ABC):
-    def __init__(self, config_path: Optional[Path] = None) -> None:
+    """
+    Abstract base class for code generation modules in the codestral_ros2_gen framework.
+
+    This class implements the template method pattern with a three-phase generation process:
+    1. Initialization: Set up the environment, load configuration, and prepare resources
+    2. Generation: Execute the actual code generation with multiple attempts and iterations
+    3. Reporting: Analyze and display metrics about the generation process
+
+    Derived classes must implement the abstract method `prepare_prompt()` to define
+    the specific prompting strategy for their generation task.
+
+    :param config_path: Path to the configuration file. If None, the default path
+                        will be used from get_config_path(), defaults to None
+    :type config_path: Optional[Path]
+    """
+
+    # Default dependencies - can be overridden in tests
+    GenerationAttemptClass = GenerationAttempt
+    MetricsHandlerClass = MetricsHandler
+    ModelClientClass = MistralClient
+
+    def __init__(
+        self,
+        config_path: Optional[Path] = None,
+        generation_attempt_class: Optional[Type] = None,
+        metrics_handler_class: Optional[Type] = None,
+        model_client_class: Optional[Type] = None,
+    ):
+        """
+        Initialize the generator with configurable dependencies.
+
+        :param config_path: Path to the configuration file
+        :param generation_attempt_class: Class to use for generation attempts (for testing)
+        :param metrics_handler_class: Class to use for metrics handling (for testing)
+        :param model_client_class: Class to use for the AI model client (for testing)
+        """
         self.config_path: Path = config_path if config_path else get_config_path()
         self.config: dict = None  # Will be loaded in _initialization_phase
         self.start_time: float = time.time()
+
+        # Allow dependency injection for testing
+        if generation_attempt_class:
+            self.GenerationAttemptClass = generation_attempt_class
+        if metrics_handler_class:
+            self.MetricsHandlerClass = metrics_handler_class
+        if model_client_class:
+            self.ModelClientClass = model_client_class
 
     @abstractmethod
     def prepare_prompt(self, **kwargs) -> str:
         """
         Prepare the input prompt to be used for code generation.
 
-        Returns:
-            str: The prepared prompt.
+        This abstract method must be implemented by subclasses to define the specific
+        prompting strategy for their generation task.
+
+        :param kwargs: Additional keyword arguments specific to the generation task
+        :return: A formatted prompt string ready for model input
+        :rtype: str
         """
         pass
 
@@ -45,6 +101,14 @@ class BaseGenerator(ABC):
         """
         Validate that the configuration has a 'generation' section with required keys,
         and ensure that the output directory is accessible.
+
+        Checks for required configuration sections and keys:
+        - 'generation' section with 'max_attempts' and 'evaluation_iterations'
+        - 'output' section with 'output_file'
+
+        Also attempts to create the output directory if it doesn't exist.
+
+        :raises RuntimeError: If configuration is invalid or output directory is inaccessible
         """
         # Check that "generation" section contains required keys.
         _missing_keys(
@@ -79,9 +143,16 @@ class BaseGenerator(ABC):
 
     def _initialization_phase(self) -> None:
         """
-        Load the configuration, validate required keys, check the workspace,
-        and initialize internal components.
+        Execute the initialization phase of the generation process.
+
+        This phase:
+        1. Loads the configuration from the specified file
+        2. Validates the environment and configuration
+        3. Initializes the metrics handler and the model client
+
+        :raises RuntimeError: If there's an issue with configuration or initialization
         """
+        logger.info("Phase: INITIALIZATION -> Loading configuration.")
         self.config = load_config(self.config_path)
         self._validate_environment()
         self._check_ros2_workspace()
@@ -92,10 +163,8 @@ class BaseGenerator(ABC):
             if Path(metrics_file).exists():
                 Path(metrics_file).unlink()
 
-            self.metrics_handler = MetricsHandler(
-                config=self.config, metrics_file=metrics_file
-            )
-            self.model = MistralClient(config=self.config)
+            self.metrics_handler = self.MetricsHandlerClass(metrics_file=metrics_file)
+            self.model = self.ModelClientClass(config=self.config)
             self.max_attempts = self.config["generation"]["max_attempts"]
             self.evaluation_iterations = self.config["generation"][
                 "evaluation_iterations"
@@ -109,14 +178,25 @@ class BaseGenerator(ABC):
             + "Moving to GENERATION phase."
         )
 
-    def _generation_phase(self) -> None:
+    def _generation_phase(self, **kwargs) -> None:
         """
-        Execute the generation phase by performing multiple iterations and attempts. Update metrics.
+        Execute the generation phase by performing multiple iterations and attempts.
+
+        This phase:
+        1. Prepares the prompt using the subclass-specific implementation
+        2. Runs the configured number of iterations
+        3. For each iteration, makes multiple generation attempts until success or max attempts
+        4. Records metrics for each attempt
+
+        The process stops early if a successful generation is achieved.
+
+        :kwargs: Additional keyword arguments to be passed to the prompt preparation method
+        :raises: Any exceptions that might occur during the generation process
         """
         logger.info("Phase: GENERATION -> Starting generation process.")
         logger.info(f"Max attempts: {self.max_attempts!r}")
         logger.info(f"Evaluation iterations: {self.evaluation_iterations!r}")
-        prompt: str = self.prepare_prompt()
+        prompt: str = self.prepare_prompt(**kwargs)
         for iteration in range(1, self.evaluation_iterations + 1):
             logger.info(f" Iteration {iteration} started.")
             output_path: Path = Path(self.config["output"]["output_file"])
@@ -124,7 +204,7 @@ class BaseGenerator(ABC):
                 logger.info(
                     f"--- Starting Attempt {attempt} (Iteration {iteration}) ---"
                 )
-                attempt_instance = GenerationAttempt(self.model, self.config)
+                attempt_instance = self.GenerationAttemptClass(self.model, self.config)
                 success, attempt_metrics = attempt_instance.run(
                     output_path, prompt, save_code
                 )
@@ -150,16 +230,33 @@ class BaseGenerator(ABC):
 
     def _report_phase(self) -> None:
         """
-        Analyse the metrics collected during the generation process and display a summary report.
+        Analyze the metrics collected during the generation process and display a summary report.
+
+        This phase:
+        1. Processes all collected metrics from generation attempts
+        2. Generates a comprehensive report on the generation performance
+        3. Logs the report at INFO level
+
+        This method is typically called in the finally block to ensure reports are generated
+        even if exceptions occur during generation.
         """
         logger.info("Phase: REPORT -> Start analyzing metrics.")
-        logger.info(f"Collected attempt metrics:\n{self.metrics_handler.metrics_df}")
-
+        logger.debug(f"Collected attempt metrics:\n{self.metrics_handler.metrics_df}")
+        logger.info(f"Generation report:\n{self.metrics_handler.get_report()}")
         logger.info("Phase: REPORT -> Metrics analysis finished.")
 
     def run(self, **kwargs) -> None:
         """
-        Run the complete generation process (initialization, generation, reporting)
+        Run the complete generation process (initialization, generation, reporting).
+
+        This is the main entry point for executing the generation workflow. It:
+        1. Runs the initialization phase
+        2. Executes the generation phase
+        3. Ensures the reporting phase is executed even if errors occur
+        4. Logs the total execution time
+
+        :param kwargs: Additional keyword arguments to pass to the generation process
+        :raises: Logs but does not propagate exceptions from the generation process
         """
         try:
             self._initialization_phase()
@@ -171,6 +268,7 @@ class BaseGenerator(ABC):
                 self._report_phase()
             else:
                 logger.warning("No metrics handler found. Skipping REPORT phase.")
+
             logger.info(
                 f"Generation process finished in {time.time() - self.start_time:.0f} seconds."
             )

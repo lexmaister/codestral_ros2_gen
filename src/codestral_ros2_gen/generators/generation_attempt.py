@@ -82,7 +82,7 @@ class AttemptMetrics:
         s = self.as_series[:-1].copy()
         s["attempt_time"] = round(s["attempt_time"], 1)
         s["success"] = str(s["success"])
-        return s.to_markdown(tablefmt="grid")
+        return s.to_markdown(tablefmt="simple")
 
 
 def attempt_state(func):

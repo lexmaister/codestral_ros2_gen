@@ -11,6 +11,7 @@ Welcome to Codestral ROS2 Generator's documentation!
    :caption: Contents:
 
    generators/base_generator
+   generators/generation_attempt
 
 Indices and tables
 ==================

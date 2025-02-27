@@ -4,14 +4,13 @@ from pathlib import Path
 from functools import wraps
 import logging
 from dataclasses import dataclass, asdict
-from typing import Any, Optional
+from typing import Any, Optional, Callable
 import pandas as pd
 
 from codestral_ros2_gen import logger_main
 from codestral_ros2_gen.models.mistral_client import MistralClient, ModelUsage
 from codestral_ros2_gen.utils.code_parser import ROS2CodeParser
 from codestral_ros2_gen.utils.ros2_runner import ROS2Runner
-
 
 logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
 
@@ -20,6 +19,9 @@ logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
 class AttemptMetrics:
     """
     Dataclass representing metrics for a single generation attempt.
+
+    This class stores and provides access to various performance metrics collected during
+    a code generation attempt, including timing, success status, test results, and token usage.
 
     Attributes:
         attempt_time (float): Total time in seconds taken for this attempt.
@@ -32,6 +34,9 @@ class AttemptMetrics:
         completion_tokens (int): Number of tokens used in the completion.
         total_tokens (int): Total number of tokens used.
         error (Optional[str]): Error message if any error occurred in case of FAILURE.
+
+    Internal Attributes:
+        _fields_order (list[str]): Internal list defining the order of fields for reports.
     """
 
     attempt_time: float
@@ -60,11 +65,22 @@ class AttemptMetrics:
 
     @property
     def as_dict(self) -> dict[str, Any]:
+        """
+        Convert metrics to a dictionary.
+
+        Returns:
+            dict[str, Any]: Dictionary representation of all metrics.
+        """
         return asdict(self)
 
     @property
     def as_series(self) -> pd.Series:
-        # Create series with specific order
+        """
+        Convert metrics to a pandas Series with proper ordering.
+
+        Returns:
+            pd.Series: Series containing all metrics with field names as index.
+        """
         s = pd.Series(
             {field: self.as_dict[field] for field in self._fields_order},
             name="value",
@@ -74,7 +90,9 @@ class AttemptMetrics:
 
     def __str__(self) -> str:
         """
-        Return a formatted string with all attempt metrics table without error message.
+        Return a formatted string with all attempt metrics in table format.
+
+        Creates a markdown-formatted table of metrics, excluding the error message.
 
         Returns:
             str: Formatted metrics table excluding error message.
@@ -85,18 +103,58 @@ class AttemptMetrics:
         return s.to_markdown(tablefmt="simple")
 
 
-def attempt_state(func):
+class AttemptState(enum.Enum):
+    """
+    Enum representing valid states during a generation attempt.
+
+    This enum defines the possible states a generation attempt can be in,
+    from initialization through success or failure.
+
+    Attributes:
+        INITIALIZE (int): Starting state for the attempt.
+        GENERATE (int): Code generation is in progress.
+        PARSE (int): Parsing the generated code.
+        SAVE (int): Saving the parsed code to disk.
+        TEST (int): Running tests on the saved code.
+        SUCCESS (int): Generation attempt succeeded.
+        FAILURE (int): Generation attempt failed.
+    """
+
+    INITIALIZE = 1
+    GENERATE = 2
+    PARSE = 3
+    SAVE = 4
+    TEST = 5
+    SUCCESS = 6
+    FAILURE = 7
+
+
+def attempt_state(func) -> Callable | None:
     """
     Decorator for methods representing a state in GenerationAttempt.
 
-    Catches exceptions, logs the error, sets the error message in instance attribute 'error'
-    and forces the attempt state to FAILURE.
+    This decorator wraps methods in the GenerationAttempt class to:
+    1. Catch exceptions and set error state.
+    2. Log errors when they occur.
+    3. Transition to FAILURE state on error.
+
+    When an exception occurs in the wrapped method, the decorator sets the error
+    message, logs the error, transitions to FAILURE state, and returns None.
 
     Args:
-        func (Callable): The state method to execute.
+        func (Callable): The method to wrap.
 
     Returns:
-        Callable: Wrapped state method.
+        Callable | None: Wrapped method with error handling and state transition logic, or None if exception occurs.
+
+    Example:
+        .. code-block:: python
+
+            @attempt_state
+            def _some_state_method(self):
+                # Method implementation that might raise an exception
+                # If exception occurs, state transitions to FAILURE
+                # and the decorator returns None
     """
 
     @wraps(func)
@@ -109,55 +167,34 @@ def attempt_state(func):
             )
             self.error = str(e)
             self.state = AttemptState.FAILURE
+            return None
 
     return wrapper
-
-
-class AttemptState(enum.Enum):
-    """
-    Enum representing valid states during a generation attempt.
-
-    Attributes:
-        INITIALIZE: Starting state.
-        GENERATE: Code generation in-progress.
-        PARSE: Parsing the generated code.
-        SAVE: Saving the parsed code to disk.
-        TEST: Running tests on the saved code.
-        SUCCESS: Generation attempt succeeded.
-        FAILURE: Generation attempt failed.
-    """
-
-    INITIALIZE = 1
-    GENERATE = 2
-    PARSE = 3
-    SAVE = 4
-    TEST = 5
-    SUCCESS = 6
-    FAILURE = 7
 
 
 class GenerationAttempt:
     """
     A state machine that orchestrates a single generation attempt using Mistral AI.
 
-    This class handles:
-      - Generating code by interacting with the Mistral client's complete() method.
-      - Parsing generated code via the ROS2CodeParser.
-      - Saving parsed code using a provided callback.
-      - Running tests on the generated code using the ROS2Runner.
+    This class handles the complete lifecycle of a code generation attempt, including:
+    - Generating code by interacting with the Mistral client.
+    - Parsing generated code with ROS2CodeParser.
+    - Saving parsed code using a provided callback.
+    - Running tests on the generated code using ROS2Runner.
 
-    The overall attempt result along with metrics is returned as an AttemptMetrics object.
+    The class implements a state machine pattern to manage transitions between
+    different phases of the generation process.
 
     Attributes:
         model (MistralClient): Instance of the Mistral client for code generation.
-        config (dict): Configuration dict including generation timeout and test settings.
+        config (dict): Configuration dictionary including generation timeout and test settings.
         state (AttemptState): Current state of the attempt.
         previous_state (Optional[AttemptState]): Previous state of the attempt.
         start_time (float): Timestamp when the attempt started.
         generated_code (Optional[str]): Raw code generated by the model.
         parsed_code (Optional[str]): Parsed and optionally formatted code.
         usage (Optional[ModelUsage]): Model usage information.
-        test_counts (tuple[int]): Tuple of test counts (passed, failed, skipped).
+        test_counts (tuple[int, int, int]): Tuple of test counts (passed, failed, skipped).
         error (Optional[str]): Error description if the attempt failed.
     """
 
@@ -165,9 +202,11 @@ class GenerationAttempt:
         """
         Initialize a GenerationAttempt.
 
+        Sets up the state machine with the given model and configuration.
+
         Args:
-            model (MistralClient): Mistral client instance.
-            config (dict): Configuration settings (e.g., generation->timeout, test settings).
+            model (MistralClient): Mistral client instance for code generation.
+            config (dict): Configuration settings including generation timeout and test settings.
         """
         self.model = model
         self.config = config
@@ -184,19 +223,18 @@ class GenerationAttempt:
         self, output_path: Path, prompt: str, save_callback
     ) -> tuple[bool, AttemptMetrics]:
         """
-        Run all stages of the generation attempt sequentially.
+        Run the complete generation attempt process.
 
-        The state machine transitions through the states: INITIALIZE, GENERATE, PARSE, SAVE, and TEST.
-        If a state fails to transition or an error occurs, the attempt is terminated and marked as FAILURE.
+        Executes the full generation cycle through all states (initialize, generate,
+        parse, save, test) and returns success status and metrics.
 
         Args:
-            output_path (Path): Target file path to save the generated code.
-            prompt (str): The input prompt for code generation.
-            save_callback (callable): Function that accepts code and output_path; returns True on success.
+            output_path (Path): Destination file path for the generated code.
+            prompt (str): The prompt to generate code from.
+            save_callback (Callable[[str, Path], bool]): Function that saves the code to the specified path.
 
         Returns:
-            tuple[bool, AttemptMetrics]: A boolean indicating success (True if SUCCESS state)
-                                         and an AttemptMetrics object containing performance data.
+            tuple[bool, AttemptMetrics]: Tuple containing success status (bool) and metrics (AttemptMetrics).
         """
         while self.state not in (AttemptState.SUCCESS, AttemptState.FAILURE):
             self.previous_state = self.state
@@ -222,6 +260,7 @@ class GenerationAttempt:
                 self.error = f"State {self.previous_state.name} did not transition."
                 self.state = AttemptState.FAILURE
                 break
+
         overall_time = time.time() - self.start_time
         success = self.state == AttemptState.SUCCESS
         metrics = AttemptMetrics(
@@ -231,9 +270,9 @@ class GenerationAttempt:
             tests_passed=self.test_counts[0],
             tests_failed=self.test_counts[1],
             tests_skipped=self.test_counts[2],
-            prompt_tokens=self.usage.prompt_tokens,
-            completion_tokens=self.usage.completion_tokens,
-            total_tokens=self.usage.total_tokens,
+            prompt_tokens=self.usage.prompt_tokens if self.usage else 0,
+            completion_tokens=self.usage.completion_tokens if self.usage else 0,
+            total_tokens=self.usage.total_tokens if self.usage else 0,
             error=self.error,
         )
         return success, metrics
@@ -241,7 +280,13 @@ class GenerationAttempt:
     @attempt_state
     def _initialize(self):
         """
-        Initialize the attempt by clearing errors and setting the state to GENERATE.
+        Initialize the attempt by clearing errors and preparing for generation.
+
+        This method is the entry point for the state machine, resetting the error
+        state and transitioning to the GENERATE state.
+
+        Raises:
+            RuntimeError: If initialization fails.
         """
         logger.info("Initializing...")
         self.error = None
@@ -252,11 +297,14 @@ class GenerationAttempt:
         """
         Generate code using the Mistral client.
 
-        Calls the Mistral client's complete() method and records model usage details.
-        Moves the state to PARSE upon successful code generation.
+        Calls the Mistral client's complete() method with the provided prompt
+        and records the generated code and model usage details.
 
         Args:
-            prompt (str): The prompt to generate code.
+            prompt (str): The prompt to generate code from.
+
+        Raises:
+            RuntimeError: If code generation fails or times out.
         """
         logger.info("Generating code...")
         generated_code, usage = self.model.complete(prompt)
@@ -274,8 +322,11 @@ class GenerationAttempt:
         """
         Parse the generated code.
 
-        Utilizes ROS2CodeParser to extract and format the code.
-        On success, transitions the state to SAVE.
+        Uses ROS2CodeParser to extract and optionally format the generated code.
+        Transitions to the SAVE state if parsing succeeds.
+
+        Raises:
+            RuntimeError: If parsing fails or no valid code is extracted.
         """
         logger.info("Parsing generated code...")
         code = ROS2CodeParser.parse(self.generated_code)
@@ -291,12 +342,15 @@ class GenerationAttempt:
         """
         Save the parsed code to a file.
 
-        Invokes the provided save_callback with the parsed code and output_path.
-        On success, transitions the state to TEST.
+        Invokes the provided save_callback with the parsed code and output path.
+        Transitions to the TEST state if saving succeeds.
 
         Args:
             output_path (Path): Destination file path for the generated code.
-            save_callback (callable): Function that persists the code.
+            save_callback (Callable[[str, Path], bool]): Function that saves the code to the specified path.
+
+        Raises:
+            RuntimeError: If the save operation fails.
         """
         logger.info("Saving code...")
         if not save_callback(self.parsed_code, output_path):
@@ -310,9 +364,11 @@ class GenerationAttempt:
         """
         Execute tests on the saved code using ROS2Runner.
 
-        Retrieves required test configuration (node_command, test_command, and ros2_version) from the config.
-        Sources the ROS2 environment and runs tests. If tests pass, the attempt is marked SUCCESS;
-        otherwise, it transitions to FAILURE.
+        Retrieves test configuration from the config and runs tests on the generated code.
+        Transitions to SUCCESS if tests pass, or FAILURE if they fail.
+
+        Raises:
+            RuntimeError: If test configuration is missing or tests fail.
         """
         logger.info("Running tests...")
         test_section = self.config.get("test")

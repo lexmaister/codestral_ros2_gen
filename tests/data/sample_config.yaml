@@ -28,7 +28,7 @@ metrics:
 
 # Path to the generated code
 output:
-  output_file: "src/object_height/object_height/service_node.py"
+  output_file: "src/service_node.py"
 
 # Input files used for prompting
 input:

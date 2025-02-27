@@ -1,6 +1,6 @@
 import time
 from pathlib import Path
-from typing import Optional, Dict, Any, Tuple, Type
+from typing import Optional, Type
 from abc import ABC, abstractmethod
 
 from codestral_ros2_gen import get_config_path, load_config, logger
@@ -16,16 +16,12 @@ class BaseGenerator(ABC):
     Abstract base class for code generation modules in the codestral_ros2_gen framework.
 
     This class implements the template method pattern with a three-phase generation process:
-    1. Initialization: Set up the environment, load configuration, and prepare resources
-    2. Generation: Execute the actual code generation with multiple attempts and iterations
-    3. Reporting: Analyze and display metrics about the generation process
+    1. Initialization: Set up the environment, load configuration, and prepare resources.
+    2. Generation: Execute the actual code generation with multiple attempts and iterations.
+    3. Reporting: Analyze and display metrics about the generation process.
 
     Derived classes must implement the abstract method `prepare_prompt()` to define
     the specific prompting strategy for their generation task.
-
-    :param config_path: Path to the configuration file. If None, the default path
-                        will be used from get_config_path(), defaults to None
-    :type config_path: Optional[Path]
     """
 
     # Default dependencies - can be overridden in tests
@@ -43,10 +39,11 @@ class BaseGenerator(ABC):
         """
         Initialize the generator with configurable dependencies.
 
-        :param config_path: Path to the configuration file
-        :param generation_attempt_class: Class to use for generation attempts (for testing)
-        :param metrics_handler_class: Class to use for metrics handling (for testing)
-        :param model_client_class: Class to use for the AI model client (for testing)
+        Args:
+            config_path (Optional[Path]): Path to the configuration file.
+            generation_attempt_class (Optional[Type]): Class to use for generation attempts (for testing).
+            metrics_handler_class (Optional[Type]): Class to use for metrics handling (for testing).
+            model_client_class (Optional[Type]): Class to use for the AI model client (for testing).
         """
         self.config_path: Path = config_path if config_path else get_config_path()
         self.config: dict = None  # Will be loaded in _initialization_phase
@@ -68,9 +65,11 @@ class BaseGenerator(ABC):
         This abstract method must be implemented by subclasses to define the specific
         prompting strategy for their generation task.
 
-        :param kwargs: Additional keyword arguments specific to the generation task
-        :return: A formatted prompt string ready for model input
-        :rtype: str
+        Args:
+            **kwargs: Additional keyword arguments specific to the generation task (e.g., service_name, node_name for prompting).
+
+        Returns:
+            str: A formatted prompt string ready for model input.
         """
         pass
 
@@ -85,7 +84,8 @@ class BaseGenerator(ABC):
 
         Also attempts to create the output directory if it doesn't exist.
 
-        :raises RuntimeError: If configuration is invalid or output directory is inaccessible
+        Raises:
+            RuntimeError: If configuration is invalid or output directory is inaccessible.
         """
         # Check that "generation" section contains required keys.
         validate_config_keys(
@@ -111,6 +111,9 @@ class BaseGenerator(ABC):
         """
         Check that the current working directory is a valid ROS2 workspace,
         i.e. contains either a 'src' or 'install' directory.
+
+        Raises:
+            RuntimeError: If the current directory is not a valid ROS2 workspace.
         """
         cwd: Path = Path.cwd()
         if not ((cwd / "src").exists() or (cwd / "install").exists()):
@@ -123,11 +126,12 @@ class BaseGenerator(ABC):
         Execute the initialization phase of the generation process.
 
         This phase:
-        1. Loads the configuration from the specified file
-        2. Validates the environment and configuration
-        3. Initializes the metrics handler and the model client
+        1. Loads the configuration from the specified file.
+        2. Validates the environment and configuration.
+        3. Initializes the metrics handler and the model client.
 
-        :raises RuntimeError: If there's an issue with configuration or initialization
+        Raises:
+            RuntimeError: If there's an issue with configuration or initialization.
         """
         logger.info("Phase: INITIALIZATION -> Loading configuration.")
         self.config = load_config(self.config_path)
@@ -160,15 +164,18 @@ class BaseGenerator(ABC):
         Execute the generation phase by performing multiple iterations and attempts.
 
         This phase:
-        1. Prepares the prompt using the subclass-specific implementation
-        2. Runs the configured number of iterations
-        3. For each iteration, makes multiple generation attempts until success or max attempts
-        4. Records metrics for each attempt
+        1. Prepares the prompt using the subclass-specific implementation.
+        2. Runs the configured number of iterations.
+        3. For each iteration, makes multiple generation attempts until success or max attempts.
+        4. Records metrics for each attempt.
 
         The process stops early if a successful generation is achieved.
 
-        :kwargs: Additional keyword arguments to be passed to the prompt preparation method
-        :raises: Any exceptions that might occur during the generation process
+        Args:
+            **kwargs: Additional keyword arguments to be passed to the prompt preparation method.
+
+        Raises:
+            Exception: Any exceptions that might occur during the generation process.
         """
         logger.info("Phase: GENERATION -> Starting generation process.")
         logger.info(f"Max attempts: {self.max_attempts!r}")
@@ -199,7 +206,7 @@ class BaseGenerator(ABC):
                 else:
                     logger.info(f"Iteration {iteration}: Attempt {attempt} failed.")
 
-            logger.info(f" Iteration {iteration} finished.")
+            logger.info(f"Iteration {iteration} finished.")
 
         logger.info(
             "Phase: GENERATION -> Generation process finished. Moving to REPORT phase."
@@ -210,9 +217,9 @@ class BaseGenerator(ABC):
         Analyze the metrics collected during the generation process and display a summary report.
 
         This phase:
-        1. Processes all collected metrics from generation attempts
-        2. Generates a comprehensive report on the generation performance
-        3. Logs the report at INFO level
+        1. Processes all collected metrics from generation attempts.
+        2. Generates a comprehensive report on the generation performance.
+        3. Logs the report at INFO level.
 
         This method is typically called in the finally block to ensure reports are generated
         even if exceptions occur during generation.
@@ -226,18 +233,21 @@ class BaseGenerator(ABC):
         """
         Run the complete generation process (initialization, generation, reporting).
 
-        This is the main entry point for executing the generation workflow. It:
-        1. Runs the initialization phase
-        2. Executes the generation phase
-        3. Ensures the reporting phase is executed even if errors occur
-        4. Logs the total execution time
+        This is the main entry point for executing the generation workflow:
+        1. Runs the initialization phase.
+        2. Executes the generation phase.
+        3. Ensures the reporting phase is executed even if errors occur.
+        4. Logs the total execution time.
 
-        :param kwargs: Additional keyword arguments to pass to the generation process
-        :raises: Logs but does not propagate exceptions from the generation process
+        Args:
+            **kwargs: Additional keyword arguments to prepare prompt (e.g., service_name, node_name) and other parameters for the generation process. These are passed to the generation phase.
+
+        Raises:
+            None: Logs but does not propagate exceptions from the generation process.
         """
         try:
             self._initialization_phase()
-            self._generation_phase()
+            self._generation_phase(**kwargs)
         except Exception as e:
             logger.error(f"Error during generation process:\n\n{e}\n")
         finally:

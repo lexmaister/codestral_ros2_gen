@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 
-from codestral_ros2_gen.generators.base_generator import BaseGenerator, _missing_keys
+from codestral_ros2_gen.generators.base_generator import BaseGenerator
 
 
 # Test implementation of BaseGenerator for testing
@@ -77,24 +77,6 @@ def test_prepare_prompt():
     generator = TestGenerator()
     assert generator.prepare_prompt() == "Test prompt"
     assert generator.prepare_prompt(key="value") == "Test prompt with {'key': 'value'}"
-
-
-def test_missing_keys_function():
-    """Test the _missing_keys utility function."""
-    config = {"section1": {"key1": "value1", "key2": "value2"}}
-
-    # Should not raise an error
-    _missing_keys(config, "section1", ("key1", "key2"))
-
-    # Should raise RuntimeError for missing section
-    with pytest.raises(RuntimeError, match="Missing section 'section2'"):
-        _missing_keys(config, "section2", ("key1",))
-
-    # Should raise RuntimeError for missing keys
-    with pytest.raises(
-        RuntimeError, match="Missing required keys in 'section1': key3, key4"
-    ):
-        _missing_keys(config, "section1", ("key1", "key3", "key4"))
 
 
 def test_validate_environment(sample_config, sample_config_path):

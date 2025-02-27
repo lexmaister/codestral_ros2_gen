@@ -8,30 +8,7 @@ from codestral_ros2_gen.utils.metrics_handler import MetricsHandler
 from codestral_ros2_gen.models.mistral_client import MistralClient
 from codestral_ros2_gen.generators.generation_attempt import GenerationAttempt
 from codestral_ros2_gen.utils.file_io import save_code
-
-
-def _missing_keys(
-    config: Dict[str, Any], section: str, required: Tuple[str, ...]
-) -> None:
-    """Raise error if any required keys are missing in the given section of config.
-
-    :param config: Configuration dictionary to inspect
-    :type config: Dict[str, Any]
-    :param section: The section name within the config to check
-    :type section: str
-    :param required: Tuple of required keys that must exist in the section
-    :type required: Tuple[str, ...]
-    :raises RuntimeError: If section is missing or any required keys are not found
-    """
-    if section not in config:
-        raise RuntimeError(
-            f"Configuration error: Missing section '{section}' in configuration."
-        )
-    missing = [key for key in required if key not in config[section]]
-    if missing:
-        raise RuntimeError(
-            f"Configuration error: Missing required keys in '{section}': {', '.join(missing)}"
-        )
+from codestral_ros2_gen.utils.config_utils import validate_config_keys
 
 
 class BaseGenerator(ABC):
@@ -111,13 +88,13 @@ class BaseGenerator(ABC):
         :raises RuntimeError: If configuration is invalid or output directory is inaccessible
         """
         # Check that "generation" section contains required keys.
-        _missing_keys(
+        validate_config_keys(
             self.config,
             "generation",
             ("max_attempts", "evaluation_iterations"),
         )
         # Check that "output" section contains the output file key.
-        _missing_keys(
+        validate_config_keys(
             self.config,
             "output",
             ("output_file",),

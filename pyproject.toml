@@ -37,6 +37,11 @@ dependencies = [
     # for ros2
     "flake8",
     "pydocstyle",
+    # for sphinx
+    "sphinx",
+    "sphinx-rtd-theme",
+    "sphinx-autodoc-typehints",
+    "myst-parser",
 ]
 
 [project.urls]

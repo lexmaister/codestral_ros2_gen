@@ -22,6 +22,7 @@ def sample_metrics():
     return AttemptMetrics(
         attempt_time=1.0,
         success=True,
+        final_state="success",
         tests_passed=10,
         tests_failed=10,
         tests_skipped=10,

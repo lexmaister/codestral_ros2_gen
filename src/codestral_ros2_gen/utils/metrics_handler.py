@@ -7,7 +7,6 @@ from io import StringIO
 from codestral_ros2_gen import logger_main
 from codestral_ros2_gen.generators.generation_attempt import AttemptMetrics
 
-
 logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
 
 
@@ -26,6 +25,7 @@ class MetricsHandler:
         Initialize the MetricsHandler.
 
         Args:
+            metrics_file (str | Path): The path to the JSONL file where metrics will be stored.
         """
         self.metrics_file = Path(metrics_file).absolute().resolve()
         logger.info(f"Metrics file: {self.metrics_file}")
@@ -46,7 +46,7 @@ class MetricsHandler:
         Args:
             iteration_number (int): The sequential number of the iteration.
             attempt_number (int): The sequential number of the attempt.
-            attempt_metrics: An AttemptMetrics instance containing metrics for the attempt.
+            attempt_metrics (AttemptMetrics): An AttemptMetrics instance containing metrics for the attempt.
         """
         logger.debug(
             f"Recording Attempt #{attempt_number}, Iteration #{iteration_number}:\n"
@@ -79,7 +79,8 @@ class MetricsHandler:
         """
         Load metrics from an existing JSONL file into the internal DataFrame.
 
-        If the file is not found, an error
+        Raises:
+            RuntimeError: If the file is not found or an error occurs during loading.
         """
         try:
             data = self.metrics_file.read_text(encoding="utf-8")
@@ -98,6 +99,7 @@ class MetricsHandler:
     def get_report(self) -> str:
         """
         Generate a report based on the collected metrics.
+
         Returns:
             str: The generated report.
         """
@@ -110,11 +112,13 @@ class MetricsHandler:
         rep_1["success"] = rep_1["success"].map({True: "✅", False: "🚫"})
         rep_1.columns = ("success", "attempts", "tests_passed")
 
-        rep2 = (
+        rep_2 = (
             self.metrics_df.groupby("iteration")[["attempt_time", "total_tokens"]]
             .apply("mean")
             .astype(int)
         )
-        rep2.columns = ("avg attempt time, s", "avg total tokens")
+        rep_2.columns = ("avg attempt time, s", "avg total tokens")
 
-        return pd.concat([rep_1, rep2], axis=1).to_markdown(tablefmt="pretty")
+        return rep_1.merge(rep_2, left_index=True, right_index=True).to_markdown(
+            tablefmt="pretty"
+        )

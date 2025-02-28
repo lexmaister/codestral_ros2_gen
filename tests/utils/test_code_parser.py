@@ -76,3 +76,58 @@ def test_code_parser(input_text, expected):
     print("Expected:", expected)
     print("---")
     assert result == expected
+
+
+def test_parse_multiple_code_blocks():
+    """
+    Test parsing a response with multiple code blocks.
+    """
+    response = """
+    Here is some text with multiple code blocks:
+    ```python
+    def first_function():
+        print('First function')
+    ```
+    More text.
+    ```python
+    def second_function():
+        print('Second function')
+    ```
+    Even more text.
+    """
+    expected_output = (
+        '#!/usr/bin/env python3\ndef first_function():\n    print("First function")\n'
+    )
+    assert ROS2CodeParser.parse(response) == expected_output
+
+
+def test_parse_invalid_code():
+    """
+    Test parsing a response with invalid Python code.
+    """
+    response = """
+    Here is some text with invalid code:
+    ```python
+    def invalid_function():
+        print('Invalid code'
+    ```
+    More text.
+    """
+    assert ROS2CodeParser.parse(response) is None
+
+
+def test_parse_code_with_shebang():
+    """
+    Test parsing a response with code that already has a shebang line.
+    """
+    response = """
+    Here is some text with code that has a shebang line:
+    ```python
+#!/usr/bin/env python3
+def shebang_function():
+    print('Shebang function')
+    ```
+    More text.
+    """
+    expected_output = '#!/usr/bin/env python3\ndef shebang_function():\n    print("Shebang function")\n'
+    assert ROS2CodeParser.parse(response) == expected_output

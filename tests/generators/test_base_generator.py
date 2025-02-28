@@ -8,6 +8,8 @@ from codestral_ros2_gen.generators.base_generator import BaseGenerator
 class TestGenerator(BaseGenerator):
     """Concrete implementation of BaseGenerator for testing."""
 
+    __test__ = False
+
     def prepare_prompt(self, **kwargs):
         """Implementation of abstract method for testing."""
         return "Test prompt" + (f" with {kwargs}" if kwargs else "")

@@ -1,7 +1,7 @@
 # Model Configuration
 model:
   type: "codestral-latest"
-  api_key: "YOUR_API_KEY_HERE"
+  api_key: "test_key"
   system_prompt: |
     You are a ROS2 expert who specializes in service implementations.
     Generate clean, efficient python code that follows ROS2 best practices.

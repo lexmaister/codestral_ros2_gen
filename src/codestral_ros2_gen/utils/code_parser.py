@@ -54,7 +54,9 @@ class ROS2CodeParser:
             ... ```
             ... More text.\"\"\"
             >>> parser.parse(response)
-            '#!/usr/bin/env python3\\ndef example_function():\\n    print(\'Hello, world!\')\\n'
+            \'#!/usr/bin/env python3
+            def example_function():
+                print(\"Hello, world!\")\'
         """
         logger.debug(f"Parsing response: {response!r}")
         # Extract code from code blocks with "```python" at start and "```" at end.

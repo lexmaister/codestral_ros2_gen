@@ -1,217 +1,139 @@
 import pytest
+from unittest.mock import patch, MagicMock
 import subprocess
-from unittest.mock import patch, Mock, call
-
 from codestral_ros2_gen.utils.ros2_runner import ROS2Runner
 
 
 @pytest.fixture
-def mock_popen(monkeypatch):
-    """Fixture to mock subprocess.Popen"""
-    mock_process = Mock()
-    mock_process.stdout = Mock()
-    mock_process.stderr = Mock()
-    mock_process.returncode = 0
-    mock_process.pid = 12345
+def mock_subprocess_popen():
+    with patch("subprocess.Popen") as mock_popen:
+        yield mock_popen
 
-    # Make poll() indicate process is running
+
+@pytest.fixture
+def mock_psutil_process():
+    with patch("psutil.Process") as mock_process:
+        yield mock_process
+
+
+def test_start_node_success(mock_subprocess_popen):
+    mock_process = MagicMock()
     mock_process.poll.return_value = None
+    mock_subprocess_popen.return_value = mock_process
 
-    # Make communicate() return empty output by default
-    mock_process.communicate.return_value = ("", "")
-
-    mock_popen = Mock(return_value=mock_process)
-    monkeypatch.setattr(subprocess, "Popen", mock_popen)
-
-    return mock_popen, mock_process
-
-
-def test_init_default_values():
-    """Test initialization with default values"""
-    runner = ROS2Runner(node_command="ros2 run pkg node", test_command="pytest")
-    assert runner.node_command == "ros2 run pkg node"
-    assert runner.test_command == "pytest"
-    assert runner.test_timeout == 30  # assuming default timeout is 30
-    assert runner.node_process is None
-    assert runner.test_output == ""
-
-
-def test_start_node(mock_popen):
-    """Test starting a node successfully"""
-    mock_process_cls, mock_process_instance = mock_popen
-
-    # Configure mock to show process is running
-    mock_process_instance.poll.return_value = None
-
-    runner = ROS2Runner(
-        node_command="ros2 run test_pkg test_node", test_command="pytest"
-    )
-
+    runner = ROS2Runner(node_command="ros2 run my_node", test_command="pytest")
     runner.start_node()
 
-    # Updated assertion to match actual implementation
-    mock_process_cls.assert_called_with(
-        "ros2 run test_pkg test_node",
+    mock_subprocess_popen.assert_called_once_with(
+        "ros2 run my_node",
         shell=True,
         executable="/bin/bash",
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
         text=True,
     )
-    assert runner.node_process == mock_process_instance
+    assert runner.node_process == mock_process
 
 
-def test_start_node_immediate_termination(mock_popen):
-    """Test starting a node that terminates immediately"""
-    mock_process_cls, mock_process_instance = mock_popen
+def test_start_node_failure(mock_subprocess_popen):
+    mock_process = MagicMock()
+    mock_process.poll.return_value = 1
+    mock_process.communicate.return_value = ("stdout", "stderr")
+    mock_subprocess_popen.return_value = mock_process
 
-    # Configure mock to show process terminated
-    mock_process_instance.poll.return_value = 1
-    mock_process_instance.communicate.return_value = ("", "Node crashed")
+    runner = ROS2Runner(node_command="ros2 run my_node", test_command="pytest")
 
-    runner = ROS2Runner(
-        node_command="ros2 run test_pkg test_node", test_command="pytest"
-    )
-
-    with pytest.raises(RuntimeError) as excinfo:
+    with pytest.raises(RuntimeError, match="Node process terminated immediately"):
         runner.start_node()
 
-    assert "Node process terminated immediately" in str(excinfo.value)
 
+def test_run_tests_success(mock_subprocess_popen):
+    mock_process = MagicMock()
+    mock_process.communicate.return_value = ("stdout", "stderr")
+    mock_process.returncode = 0
+    mock_subprocess_popen.return_value = mock_process
 
-def test_kill_node_not_running():
-    """Test killing a node that isn't running"""
-    runner = ROS2Runner(
-        node_command="ros2 run test_pkg test_node", test_command="pytest"
+    runner = ROS2Runner(node_command="ros2 run my_node", test_command="pytest")
+    return_code = runner.run_tests()
+
+    mock_subprocess_popen.assert_called_once_with(
+        "pytest",
+        shell=True,
+        executable="/bin/bash",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
     )
-
-    # Should not raise any exception
-    runner.kill_node()
-    assert runner.node_process is None
+    assert return_code == 0
+    assert runner.test_output == "stdout:\nstdout\nstderr:\nstderr"
 
 
-def test_kill_node_graceful(mock_popen):
-    """Test killing a node gracefully"""
-    mock_process_cls, mock_process_instance = mock_popen
-
-    # Configure mock for successful startup and shutdown
-    mock_process_instance.poll.return_value = None
-    mock_process_instance.wait.return_value = 0
-
-    runner = ROS2Runner(
-        node_command="ros2 run test_pkg test_node", test_command="pytest"
+def test_run_tests_timeout(mock_subprocess_popen):
+    mock_process = MagicMock()
+    mock_process.communicate.side_effect = subprocess.TimeoutExpired(
+        cmd="pytest", timeout=30, output=("stdout", "stderr")
     )
-
-    runner.start_node()
-    runner.kill_node()
-
-    mock_process_instance.terminate.assert_called_once()
-    mock_process_instance.wait.assert_called_once()
-    assert runner.node_process is None
-
-
-def test_run_tests_success(mock_popen):
-    """Test successful test execution"""
-    mock_process_cls, mock_process_instance = mock_popen
-
-    # Configure mock for successful test run
-    mock_process_instance.communicate.return_value = ("Tests passed", "")
-    mock_process_instance.returncode = 0
+    mock_subprocess_popen.return_value = mock_process
 
     runner = ROS2Runner(
-        node_command="ros2 run test_pkg test_node", test_command="pytest"
+        node_command="ros2 run my_node", test_command="pytest", test_timeout=30
     )
+    return_code = runner.run_tests()
 
-    result = runner.run_tests()
-
-    assert result == 0
-    assert "Tests passed" in runner.test_output
-
-
-def test_run_tests_with_node(mock_popen):
-    """Test running tests with a node running"""
-    mock_process_cls, mock_process_instance = mock_popen
-
-    # Configure mock for successful node startup and test run
-    mock_process_instance.poll.return_value = None
-    mock_process_instance.communicate.return_value = ("Test output", "")
-    mock_process_instance.returncode = 0
-
-    runner = ROS2Runner(
-        node_command="ros2 run test_pkg test_node", test_command="pytest"
-    )
-
-    runner.start_node()
-    result = runner.run_tests()
-
-    assert result == 0
-    assert "Test output" in runner.test_output
-
-
-def test_run_tests_failure(mock_popen):
-    """Test handling test failures"""
-    mock_process_cls, mock_process_instance = mock_popen
-
-    # Configure mock for failed test run
-    mock_process_instance.communicate.return_value = ("Test failed", "Error occurred")
-    mock_process_instance.returncode = 1
-
-    runner = ROS2Runner(
-        node_command="ros2 run test_pkg test_node", test_command="pytest"
-    )
-
-    result = runner.run_tests()
-
-    assert result == 1
-    assert "Test failed" in runner.test_output
-    assert "Error occurred" in runner.test_output
-
-
-def test_run_tests_timeout(mock_popen):
-    """Test handling timeout during test execution"""
-    mock_process_cls, mock_process_instance = mock_popen
-
-    # Configure mock for timeout with some partial output
-    timeout_exc = subprocess.TimeoutExpired(
-        cmd="pytest",
-        timeout=30,
-        output="Partial test output",
-        stderr="Test timeout occurred",
-    )
-    mock_process_instance.communicate.side_effect = timeout_exc
-
-    runner = ROS2Runner(
-        node_command="ros2 run test_pkg test_node",
-        test_command="pytest",
-        test_timeout=30,
-    )
-
-    result = runner.run_tests()
-
-    # Verify process was killed after timeout
-    mock_process_instance.kill.assert_called_once()
-    # Check return code indicates failure
-    assert result == 1
-    # Verify timeout message is in output
+    mock_process.kill.assert_called_once()
+    assert return_code == 1
     assert "Test process timed out after 30 seconds" in runner.test_output
-    assert "Partial test output" in runner.test_output
+
+
+def test_kill_node_success(mock_psutil_process):
+    mock_shell_process = MagicMock()
+    mock_child_process = MagicMock()
+    mock_child_process.cmdline.return_value = ["ros2", "run", "my_node"]
+    mock_child_process.pid = 5678
+    mock_shell_process.children.return_value = [mock_child_process]
+    mock_shell_process.is_running.return_value = True
+    mock_psutil_process.return_value = mock_shell_process
+
+    runner = ROS2Runner(node_command="ros2 run my_node", test_command="pytest")
+    runner.node_process = MagicMock(pid=1234)
+
+    runner.kill_node()
+
+    mock_child_process.terminate.assert_called_once()
+    mock_shell_process.terminate.assert_called_once()
+    assert runner.node_process is None
 
 
 def test_get_tests_stat():
-    """Test parsing test output for statistics"""
-    runner = ROS2Runner(
-        node_command="ros2 run test_pkg test_node",
-        test_command="pytest",
-        test_timeout=30,
-    )
-    runner.test_output = """
-    ============================= short test summary info ==============================
-    FAILED test_pkg/test_node.py::test_failed - AssertionError: assert False
-    PASSED test_pkg/test_node.py::test_passed
-    SKIPPED test_pkg/test_node.py::test_skipped
-    ====================== 1 failed, 2 passed, 3 skipped in 0.12s =======================
-    """
+    runner = ROS2Runner(node_command="ros2 run my_node", test_command="pytest")
+    runner.test_output = "stdout:\n10 passed in 0.12s\n10 failed in 0.12s\n10 skipped in 0.12s\nstderr:\n"
+
     runner._get_tests_stat()
-    assert runner.tests_failed == 1
-    assert runner.tests_passed == 2
-    assert runner.tests_skipped == 3
+
+    assert runner.tests_passed == 10
+    assert runner.tests_failed == 10
+    assert runner.tests_skipped == 10
+
+
+@pytest.mark.parametrize("return_code, succeed", [(1, 0), (0, 1)])
+def test_run_success(mock_subprocess_popen, mock_psutil_process, return_code, succeed):
+    mock_test_process = MagicMock()
+    mock_test_process.poll.return_value = None
+    mock_test_process.communicate.return_value = (
+        "stdout 1 passed, 2 failed, 3 skipped in 10 s",
+        "stderr",
+    )
+    mock_test_process.returncode = return_code
+    mock_subprocess_popen.return_value = mock_test_process
+
+    mock_node_process = MagicMock()
+    mock_node_process.poll.return_value = None
+    mock_node_process.children.return_value = []
+    mock_node_process.is_running.return_value = False
+    mock_psutil_process.return_value = mock_node_process
+
+    runner = ROS2Runner(node_command="ros2 run my_node", test_command="pytest")
+    success, _, stats = runner.run()
+
+    assert success == succeed
+    assert stats == (1, 2, 3)

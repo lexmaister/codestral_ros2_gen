@@ -8,24 +8,33 @@ import psutil
 
 from codestral_ros2_gen import logger_main
 
-
 logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
 
 
 class ROS2Runner:
     """
-    TestRunner encapsulates methods to launch a ROS2 node, run pytest tests in the ROS2 environment,
+    ROS2Runner encapsulates methods to launch a ROS2 node, run pytest tests in the ROS2 environment,
     capture the test output for analysis, and terminate the node.
+
+    Attributes:
+        node_command (str): Shell command to launch the ROS2 node.
+        test_command (str): Shell command to run tests (pytest).
+        test_timeout (int): How many seconds to wait for the process before timing out. Defaults to 30 seconds.
+        node_process (subprocess.Popen): The process object for the ROS2 node.
+        test_output (str): Captured output from the test command.
+        tests_passed (int): Number of tests that passed.
+        tests_failed (int): Number of tests that failed.
+        tests_skipped (int): Number of tests that were skipped.
     """
 
     def __init__(self, node_command: str, test_command: str, test_timeout: int = 30):
         """
-        Initialize the TestRunner.
+        Initialize the ROS2Runner.
 
         Args:
             node_command (str): Shell command to launch the ROS2 node.
             test_command (str): Shell command to run tests (pytest).
-            timeout_seconds (int): How many seconds to wait for the process before timing out. Defaults to 30 seconds.
+            test_timeout (int): How many seconds to wait for the process before timing out. Defaults to 30 seconds.
         """
         self.node_command = node_command
         self.test_command = test_command
@@ -41,7 +50,7 @@ class ROS2Runner:
         Start the ROS2 node and verify it launched successfully.
 
         Raises:
-            RuntimeError: If node fails to start or register with ROS2
+            RuntimeError: If the node fails to start or register with ROS2.
         """
         logger.info("Starting the ROS2 node...")
         self.node_process = subprocess.Popen(
@@ -100,19 +109,6 @@ class ROS2Runner:
     def kill_node(self) -> None:
         """
         Terminate the running ROS2 node cleanly, and force-kill if necessary.
-        """
-        if self.node_process is not None:
-            logger.info(f"Terminating node process, pid {self.node_process.pid!r}...")
-            try:
-                self.node_process.terminate()
-                self.node_process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                logger.warning("Node did not shutdown gracefully; force killing.")
-                os.kill(self.node_process.pid, signal.SIGKILL)
-            self.node_process = None
-
-    def kill_node(self) -> None:
-        """Terminate the running ROS2 node cleanly, and force-kill if necessary.
         Uses psutil to find and terminate the actual ROS2 node process, not just the shell.
         """
         if self.node_process is not None:
@@ -208,7 +204,7 @@ class ROS2Runner:
         Execute the full test run: start node, run tests, and terminate the node.
 
         Returns:
-            (bool, str, tuple[int, int, int]): Tuple with overall test success status,
+            tuple[bool, str, tuple[int, int, int]]: Tuple with overall test success status,
             captured test output and a tuple with the number of tests passed, failed, and skipped.
         """
         try:

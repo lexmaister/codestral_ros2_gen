@@ -12,6 +12,7 @@ Welcome to Codestral ROS2 Generator's documentation!
 
    generators/base_generator
    generators/generation_attempt
+   models/mistral_client
 
 Indices and tables
 ==================

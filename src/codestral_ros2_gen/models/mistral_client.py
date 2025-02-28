@@ -11,7 +11,14 @@ logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
 
 @dataclass
 class ModelUsage:
-    """Token usage statistics."""
+    """
+    Dataclass to represent token usage statistics.
+
+    Attributes:
+        prompt_tokens (int): Number of tokens used in the prompt.
+        completion_tokens (int): Number of tokens used in the completion.
+        total_tokens (int): Total number of tokens used.
+    """
 
     prompt_tokens: int
     completion_tokens: int
@@ -27,7 +34,15 @@ class ModelUsage:
 
 
 class MistralClient:
-    """Client for interacting with Mistral AI API."""
+    """
+    Client for interacting with Mistral AI API.
+
+    Attributes:
+        DEFAULT_CONFIG (Dict[str, Any]): Default configuration for the Mistral client.
+        api_key (str): API key for authenticating with the Mistral AI API.
+        client (Mistral): Mistral client instance.
+        config (Dict[str, Any]): Configuration for the Mistral client.
+    """
 
     DEFAULT_CONFIG = {
         "model": {"type": "codestral-latest", "parameters": {"temperature": 0.2}}
@@ -36,13 +51,32 @@ class MistralClient:
     def __init__(
         self, api_key: Optional[str] = None, config: Optional[Dict[str, Any]] = None
     ):
+        """
+        Initialize the MistralClient.
+
+        Args:
+            api_key (Optional[str]): API key for authenticating with the Mistral AI API.
+            config (Optional[Dict[str, Any]]): Configuration for the Mistral client.
+        """
         model_config = config.get("model", {}) if config else {}
         self.api_key = self._get_api_key(api_key, model_config)
         self.client = Mistral(api_key=self.api_key)
         self.config = model_config
 
     def _get_api_key(self, api_key: Optional[str], config: Dict[str, Any]) -> str:
-        """Get API key from provided sources in order of precedence."""
+        """
+        Get API key from provided sources in order of precedence.
+
+        Args:
+            api_key (Optional[str]): API key provided directly.
+            config (Dict[str, Any]): Configuration dictionary.
+
+        Returns:
+            str: API key.
+
+        Raises:
+            RuntimeError: If API key is not found in any of the provided sources.
+        """
         msg = "Create Mistral client with provided API key"
         if api_key:
             logger.info(msg)
@@ -77,13 +111,18 @@ class MistralClient:
         Get completion from the model.
 
         Args:
-            prompt: Main prompt text
-            system_prompt: Optional override for system prompt
-            model_type: Optional override for model type
-            temperature: Optional override for temperature
+            prompt (str): Main prompt text.
+            system_prompt (Optional[str]): Optional override for system prompt.
+            model_type (Optional[str]): Optional override for model type.
+            temperature (Optional[float]): Optional override for temperature.
 
         Returns:
-            Tuple of (generated_text, usage_stats)
+            Tuple[str, ModelUsage]: Tuple of (generated_text, usage_stats).
+
+        Raises:
+            ValueError: If the prompt is empty.
+            ConnectionError: If there is a connection error with the Mistral API.
+            RuntimeError: If there is an API error.
         """
         logger.info("Start generating completion from Mistral AI")
         logger.debug(f"Prompt:\n{'<'*3}\n{prompt.strip()}\n{'<'*3}")
@@ -140,7 +179,16 @@ class MistralClient:
     def _prepare_messages(
         self, prompt: str, system_prompt: Optional[str] = None
     ) -> List[Dict[str, str]]:
-        """Prepare messages list for the API call."""
+        """
+        Prepare messages list for the API call.
+
+        Args:
+            prompt (str): Main prompt text.
+            system_prompt (Optional[str]): Optional system prompt.
+
+        Returns:
+            List[Dict[str, str]]: List of messages for the API call.
+        """
         messages = []
 
         if system_prompt:

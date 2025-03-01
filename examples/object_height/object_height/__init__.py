@@ -1,1 +1,0 @@
-"""Object height service package."""

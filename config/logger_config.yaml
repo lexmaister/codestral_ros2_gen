@@ -1,9 +1,0 @@
-level: INFO
-file: "generation.log"
-format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-handlers:
-  console:
-    enabled: true
-  file:
-    enabled: true
-    mode: w  # 'w' for write (overwrite), 'a' for append

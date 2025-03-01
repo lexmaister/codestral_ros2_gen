@@ -1,0 +1,328 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Base Generator &mdash; Codestral ROS2 Generator 0.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=10f1778b"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Generation Attempt" href="generation_attempt.html" />
+    <link rel="prev" title="Welcome to Codestral ROS2 Generator’s documentation!" href="../index.html" />
+</head>
+
+<body class="wy-body-for-nav">
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+
+
+          <a href="../index.html" class="icon icon-home">
+            Codestral ROS2 Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Base Generator</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator"><code class="docutils literal notranslate"><span class="pre">BaseGenerator</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator.__init__"><code class="docutils literal notranslate"><span class="pre">BaseGenerator.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator.GenerationAttemptClass"><code class="docutils literal notranslate"><span class="pre">BaseGenerator.GenerationAttemptClass</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator.MetricsHandlerClass"><code class="docutils literal notranslate"><span class="pre">BaseGenerator.MetricsHandlerClass</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator.ModelClientClass"><code class="docutils literal notranslate"><span class="pre">BaseGenerator.ModelClientClass</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator.prepare_prompt"><code class="docutils literal notranslate"><span class="pre">BaseGenerator.prepare_prompt()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._validate_environment"><code class="docutils literal notranslate"><span class="pre">BaseGenerator._validate_environment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._check_ros2_workspace"><code class="docutils literal notranslate"><span class="pre">BaseGenerator._check_ros2_workspace()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._initialization_phase"><code class="docutils literal notranslate"><span class="pre">BaseGenerator._initialization_phase()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._abc_impl"><code class="docutils literal notranslate"><span class="pre">BaseGenerator._abc_impl</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._generation_phase"><code class="docutils literal notranslate"><span class="pre">BaseGenerator._generation_phase()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._report_phase"><code class="docutils literal notranslate"><span class="pre">BaseGenerator._report_phase()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator.run"><code class="docutils literal notranslate"><span class="pre">BaseGenerator.run()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="generation_attempt.html">Generation Attempt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/mistral_client.html">Mistral Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/code_parser.html">Code Parser</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/config_utils.html">Config Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/file_io.html">File IO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/metrics_handler.html">Metrics Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/ros2_runner.html">ROS2 Runner</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Codestral ROS2 Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Base Generator</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/generators/base_generator.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+
+  <section id="module-codestral_ros2_gen.generators.base_generator">
+<span id="base-generator"></span><h1>Base Generator<a class="headerlink" href="#module-codestral_ros2_gen.generators.base_generator" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">codestral_ros2_gen.generators.base_generator.</span></span><span class="sig-name descname"><span class="pre">BaseGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generation_attempt_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_handler_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_client_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/base_generator.html#BaseGenerator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract base class for code generation modules in the codestral_ros2_gen framework.</p>
+<p>This class implements the template method pattern with a three-phase generation process:
+1. Initialization: Set up the environment, load configuration, and prepare resources.
+2. Generation: Execute the actual code generation with multiple attempts and iterations.
+3. Reporting: Analyze and display metrics about the generation process.</p>
+<p>Derived classes must implement the abstract method <cite>prepare_prompt()</cite> to define
+the specific prompting strategy for their generation task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config_path</strong> (<em>Path</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>generation_attempt_class</strong> (<em>Type</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>metrics_handler_class</strong> (<em>Type</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>model_client_class</strong> (<em>Type</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generation_attempt_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_handler_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_client_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/base_generator.html#BaseGenerator.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialize the generator with configurable dependencies.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config_path</strong> (<em>Optional</em><em>[</em><em>Path</em><em>]</em>) – Path to the configuration file.</p></li>
+<li><p><strong>generation_attempt_class</strong> (<em>Optional</em><em>[</em><em>Type</em><em>]</em>) – Class to use for generation attempts (for testing).</p></li>
+<li><p><strong>metrics_handler_class</strong> (<em>Optional</em><em>[</em><em>Type</em><em>]</em>) – Class to use for metrics handling (for testing).</p></li>
+<li><p><strong>model_client_class</strong> (<em>Optional</em><em>[</em><em>Type</em><em>]</em>) – Class to use for the AI model client (for testing).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator.GenerationAttemptClass">
+<span class="sig-name descname"><span class="pre">GenerationAttemptClass</span></span><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator.GenerationAttemptClass" title="Link to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt" title="codestral_ros2_gen.generators.generation_attempt.GenerationAttempt"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenerationAttempt</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator.MetricsHandlerClass">
+<span class="sig-name descname"><span class="pre">MetricsHandlerClass</span></span><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator.MetricsHandlerClass" title="Link to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="../utils/metrics_handler.html#codestral_ros2_gen.utils.metrics_handler.MetricsHandler" title="codestral_ros2_gen.utils.metrics_handler.MetricsHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricsHandler</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator.ModelClientClass">
+<span class="sig-name descname"><span class="pre">ModelClientClass</span></span><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator.ModelClientClass" title="Link to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="../models/mistral_client.html#codestral_ros2_gen.models.mistral_client.MistralClient" title="codestral_ros2_gen.models.mistral_client.MistralClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">MistralClient</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator.prepare_prompt">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prepare_prompt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/base_generator.html#BaseGenerator.prepare_prompt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator.prepare_prompt" title="Link to this definition"></a></dt>
+<dd><p>Prepare the input prompt to be used for code generation.</p>
+<p>This abstract method must be implemented by subclasses to define the specific
+prompting strategy for their generation task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>**kwargs</strong> – Additional keyword arguments specific to the generation task (e.g., service_name, node_name for prompting).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A formatted prompt string ready for model input.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator._validate_environment">
+<span class="sig-name descname"><span class="pre">_validate_environment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/base_generator.html#BaseGenerator._validate_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._validate_environment" title="Link to this definition"></a></dt>
+<dd><p>Validate that the configuration has a ‘generation’ section with required keys,
+and ensure that the output directory is accessible.</p>
+<p>Checks for required configuration sections and keys:
+- ‘generation’ section with ‘max_attempts’ and ‘evaluation_iterations’
+- ‘output’ section with ‘output_file’</p>
+<p>Also attempts to create the output directory if it doesn’t exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – If configuration is invalid or output directory is inaccessible.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator._check_ros2_workspace">
+<span class="sig-name descname"><span class="pre">_check_ros2_workspace</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/base_generator.html#BaseGenerator._check_ros2_workspace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._check_ros2_workspace" title="Link to this definition"></a></dt>
+<dd><p>Check that the current working directory is a valid ROS2 workspace,
+i.e. contains either a ‘src’ or ‘install’ directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – If the current directory is not a valid ROS2 workspace.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator._initialization_phase">
+<span class="sig-name descname"><span class="pre">_initialization_phase</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/base_generator.html#BaseGenerator._initialization_phase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._initialization_phase" title="Link to this definition"></a></dt>
+<dd><p>Execute the initialization phase of the generation process.</p>
+<p>This phase:
+1. Loads the configuration from the specified file.
+2. Validates the environment and configuration.
+3. Initializes the metrics handler and the model client.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – If there’s an issue with configuration or initialization.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator._abc_impl">
+<span class="sig-name descname"><span class="pre">_abc_impl</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._abc_impl" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator._generation_phase">
+<span class="sig-name descname"><span class="pre">_generation_phase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/base_generator.html#BaseGenerator._generation_phase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._generation_phase" title="Link to this definition"></a></dt>
+<dd><p>Execute the generation phase by performing multiple iterations and attempts.</p>
+<p>This phase:
+1. Prepares the prompt using the subclass-specific implementation.
+2. Runs the configured number of iterations.
+3. For each iteration, makes multiple generation attempts until success or max attempts.
+4. Records metrics for each attempt.</p>
+<p>The process stops early if a successful generation is achieved.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>**kwargs</strong> – Additional keyword arguments to be passed to the prompt preparation method.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Exception</strong> – Any exceptions that might occur during the generation process.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator._report_phase">
+<span class="sig-name descname"><span class="pre">_report_phase</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/base_generator.html#BaseGenerator._report_phase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._report_phase" title="Link to this definition"></a></dt>
+<dd><p>Analyze the metrics collected during the generation process and display a summary report.</p>
+<p>This phase:
+1. Processes all collected metrics from generation attempts.
+2. Generates a comprehensive report on the generation performance.
+3. Logs the report at INFO level.</p>
+<p>This method is typically called in the finally block to ensure reports are generated
+even if exceptions occur during generation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/base_generator.html#BaseGenerator.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator.run" title="Link to this definition"></a></dt>
+<dd><p>Run the complete generation process (initialization, generation, reporting).</p>
+<p>This is the main entry point for executing the generation workflow:
+1. Runs the initialization phase.
+2. Executes the generation phase.
+3. Ensures the reporting phase is executed even if errors occur.
+4. Logs the total execution time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>**kwargs</strong> – Additional keyword arguments to prepare prompt (e.g., service_name, node_name) and other parameters for the generation process. These are passed to the generation phase.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>None</strong> – Logs but does not propagate exceptions from the generation process.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="Welcome to Codestral ROS2 Generator’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="generation_attempt.html" class="btn btn-neutral float-right" title="Generation Attempt" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Lexmaister.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+</body>
+</html>

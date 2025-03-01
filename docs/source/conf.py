@@ -40,6 +40,8 @@ exclude_patterns = []
 html_theme = "alabaster"  # default
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
+# Custom output directory
+html_output_path = "html"
 
 # Napoleon settings for docstring parsing
 napoleon_google_docstring = True

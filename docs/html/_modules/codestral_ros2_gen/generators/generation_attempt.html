@@ -1,0 +1,547 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>codestral_ros2_gen.generators.generation_attempt &mdash; Codestral ROS2 Generator 0.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=10f1778b"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+</head>
+
+<body class="wy-body-for-nav">
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+
+
+          <a href="../../../index.html" class="icon icon-home">
+            Codestral ROS2 Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../generators/base_generator.html">Base Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generators/generation_attempt.html">Generation Attempt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models/mistral_client.html">Mistral Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/code_parser.html">Code Parser</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/config_utils.html">Config Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/file_io.html">File IO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/metrics_handler.html">Metrics Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/ros2_runner.html">ROS2 Runner</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Codestral ROS2 Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">codestral_ros2_gen.generators.generation_attempt</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+
+  <h1>Source code for codestral_ros2_gen.generators.generation_attempt</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">enum</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">asdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Callable</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">codestral_ros2_gen</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger_main</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">codestral_ros2_gen.models.mistral_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">MistralClient</span><span class="p">,</span> <span class="n">ModelUsage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">codestral_ros2_gen.utils.code_parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ROS2CodeParser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">codestral_ros2_gen.utils.ros2_runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">ROS2Runner</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">logger_main</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="vm">__name__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AttemptMetrics">
+<a class="viewcode-back" href="../../../generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AttemptMetrics</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dataclass representing metrics for a single generation attempt.</span>
+
+<span class="sd">    This class stores and provides access to various performance metrics collected during</span>
+<span class="sd">    a code generation attempt, including timing, success status, test results, and token usage.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        attempt_time (float): Total time in seconds taken for this attempt.</span>
+<span class="sd">        success (bool): Final state of the attempt (True for SUCCESS, False for FAILURE).</span>
+<span class="sd">        final_state (str): Final state of the attempt: SUCCESS or other in case of FAILURE.</span>
+<span class="sd">        tests_passed (int): Number of tests passed.</span>
+<span class="sd">        tests_failed (int): Number of tests failed.</span>
+<span class="sd">        tests_skipped (int): Number of tests skipped.</span>
+<span class="sd">        prompt_tokens (int): Number of tokens used in the prompt.</span>
+<span class="sd">        completion_tokens (int): Number of tokens used in the completion.</span>
+<span class="sd">        total_tokens (int): Total number of tokens used.</span>
+<span class="sd">        error (Optional[str]): Error message if any error occurred in case of FAILURE.</span>
+
+<span class="sd">    Internal Attributes:</span>
+<span class="sd">        _fields_order (list[str]): Internal list defining the order of fields for reports.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">attempt_time</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">final_state</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">tests_passed</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">tests_failed</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">tests_skipped</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">prompt_tokens</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">completion_tokens</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">total_tokens</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">error</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">_fields_order</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;attempt_time&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;final_state&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tests_passed&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tests_failed&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tests_skipped&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;prompt_tokens&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;completion_tokens&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;total_tokens&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;error&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert metrics to a dictionary.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[str, Any]: Dictionary representation of all metrics.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">asdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">as_series</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert metrics to a pandas Series with proper ordering.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.Series: Series containing all metrics with field names as index.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">field</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_dict</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields_order</span><span class="p">},</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;value&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;metric&quot;</span>
+        <span class="k">return</span> <span class="n">s</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a formatted string with all attempt metrics in table format.</span>
+
+<span class="sd">        Creates a markdown-formatted table of metrics, excluding the error message.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: Formatted metrics table excluding error message.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_series</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">s</span><span class="p">[</span><span class="s2">&quot;attempt_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;attempt_time&quot;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">s</span><span class="p">[</span><span class="s2">&quot;success&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;success&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">to_markdown</span><span class="p">(</span><span class="n">tablefmt</span><span class="o">=</span><span class="s2">&quot;simple&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="AttemptState">
+<a class="viewcode-back" href="../../../generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.AttemptState">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AttemptState</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enum representing valid states during a generation attempt.</span>
+
+<span class="sd">    This enum defines the possible states a generation attempt can be in,</span>
+<span class="sd">    from initialization through success or failure.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        INITIALIZE (int): Starting state for the attempt.</span>
+<span class="sd">        GENERATE (int): Code generation is in progress.</span>
+<span class="sd">        PARSE (int): Parsing the generated code.</span>
+<span class="sd">        SAVE (int): Saving the parsed code to disk.</span>
+<span class="sd">        TEST (int): Running tests on the saved code.</span>
+<span class="sd">        SUCCESS (int): Generation attempt succeeded.</span>
+<span class="sd">        FAILURE (int): Generation attempt failed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">INITIALIZE</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">GENERATE</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">PARSE</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">SAVE</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">TEST</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">SUCCESS</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="n">FAILURE</span> <span class="o">=</span> <span class="mi">7</span></div>
+
+
+
+<div class="viewcode-block" id="attempt_state">
+<a class="viewcode-back" href="../../../generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.attempt_state">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">attempt_state</span><span class="p">(</span><span class="n">func</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Decorator for methods representing a state in GenerationAttempt.</span>
+
+<span class="sd">    This decorator wraps methods in the GenerationAttempt class to:</span>
+<span class="sd">    1. Catch exceptions and set error state.</span>
+<span class="sd">    2. Log errors when they occur.</span>
+<span class="sd">    3. Transition to FAILURE state on error.</span>
+
+<span class="sd">    When an exception occurs in the wrapped method, the decorator sets the error</span>
+<span class="sd">    message, logs the error, transitions to FAILURE state, and returns None.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        func (Callable): The method to wrap.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Callable | None: Wrapped method with error handling and state transition logic, or None if exception occurs.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            @attempt_state</span>
+<span class="sd">            def _some_state_method(self):</span>
+<span class="sd">                # Method implementation that might raise an exception</span>
+<span class="sd">                # If exception occurs, state transitions to FAILURE</span>
+<span class="sd">                # and the decorator returns None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Exception on stage </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_state</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">:</span><span class="se">\n\n</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">AttemptState</span><span class="o">.</span><span class="n">FAILURE</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">wrapper</span></div>
+
+
+
+<div class="viewcode-block" id="GenerationAttempt">
+<a class="viewcode-back" href="../../../generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GenerationAttempt</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A state machine that orchestrates a single generation attempt using Mistral AI.</span>
+
+<span class="sd">    This class handles the complete lifecycle of a code generation attempt, including:</span>
+<span class="sd">    - Generating code by interacting with the Mistral client.</span>
+<span class="sd">    - Parsing generated code with ROS2CodeParser.</span>
+<span class="sd">    - Saving parsed code using a provided callback.</span>
+<span class="sd">    - Running tests on the generated code using ROS2Runner.</span>
+
+<span class="sd">    The class implements a state machine pattern to manage transitions between</span>
+<span class="sd">    different phases of the generation process.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        model (MistralClient): Instance of the Mistral client for code generation.</span>
+<span class="sd">        config (dict): Configuration dictionary including generation timeout and test settings.</span>
+<span class="sd">        state (AttemptState): Current state of the attempt.</span>
+<span class="sd">        previous_state (Optional[AttemptState]): Previous state of the attempt.</span>
+<span class="sd">        start_time (float): Timestamp when the attempt started.</span>
+<span class="sd">        generated_code (Optional[str]): Raw code generated by the model.</span>
+<span class="sd">        parsed_code (Optional[str]): Parsed and optionally formatted code.</span>
+<span class="sd">        usage (Optional[ModelUsage]): Model usage information.</span>
+<span class="sd">        test_counts (tuple[int, int, int]): Tuple of test counts (passed, failed, skipped).</span>
+<span class="sd">        error (Optional[str]): Error description if the attempt failed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GenerationAttempt.__init__">
+<a class="viewcode-back" href="../../../generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">MistralClient</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a GenerationAttempt.</span>
+
+<span class="sd">        Sets up the state machine with the given model and configuration.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model (MistralClient): Mistral client instance for code generation.</span>
+<span class="sd">            config (dict): Configuration settings including generation timeout and test settings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">AttemptState</span><span class="o">.</span><span class="n">INITIALIZE</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">previous_state</span><span class="p">:</span> <span class="n">AttemptState</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generated_code</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parsed_code</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">usage</span><span class="p">:</span> <span class="n">ModelUsage</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_counts</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="GenerationAttempt.run">
+<a class="viewcode-back" href="../../../generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.run">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">save_callback</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">AttemptMetrics</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run the complete generation attempt process.</span>
+
+<span class="sd">        Executes the full generation cycle through all states (initialize, generate,</span>
+<span class="sd">        parse, save, test) and returns success status and metrics.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            output_path (Path): Destination file path for the generated code.</span>
+<span class="sd">            prompt (str): The prompt to generate code from.</span>
+<span class="sd">            save_callback (Callable[[str, Path], bool]): Function that saves the code to the specified path.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[bool, AttemptMetrics]: Tuple containing success status (bool) and metrics (AttemptMetrics).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">AttemptState</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span> <span class="n">AttemptState</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">previous_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Entering state: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">AttemptState</span><span class="o">.</span><span class="n">INITIALIZE</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_initialize</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">AttemptState</span><span class="o">.</span><span class="n">GENERATE</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_generate</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">AttemptState</span><span class="o">.</span><span class="n">PARSE</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_parse</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">AttemptState</span><span class="o">.</span><span class="n">SAVE</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_save</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">save_callback</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">AttemptState</span><span class="o">.</span><span class="n">TEST</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_test</span><span class="p">()</span>
+            <span class="c1"># each stage should set new self.state itself</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Exiting state: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_state</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> -&gt; New state: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_state</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;State did not change from </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_state</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">. Terminating attempt.&quot;</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;State </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_state</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> did not transition.&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">AttemptState</span><span class="o">.</span><span class="n">FAILURE</span>
+                <span class="k">break</span>
+
+        <span class="n">overall_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span>
+        <span class="n">success</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">AttemptState</span><span class="o">.</span><span class="n">SUCCESS</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="n">AttemptMetrics</span><span class="p">(</span>
+            <span class="n">attempt_time</span><span class="o">=</span><span class="n">overall_time</span><span class="p">,</span>
+            <span class="n">success</span><span class="o">=</span><span class="n">success</span><span class="p">,</span>
+            <span class="n">final_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">success</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_state</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">tests_passed</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">test_counts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">tests_failed</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">test_counts</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">tests_skipped</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">test_counts</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+            <span class="n">prompt_tokens</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">prompt_tokens</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">usage</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">completion_tokens</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">completion_tokens</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">usage</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">total_tokens</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">total_tokens</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">usage</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">error</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">success</span><span class="p">,</span> <span class="n">metrics</span></div>
+
+
+<div class="viewcode-block" id="GenerationAttempt._initialize">
+<a class="viewcode-back" href="../../../generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt._initialize">[docs]</a>
+    <span class="nd">@attempt_state</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the attempt by clearing errors and preparing for generation.</span>
+
+<span class="sd">        This method is the entry point for the state machine, resetting the error</span>
+<span class="sd">        state and transitioning to the GENERATE state.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: If initialization fails.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initializing...&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">AttemptState</span><span class="o">.</span><span class="n">GENERATE</span></div>
+
+
+<div class="viewcode-block" id="GenerationAttempt._generate">
+<a class="viewcode-back" href="../../../generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt._generate">[docs]</a>
+    <span class="nd">@attempt_state</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate code using the Mistral client.</span>
+
+<span class="sd">        Calls the Mistral client&#39;s complete() method with the provided prompt</span>
+<span class="sd">        and records the generated code and model usage details.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            prompt (str): The prompt to generate code from.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: If code generation fails or times out.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Generating code...&quot;</span><span class="p">)</span>
+        <span class="n">generated_code</span><span class="p">,</span> <span class="n">usage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">complete</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Code generated successfully.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generated_code</span> <span class="o">=</span> <span class="n">generated_code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">usage</span><span class="p">:</span> <span class="n">ModelUsage</span> <span class="o">=</span> <span class="n">usage</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Model usage: prompt_tokens=</span><span class="si">{</span><span class="n">usage</span><span class="o">.</span><span class="n">prompt_tokens</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;completion_tokens=</span><span class="si">{</span><span class="n">usage</span><span class="o">.</span><span class="n">completion_tokens</span><span class="si">}</span><span class="s2">, total_tokens=</span><span class="si">{</span><span class="n">usage</span><span class="o">.</span><span class="n">total_tokens</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">AttemptState</span><span class="o">.</span><span class="n">PARSE</span></div>
+
+
+<div class="viewcode-block" id="GenerationAttempt._parse">
+<a class="viewcode-back" href="../../../generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt._parse">[docs]</a>
+    <span class="nd">@attempt_state</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse the generated code.</span>
+
+<span class="sd">        Uses ROS2CodeParser to extract and optionally format the generated code.</span>
+<span class="sd">        Transitions to the SAVE state if parsing succeeds.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: If parsing fails or no valid code is extracted.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Parsing generated code...&quot;</span><span class="p">)</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="n">ROS2CodeParser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">generated_code</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">code</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Parsing failed, no code returned.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parsed_code</span> <span class="o">=</span> <span class="n">code</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Parsing succeeded.&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">AttemptState</span><span class="o">.</span><span class="n">SAVE</span></div>
+
+
+<div class="viewcode-block" id="GenerationAttempt._save">
+<a class="viewcode-back" href="../../../generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt._save">[docs]</a>
+    <span class="nd">@attempt_state</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">save_callback</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save the parsed code to a file.</span>
+
+<span class="sd">        Invokes the provided save_callback with the parsed code and output path.</span>
+<span class="sd">        Transitions to the TEST state if saving succeeds.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            output_path (Path): Destination file path for the generated code.</span>
+<span class="sd">            save_callback (Callable[[str, Path], bool]): Function that saves the code to the specified path.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: If the save operation fails.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Saving code...&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">save_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parsed_code</span><span class="p">,</span> <span class="n">output_path</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Saving failed.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Code saved successfully.&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">AttemptState</span><span class="o">.</span><span class="n">TEST</span></div>
+
+
+<div class="viewcode-block" id="GenerationAttempt._test">
+<a class="viewcode-back" href="../../../generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt._test">[docs]</a>
+    <span class="nd">@attempt_state</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_test</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute tests on the saved code using ROS2Runner.</span>
+
+<span class="sd">        Retrieves test configuration from the config and runs tests on the generated code.</span>
+<span class="sd">        Transitions to SUCCESS if tests pass, or FAILURE if they fail.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: If test configuration is missing or tests fail.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Running tests...&quot;</span><span class="p">)</span>
+        <span class="n">test_section</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;test&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="n">test_section</span>
+            <span class="ow">or</span> <span class="s2">&quot;ws_setup&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">test_section</span>
+            <span class="ow">or</span> <span class="s2">&quot;node_command&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">test_section</span>
+            <span class="ow">or</span> <span class="s2">&quot;test_command&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">test_section</span>
+            <span class="ow">or</span> <span class="s2">&quot;test_timeout&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">test_section</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Missing required test configuration (ws_setup, node_command, test_command or test_timeout).&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">ws_setup</span> <span class="o">=</span> <span class="n">test_section</span><span class="p">[</span><span class="s2">&quot;ws_setup&quot;</span><span class="p">]</span>
+        <span class="n">node_command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ws_setup</span><span class="si">}</span><span class="s2"> &amp;&amp; </span><span class="si">{</span><span class="n">test_section</span><span class="p">[</span><span class="s1">&#39;node_command&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">test_command</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ws_setup</span><span class="si">}</span><span class="s2"> &amp;&amp; </span><span class="si">{</span><span class="n">test_section</span><span class="p">[</span><span class="s1">&#39;test_command&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Built node command: </span><span class="si">{</span><span class="n">node_command</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Built test command: </span><span class="si">{</span><span class="n">test_command</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">test_runner</span> <span class="o">=</span> <span class="n">ROS2Runner</span><span class="p">(</span>
+            <span class="n">node_command</span><span class="o">=</span><span class="n">node_command</span><span class="p">,</span>
+            <span class="n">test_command</span><span class="o">=</span><span class="n">test_command</span><span class="p">,</span>
+            <span class="n">test_timeout</span><span class="o">=</span><span class="n">test_section</span><span class="p">[</span><span class="s2">&quot;test_timeout&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">success</span><span class="p">,</span> <span class="n">test_logs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_counts</span> <span class="o">=</span> <span class="n">test_runner</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Test logs:</span><span class="se">\n</span><span class="si">{</span><span class="n">test_logs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Tests passed successfully.&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">AttemptState</span><span class="o">.</span><span class="n">SUCCESS</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Tests failed.&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Tests failed. Logs:</span><span class="se">\n</span><span class="si">{</span><span class="n">test_logs</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">AttemptState</span><span class="o">.</span><span class="n">FAILURE</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Lexmaister.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+</body>
+</html>

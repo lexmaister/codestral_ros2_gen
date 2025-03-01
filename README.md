@@ -50,7 +50,6 @@ mkdir test_ws
 ```
 
 so your directory structure will look like this:
-
 ```
 test_gen/
 ├── .venv/
@@ -60,7 +59,13 @@ test_gen/
 
 * [Generating a simple service node](docs/Example_object_height_service.md)
 
-## Generation and Performance Evaluation Block Diagram
+## Documentation
+
+### Full Code Documentation
+
+See the [full code documentation](https://lexmaister.github.io/codestral_ros2_gen/) on GitHub Pages. This documentation includes detailed explanations of the codebase, API references, and usage examples.
+
+### Generation and Performance Evaluation Block Diagram
 
 ```mermaid
 %%{

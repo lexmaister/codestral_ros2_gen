@@ -3,4 +3,4 @@
 set -e
 
 cd ./docs
-make clean && make html && cp -r build/html/ ./
+make clean && make html

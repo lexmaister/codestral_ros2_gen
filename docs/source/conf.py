@@ -9,7 +9,7 @@
 project = "Codestral ROS2 Generator"
 copyright = "2025, Lexmaister"
 author = "Lexmaister"
-release = "0.2"
+version = "0.1.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -39,9 +39,9 @@ exclude_patterns = []
 # Theme configuration
 html_theme = "alabaster"  # default
 html_theme = "sphinx_rtd_theme"
-html_static_path = ["_static"]
 # Custom output directory
 html_output_path = "html"
+# html_static_path = ["_static"]
 
 # Napoleon settings for docstring parsing
 napoleon_google_docstring = True

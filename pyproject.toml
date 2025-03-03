@@ -1,6 +1,6 @@
 [project]
 name = "codestral_ros2_gen"
-version = "0.2"
+version = "0.1.0"
 keywords = ["ROS2", "Codestral", "AI", "Code Generation"]
 description = "Generate ROS2 elements (nodes, interfaces, etc) with Codestral AI model"
 authors = [

@@ -17,16 +17,14 @@ logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
 class NetworkScanner:
     """Asynchronous network scanner using ICMP echo requests"""
 
-    def __init__(self, timeout: float = 2.0, retries: int = 1):
+    def __init__(self, timeout: float = 2.0):
         """
         Initialize network scanner
 
         Args:
             timeout: Seconds to wait for response
-            retries: Number of retry attempts
         """
         self.timeout = timeout
-        self.retries = retries
         self.hosts: List[NetworkHost] = []
 
         # Check privileges
@@ -35,11 +33,13 @@ class NetworkScanner:
                 "Raw socket operations require root privileges. Run with sudo."
             )
 
+        logger.info(f"NetworkScanner initialized with timeout={timeout}s")
+
     async def scan(self, targets: str) -> Dict[str, dict]:
         """Perform network scan on specified targets"""
         # Parse targets and create host objects
         host_ips = parse_network_targets(targets)
-        logger.info(f"Scanning {len(host_ips)} targets with timeout={self.timeout}s")
+        logger.info(f"Scanning {len(host_ips)} targets")
         self.hosts = [NetworkHost(ip) for ip in host_ips]
 
         sock = None
@@ -48,36 +48,54 @@ class NetworkScanner:
             sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
             sock.setblocking(False)
 
-            pending_hosts = set(self.hosts)
+            # All hosts to scan
+            hosts_to_scan = set(self.hosts)
 
-            # For each retry attempt
-            for attempt in range(self.retries):
-                if attempt > 0:
-                    logger.info(f"Starting retry attempt {attempt}")
+            # Send packets to all hosts
+            await self._send_packets(sock, hosts_to_scan)
 
-                # Send packets to all pending hosts
-                await self._send_packets(sock, pending_hosts)
+            # Wait for responses with timeout
+            await self._receive_responses(sock, hosts_to_scan)
 
-                # Wait for responses with timeout
-                await self._receive_responses(sock, pending_hosts)
-
-                # Update pending hosts for potential retry
-                pending_hosts = {h for h in self.hosts if not h.result.is_alive}
-
-                if not pending_hosts:
-                    logger.info("All hosts responded, scan complete")
-                    break
-
+            # Return results
             return self._collect_results()
 
         except Exception as e:
-            logger.error(f"Scan error: {e}")
+            # Make sure we're only logging actual exceptions
+            logger.error(f"Scan error: {str(e)}")
             raise
 
         finally:
             if sock:
-                sock.close()
-                logger.debug("Socket closed")
+                try:
+                    # Proper socket cleanup sequence:
+
+                    # 1. Set a short timeout to avoid hanging during cleanup
+                    sock.settimeout(0.1)
+
+                    # 2. Clear any pending data from the socket buffer
+                    try:
+                        # Non-blocking read to clear buffer
+                        while True:
+                            # Try to empty the buffer
+                            sock.recv(4096)
+                    except (BlockingIOError, socket.timeout):
+                        pass  # Buffer is empty or timeout occurred
+
+                    # 3. Shut down the socket (if supported by platform)
+                    try:
+                        # SHUT_RDWR = 2 (both sending and receiving)
+                        sock.shutdown(socket.SHUT_RDWR)
+                    except (OSError, socket.error):
+                        # Some socket types or platforms don't support shutdown
+                        pass
+
+                    # 4. Finally close the socket
+                    sock.close()
+                    logger.debug("Socket properly cleaned and closed")
+
+                except Exception as e:
+                    logger.warning(f"Error during socket cleanup: {str(e)}")
 
     async def _send_packets(self, sock: socket.socket, hosts: Set[NetworkHost]) -> None:
         """Send ICMP packets to all specified hosts"""
@@ -88,7 +106,7 @@ class NetworkScanner:
                 host.mark_sent()
             except Exception as e:
                 logger.error(f"Error sending to {host.ip_address}: {e}")
-                host.result.error = str(e)
+                host.mark_error(str(e))
 
     async def _receive_responses(
         self, sock: socket.socket, hosts: Set[NetworkHost]
@@ -98,9 +116,7 @@ class NetworkScanner:
         end_time = time.time() + self.timeout
 
         # Continue until timeout or all hosts responded
-        while time.time() < end_time and any(
-            h.state == HostState.WAITING for h in hosts
-        ):
+        while time.time() < end_time and any(h.state == HostState.SENT for h in hosts):
             # Check if there are any responses ready with select
             ready_to_read, _, _ = select.select([sock], [], [], 0.01)
 
@@ -126,7 +142,7 @@ class NetworkScanner:
                     (
                         h
                         for h in hosts
-                        if h.ip_address == src_ip and h.state == HostState.WAITING
+                        if h.ip_address == src_ip and h.state == HostState.SENT
                     ),
                     None,
                 )
@@ -134,7 +150,9 @@ class NetworkScanner:
                 if matching_host and matching_host.validate_response(
                     icmp_header, receive_time
                 ):
-                    logger.debug(f"Response received from {src_ip}")
+                    logger.debug(
+                        f"Response received from {src_ip} in {matching_host.result.response_time*1000:.2f}ms"
+                    )
                     matching_host.mark_responded()
 
             except BlockingIOError:
@@ -145,7 +163,7 @@ class NetworkScanner:
 
         # Mark remaining hosts as timeout
         for host in hosts:
-            if host.state == HostState.WAITING:
+            if host.state == HostState.SENT:
                 logger.debug(f"Host {host.ip_address} timed out")
                 host.mark_timeout()
 

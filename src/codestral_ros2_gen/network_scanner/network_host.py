@@ -7,9 +7,10 @@ import time
 
 class HostState(Enum):
     INIT = "init"
-    WAITING = "waiting"
+    SENT = "sent"
     RESPONDED = "responded"
     TIMEOUT = "timeout"
+    ERROR = "error"
 
 
 @dataclass
@@ -76,7 +77,7 @@ class NetworkHost:
     def mark_sent(self) -> None:
         """Mark host as waiting for response"""
         self.send_time = time.time()
-        self.state = HostState.WAITING
+        self.state = HostState.SENT
 
     def mark_responded(self) -> None:
         """Mark host as responded"""
@@ -85,3 +86,7 @@ class NetworkHost:
     def mark_timeout(self) -> None:
         """Mark host as timeout"""
         self.state = HostState.TIMEOUT
+
+    def mark_error(self) -> None:
+        """Mark host as in error state"""
+        self.state = HostState.ERROR

@@ -10,7 +10,7 @@ from codestral_ros2_gen.network_scanner.network_scanner import NetworkScanner
 async def main():
     try:
         # Create scanner instance
-        scanner = NetworkScanner(timeout=1.0)
+        scanner = NetworkScanner(timeout=3)
 
         # Example targets (adjust for your network)
         # targets = "192.168.0.1-192.168.0.10"  # Scan first 10 IPs
@@ -30,7 +30,7 @@ async def main():
         for ip, data in results.items():
             status = "✓ ALIVE" if data["is_alive"] else "✗ DOWN"
             response = (
-                f"{data['response_time']:.3f}ms" if data["response_time"] else "N/A"
+                f"{data['response_time']:.2f} s" if data["response_time"] else "N/A"
             )
             if data["is_alive"]:
                 logger.info(f"Host: {ip:16} Status: {status:8} Response: {response:10}")

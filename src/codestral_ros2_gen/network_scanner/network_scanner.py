@@ -18,12 +18,6 @@ class NetworkScanner:
     """Asynchronous network scanner using ICMP echo requests"""
 
     def __init__(self, timeout: float = 2.0):
-        """
-        Initialize network scanner
-
-        Args:
-            timeout: Seconds to wait for response
-        """
         self.timeout = timeout
         self.hosts: List[NetworkHost] = []
 
@@ -35,100 +29,93 @@ class NetworkScanner:
 
         logger.info(f"NetworkScanner initialized with timeout={timeout}s")
 
-    async def scan(self, targets: str) -> Dict[str, dict]:
-        """Perform network scan on specified targets"""
-        # Parse targets and create host objects
-        host_ips = parse_network_targets(targets)
-        logger.info(f"Scanning {len(host_ips)} targets")
-        self.hosts = [NetworkHost(ip) for ip in host_ips]
+    def _create_socket(self) -> socket.socket:
+        """Create and configure raw socket for ICMP"""
+        sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
+        sock.setblocking(False)
+        logger.info("Raw socket created for ICMP")
+        return sock
 
-        sock = None
-        try:
-            # Create socket inside the coroutine
-            sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
-            sock.setblocking(False)
-
-            # All hosts to scan
-            hosts_to_scan = set(self.hosts)
-
-            # Send packets to all hosts
-            await self._send_packets(sock, hosts_to_scan)
-
-            # Wait for responses with timeout
-            await self._receive_responses(sock, hosts_to_scan)
-
-            # Return results
-            return self._collect_results()
-
-        except Exception as e:
-            # Make sure we're only logging actual exceptions
-            logger.error(f"Scan error: {str(e)}")
-            raise
-
-        finally:
-            if sock:
-                try:
-                    # Proper socket cleanup sequence:
-
-                    # 1. Set a short timeout to avoid hanging during cleanup
-                    sock.settimeout(0.1)
-
-                    # 2. Clear any pending data from the socket buffer
-                    try:
-                        # Non-blocking read to clear buffer
-                        while True:
-                            # Try to empty the buffer
-                            sock.recv(4096)
-                    except (BlockingIOError, socket.timeout):
-                        pass  # Buffer is empty or timeout occurred
-
-                    # 3. Shut down the socket (if supported by platform)
-                    try:
-                        # SHUT_RDWR = 2 (both sending and receiving)
-                        sock.shutdown(socket.SHUT_RDWR)
-                    except (OSError, socket.error):
-                        # Some socket types or platforms don't support shutdown
-                        pass
-
-                    # 4. Finally close the socket
-                    sock.close()
-                    logger.debug("Socket properly cleaned and closed")
-
-                except Exception as e:
-                    logger.warning(f"Error during socket cleanup: {str(e)}")
-
-    async def _send_packets(self, sock: socket.socket, hosts: Set[NetworkHost]) -> None:
-        """Send ICMP packets to all specified hosts"""
+    def _send_packets_to_hosts(
+        self, sock: socket.socket, hosts: Set[NetworkHost]
+    ) -> None:
+        """Send ICMP packets to all hosts"""
+        logger.info(f"Sending packets to {len(hosts)} hosts")
         for host in hosts:
             try:
                 logger.debug(f"Sending packet to {host.ip_address}")
                 sock.sendto(host.packet, (host.ip_address, 0))
                 host.mark_sent()
             except Exception as e:
-                logger.error(f"Error sending to {host.ip_address}: {e}")
+                logger.error(f"Error sending to {host.ip_address}: {str(e)}")
                 host.mark_error(str(e))
+
+        logger.info("All packets sent")
+
+    def _close_socket(self, sock: socket.socket) -> None:
+        """Properly clean up and close socket"""
+        try:
+            logger.info("Cleaning up and closing socket")
+            # 1. Set short timeout for cleanup operations
+            sock.settimeout(0.1)
+
+            # 2. Clear socket buffer
+            try:
+                while True:
+                    sock.recv(4096)
+            except (BlockingIOError, socket.timeout):
+                pass  # Buffer is empty or timeout occurred
+
+            # 3. Shutdown socket if supported
+            try:
+                sock.shutdown(socket.SHUT_RDWR)
+            except (OSError, socket.error):
+                pass  # Shutdown not supported or socket already closed
+
+            # 4. Close socket
+            sock.close()
+            logger.debug("Socket properly cleaned and closed")
+
+        except Exception as e:
+            logger.warning(f"Error during socket cleanup: {str(e)}")
 
     async def _receive_responses(
         self, sock: socket.socket, hosts: Set[NetworkHost]
     ) -> None:
         """Receive and process responses with timeout"""
-        # Calculate end time based on timeout
-        end_time = time.time() + self.timeout
 
-        # Continue until timeout or all hosts responded
-        while time.time() < end_time and any(h.state == HostState.SENT for h in hosts):
-            # Check if there are any responses ready with select
-            ready_to_read, _, _ = select.select([sock], [], [], 0.01)
+        async def is_scanning_complete() -> bool:
+            """Check if scanning should continue"""
+            # Give control back to event loop periodically during check
+            await asyncio.sleep(0)
+            return not any(h.state == HostState.SENT for h in hosts)
 
-            if not ready_to_read:
-                # Nothing to read yet, sleep briefly and continue
-                await asyncio.sleep(0.01)
-                continue
+        # Use asyncio.get_event_loop().time() instead of time.time()
+        loop = asyncio.get_running_loop()
+        end_time = loop.time() + self.timeout
+
+        while True:
+            # Check timeout
+            if loop.time() >= end_time:
+                logger.debug("Scan timeout reached")
+                break
+
+            # Check if all hosts are processed
+            if await is_scanning_complete():
+                logger.debug("All hosts processed")
+                break
 
             try:
-                # Receive data (standard blocking call but we know data is ready)
+                ready_to_read, _, _ = select.select([sock], [], [], 0.01)
+
+                if not ready_to_read:
+                    await asyncio.sleep(0.01)
+                    continue
+
                 data, addr = sock.recvfrom(1024)
-                receive_time = time.time()
+                receive_time = (
+                    time.time()
+                )  # Use absolute time instead of loop time for host
 
                 if len(data) < 20:
                     logger.debug("Received packet too small")
@@ -137,7 +124,6 @@ class NetworkScanner:
                 icmp_header = data[20:]
                 src_ip = addr[0]
 
-                # Find matching host
                 matching_host = next(
                     (
                         h
@@ -151,17 +137,35 @@ class NetworkScanner:
                     icmp_header, receive_time
                 ):
                     logger.debug(
-                        f"Response received from {src_ip} in {matching_host.result.response_time*1000:.2f}ms"
+                        f"Response from {src_ip} in {matching_host.result.response_time*1000:.2f}ms"
                     )
                     matching_host.mark_responded()
 
             except BlockingIOError:
-                # Just in case, although select should prevent this
                 await asyncio.sleep(0.01)
             except Exception as e:
-                logger.error(f"Error receiving response: {e}")
+                error_msg = f"Error receiving response: {str(e)}"
+                logger.error(error_msg)
 
-        # Mark remaining hosts as timeout
+                # Determine which host(s) were affected
+                if "matching_host" in locals() and matching_host:
+                    # If we know which host caused the error, mark just that one
+                    logger.debug(
+                        f"Marking host {matching_host.ip_address} as error due to: {error_msg}"
+                    )
+                    matching_host.mark_error(error_msg)
+                else:
+                    # If we can't determine specific host, mark all pending hosts as error
+                    logger.warning(
+                        "Marking all pending hosts as error due to receive failure"
+                    )
+                    for host in hosts:
+                        if host.state == HostState.SENT:
+                            host.mark_error(error_msg)
+                    # Exit the receive loop as we can't continue processing
+                    break
+
+        # Mark remaining SENT hosts as timeout
         for host in hosts:
             if host.state == HostState.SENT:
                 logger.debug(f"Host {host.ip_address} timed out")
@@ -178,3 +182,34 @@ class NetworkScanner:
             }
             for host in self.hosts
         }
+
+    async def scan(self, targets: str) -> Dict[str, dict]:
+        """Perform network scan on specified targets"""
+        # Parse targets and create host objects
+        host_ips = parse_network_targets(targets)
+        logger.info(f"Scanning {len(host_ips)} targets")
+        self.hosts = [NetworkHost(ip) for ip in host_ips]
+
+        sock = None
+        try:
+            # Create and initialize socket
+            sock = self._create_socket()
+
+            # Prepare hosts for scanning
+            hosts_to_scan = set(self.hosts)
+
+            # Send packets to all hosts
+            self._send_packets_to_hosts(sock, hosts_to_scan)
+
+            # Wait for and process responses
+            await self._receive_responses(sock, hosts_to_scan)
+
+            # Return formatted results
+            return self._collect_results()
+
+        except Exception as e:
+            raise RuntimeError(f"Scan failled with error:\n\n{str(e)}\n")
+
+        finally:
+            if sock:
+                self._close_socket(sock)

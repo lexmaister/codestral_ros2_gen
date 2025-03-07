@@ -3,6 +3,10 @@ import struct
 from dataclasses import dataclass
 from typing import Optional
 import time
+from logging import getLogger
+
+
+logger = getLogger(__name__)
 
 
 class HostState(Enum):
@@ -32,9 +36,9 @@ class NetworkHost:
         self.result: HostResult = HostResult(is_alive=False)
 
         # Pre-calculate packet
-        self.prepare_packet()
+        self._prepare_packet()
 
-    def prepare_packet(self) -> None:
+    def _prepare_packet(self) -> None:
         """Pre-calculate ICMP packet for this host"""
         self.sequence = int(time.time() * 1000) & 0xFFFF
         header = struct.pack("!BBHHH", 8, 0, 0, id(self) & 0xFFFF, self.sequence)
@@ -87,6 +91,10 @@ class NetworkHost:
         """Mark host as timeout"""
         self.state = HostState.TIMEOUT
 
-    def mark_error(self) -> None:
-        """Mark host as in error state"""
+    def mark_error(self, error_msg: str) -> None:
+        """Mark host as errored with specific error message"""
         self.state = HostState.ERROR
+        self.result.error = error_msg
+        self.result.is_alive = False
+        self.result.response_time = None
+        logger.debug(f"Host {self.ip_address} marked as error: {error_msg}")

@@ -3,6 +3,11 @@
 import ipaddress
 from typing import List
 import re
+import logging
+
+from codestral_ros2_gen import logger_main
+
+logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
 
 
 def parse_network_targets(network_spec: str) -> List[str]:
@@ -130,6 +135,6 @@ def parse_network_targets(network_spec: str) -> List[str]:
             pass
 
         # If we reach here, the format wasn't recognized
-        print(f"Warning: Could not parse network format: '{network}'")
+        logger.warning(f"Could not parse network format: '{network}'")
 
     return sorted(list(result_hosts))

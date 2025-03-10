@@ -106,7 +106,7 @@ def test_initialization_codestral_ros2_gen(host_params):
     # Check logger is set correctly
     assert hasattr(host, "logger")
     assert host.logger is not None
-    assert host.logger.name == "root.network_host"
+    assert host.logger.name == "root.network_scan"
 
     # Verify packet was created
     assert host.packet is not None
@@ -126,7 +126,7 @@ def test_initialization_ros2_logger(host_params, mock_ros2_logger):
 
 def test_initialization_without_logger(host_params):
     """Test host initialization without any logger"""
-    with patch("codestral_ros2_gen.network_scanner.network_host.default_logger", None):
+    with patch("codestral_ros2_gen.network_scanner.network_host.crg_logger", None):
         with pytest.raises(
             RuntimeError, match="No logger provided and default logger is not set"
         ):

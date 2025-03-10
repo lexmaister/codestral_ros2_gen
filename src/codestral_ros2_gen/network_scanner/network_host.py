@@ -12,14 +12,9 @@ import time
 from enum import Enum, auto
 from typing import Optional, Any
 
-# Try to import logger_main, but don't fail if not available
-try:
-    from codestral_ros2_gen import logger_main, logging
+from .utils import get_codestral_ros2_gen_logger
 
-    default_logger = logging.getLogger(f"{logger_main}.network_host")
-
-except ImportError:
-    default_logger = None  # will work with exteral logger
+crg_logger = get_codestral_ros2_gen_logger()
 
 
 class HostState(Enum):
@@ -129,8 +124,8 @@ class NetworkHost:
 
         if logger is not None:
             self.logger = logger
-        elif default_logger is not None:
-            self.logger = default_logger
+        elif crg_logger is not None:
+            self.logger = crg_logger
         else:
             raise RuntimeError("No logger provided and default logger is not set")
 

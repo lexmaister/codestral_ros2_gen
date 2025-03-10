@@ -6,6 +6,7 @@ during network scanning operations. It includes the host state tracking
 and ICMP packet generation capabilities.
 """
 
+import random
 import struct
 import time
 from enum import Enum, auto
@@ -86,19 +87,13 @@ class NetworkHost:
 
     This class represents a network host during scanning operations,
     tracking its state and managing ICMP packet generation.
-
-    Attributes:
-        ip_address (str): The IP address of the host
-        state (HostState): The current state of the host (read-only)
-        packet (bytes): The ICMP packet to send to this host
-        send_time (float): When the packet was sent (Unix timestamp)
-        recv_time (float): When the response was received (Unix timestamp)
-        result (HostResult): The result of the scan after completion
     """
 
     def __init__(
         self,
         ip_address: str,
+        icmp_id=None,
+        icmp_seq=1,
         timeout_sec: float = 1.0,
         packet_size: int = 64,
         logger: Optional[Any] = None,
@@ -108,6 +103,8 @@ class NetworkHost:
 
         Args:
             ip_address: IP address of the host
+            icmp_id: ICMP identifier (random if None)
+            icmp_seq: ICMP sequence number (default: 1)
             timeout_sec: Timeout in seconds to wait for response
             packet_size: Size of the ICMP packet in bytes
             logger: External logger to use (typically a ROS2 logger)
@@ -120,6 +117,15 @@ class NetworkHost:
         self.recv_time = 0.0
         self.error_message = None
         self.result = None
+
+        # Generate random identifier if none provided
+        if icmp_id is None:
+            # Generate random 16-bit integer (0-65535)
+            self.icmp_id = random.randint(0, 0xFFFF)
+        else:
+            self.icmp_id = icmp_id
+
+        self.icmp_seq = icmp_seq
 
         if logger is not None:
             self.logger = logger
@@ -154,12 +160,10 @@ class NetworkHost:
         icmp_type = 8
         icmp_code = 0
         icmp_checksum = 0
-        icmp_id = 12345  # Our identifier
-        icmp_seq = 1  # Sequence number
 
         # Create header without checksum
         header = struct.pack(
-            "!BBHHH", icmp_type, icmp_code, icmp_checksum, icmp_id, icmp_seq
+            "!BBHHH", icmp_type, icmp_code, icmp_checksum, self.icmp_id, self.icmp_seq
         )
 
         # Create payload (pad to desired size)
@@ -172,7 +176,7 @@ class NetworkHost:
 
         # Insert checksum into header
         header = struct.pack(
-            "!BBHHH", icmp_type, icmp_code, checksum, icmp_id, icmp_seq
+            "!BBHHH", icmp_type, icmp_code, checksum, self.icmp_id, self.icmp_seq
         )
         packet = header + payload
 

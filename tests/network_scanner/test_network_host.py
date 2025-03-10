@@ -80,6 +80,8 @@ def host_params() -> Dict[str, Any]:
     """Fixture providing standard parameters for host creation."""
     return {
         "ip_address": "192.168.1.1",
+        "icmp_id": 12345,
+        "icmp_seq": 1,
         "timeout_sec": 2.0,
         "packet_size": 64,
     }
@@ -98,6 +100,8 @@ def test_initialization_codestral_ros2_gen(host_params):
     assert host.error_message is None
     assert host.result is None
     assert host.state == HostState.INIT
+    assert host.icmp_id == 12345
+    assert host.icmp_seq == 1
 
     # Check logger is set correctly
     assert hasattr(host, "logger")

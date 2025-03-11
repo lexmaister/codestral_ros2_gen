@@ -42,7 +42,7 @@ class NetworkHost:
     Single host handler for network scanning operations.
 
     This class represents a network host during scanning operations,
-    tracking its state and managing ICMP packet generation.
+    tracking its state and managing ICMP packet generation and validation.
     """
 
     def __init__(
@@ -60,8 +60,7 @@ class NetworkHost:
             ip_address: IP address of the host
             icmp_id: ICMP identifier (random if None)
             icmp_seq: ICMP sequence number (default: 1)
-            timeout_sec: Timeout in seconds to wait for response
-            packet_size: Size of the ICMP packet in bytes
+            packet_size: Size of the ICMP packet in bytes (default: 64)
             logger: External logger to use (typically a ROS2 logger)
         """
         self._state = HostState.INIT
@@ -89,7 +88,7 @@ class NetworkHost:
             raise RuntimeError("No logger provided and default logger is not set")
 
         self.packet = self._create_icmp_packet()
-        self.logger.debug(f"Created NetworkHost for {ip_address}")
+        self.logger.debug(f"Created NetworkHost object for {ip_address}")
 
     @property
     def state(self) -> HostState:
@@ -107,6 +106,9 @@ class NetworkHost:
 
         Returns:
             bytes: The ICMP packet ready to be sent
+
+        Raises:
+            RuntimeError: If the generated packet size is not equal to provided packet size
         """
         self.logger.debug(f"Creating ICMP packet for {self.ip_address}")
 
@@ -142,7 +144,7 @@ class NetworkHost:
 
         # Validate the packet
         if len(packet) != self.packet_size:
-            self.logger.debug(
+            raise RuntimeError(
                 f"Packet size mismatch: expected {self.packet_size}, got {len(packet)}"
             )
 
@@ -188,7 +190,12 @@ class NetworkHost:
 
         Args:
             packet (bytes): The received ICMP packet.
+
+        Side Effects:
+            Updates the host state and response time based on the received packet.
         """
+        self.logger.debug(f"Handling response for {self.ip_address}")
+
         # Skip IP header (length in bytes = first 4 bits * 4)
         ip_header_length = (packet[0] & 0x0F) * 4
         icmp_packet = packet[ip_header_length:]
@@ -202,7 +209,7 @@ class NetworkHost:
             "!BBHHH", icmp_packet[:8]
         )
 
-        if icmp_type != 0 or icmp_code != 0:  # Not an Echo Reply
+        if icmp_type != 0 or icmp_code != 0:
             self.mark_error("Received ICMP packet is not an Echo Reply")
             return
 
@@ -225,6 +232,8 @@ class NetworkHost:
     def mark_responded(self, recv_time: Optional[float] = None) -> None:
         """
         Mark the host as having responded to the packet.
+
+        Sets the state to RESPONDED, records the receive time, and calculates the RTT.
 
         Args:
             recv_time: Time when response was received, defaults to current time

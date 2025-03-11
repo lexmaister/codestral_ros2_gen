@@ -10,7 +10,8 @@ import random
 import struct
 import time
 from enum import Enum, auto
-from typing import Optional, Any
+from typing import Optional
+import logging
 
 from .utils import get_codestral_ros2_gen_logger
 
@@ -36,46 +37,6 @@ class HostState(Enum):
     ERROR = auto()
 
 
-class HostResult:
-    """
-    Class to store the result of a host scan.
-
-    This class encapsulates the result data from a network host scan,
-    including response time and error information.
-
-    Attributes:
-        rtt_ms (float): Round-trip time in milliseconds - would be rounded to integer, or None if no response
-        error (str): Error message if an error occurred, or None
-        responded (bool): Whether the host responded successfully
-    """
-
-    def __init__(self, rtt_ms: Optional[float] = None, error: Optional[str] = None):
-        """
-        Initialize a HostResult object.
-
-        Args:
-            rtt_ms: Round-trip time in milliseconds, or None if no response
-            error: Error message if an error occurred, or None
-        """
-        self.rtt_ms = round(rtt_ms) if rtt_ms is not None else None
-        self.error = error
-        self.responded = rtt_ms is not None and error is None
-
-    def __str__(self) -> str:
-        """
-        Return a string representation of the result.
-
-        Returns:
-            str: String description of the result
-        """
-        if self.responded:
-            return f"Response time: {self.rtt_ms} ms"
-        elif self.error:
-            return f"Error: {self.error}"
-        else:
-            return "No response (timeout)"
-
-
 class NetworkHost:
     """
     Single host handler for network scanning operations.
@@ -89,9 +50,8 @@ class NetworkHost:
         ip_address: str,
         icmp_id=None,
         icmp_seq=1,
-        timeout_sec: float = 1.0,
         packet_size: int = 64,
-        logger: Optional[Any] = None,
+        logger: logging.Logger | None = None,
     ):
         """
         Initialize a NetworkHost object.
@@ -106,12 +66,11 @@ class NetworkHost:
         """
         self._state = HostState.INIT
         self.ip_address = ip_address
-        self.timeout_sec = timeout_sec
         self.packet_size = packet_size
         self.send_time = 0.0
         self.recv_time = 0.0
+        self.rtt_ms: int = None
         self.error_message = None
-        self.result = None
 
         # Generate random identifier if none provided
         if icmp_id is None:
@@ -161,9 +120,15 @@ class NetworkHost:
             "!BBHHH", icmp_type, icmp_code, icmp_checksum, self.icmp_id, self.icmp_seq
         )
 
-        # Create payload (pad to desired size)
-        payload_size = max(0, self.packet_size - len(header))
-        payload = bytes([i & 0xFF for i in range(payload_size)])
+        # Create payload:
+        payload_data = b"PING"  # Placeholder payload
+
+        # Pad the payload to reach the requested packet size
+        padding_size = max(0, self.packet_size - len(header) - len(payload_data))
+        padding = bytes([i & 0xFF for i in range(padding_size)])
+
+        # Combine the payload
+        payload = payload_data + padding
 
         # Calculate checksum on the header and payload
         full_packet = header + payload
@@ -213,9 +178,39 @@ class NetworkHost:
 
         # Validate the checksum
         if answer == 0:
-            self.logger.debug("Warning: Calculated checksum is 0")
+            self.logger.warning("Calculated checksum is 0")
 
         return answer
+
+    def handle_response(self, packet: bytes) -> None:
+        """
+        Validate ICMP echo reply packet for this host.
+
+        Args:
+            packet (bytes): The received ICMP packet.
+        """
+        # Skip IP header (length in bytes = first 4 bits * 4)
+        ip_header_length = (packet[0] & 0x0F) * 4
+        icmp_packet = packet[ip_header_length:]
+
+        if len(icmp_packet) < 8:
+            self.mark_error("Received ICMP packet is too short")
+            return
+
+        # Parse ICMP Echo Reply header (Type 0, Code 0)
+        icmp_type, icmp_code, _, recv_id, recv_seq = struct.unpack(
+            "!BBHHH", icmp_packet[:8]
+        )
+
+        if icmp_type != 0 or icmp_code != 0:  # Not an Echo Reply
+            self.mark_error("Received ICMP packet is not an Echo Reply")
+            return
+
+        if recv_id != self.icmp_id or recv_seq != self.icmp_seq:
+            self.mark_error("Received ICMP packet has incorrect ID or Sequence")
+            return
+
+        self.mark_responded()
 
     def mark_sent(self) -> None:
         """
@@ -236,19 +231,15 @@ class NetworkHost:
         """
         self._state = HostState.RESPONDED
         self.recv_time = recv_time or time.time()
-        rtt_ms = (self.recv_time - self.send_time) * 1000
-        self.result = HostResult(rtt_ms=rtt_ms)
-        self.logger.debug(
-            f"Response from {self.ip_address} after {self.result.rtt_ms} ms"
-        )
+        self.rtt_ms = round((self.recv_time - self.send_time) * 1000)
+        self.logger.debug(f"Response from {self.ip_address} after {self.rtt_ms} ms")
 
     def mark_timeout(self) -> None:
         """
         Mark the host as having timed out (no response received).
         """
         self._state = HostState.TIMEOUT
-        self.result = HostResult()
-        self.logger.debug(f"Timeout for {self.ip_address} after {self.timeout_sec} s")
+        self.logger.debug(f"Timeout for {self.ip_address}")
 
     def mark_error(self, error_message: str) -> None:
         """
@@ -259,28 +250,7 @@ class NetworkHost:
         """
         self._state = HostState.ERROR
         self.error_message = error_message
-        self.result = HostResult(error=error_message)
-        self.logger.debug(f"Error for {self.ip_address}: {error_message}")
-
-    def is_timed_out(self) -> bool:
-        """
-        Check if the host has timed out.
-
-        Returns:
-            bool: True if the host is in SENT state and the timeout period has elapsed
-        """
-        if self._state != HostState.SENT:
-            return False
-
-        elapsed = time.time() - self.send_time
-        timed_out = elapsed > self.timeout_sec
-
-        if timed_out:
-            self.logger.debug(
-                f"Host {self.ip_address} timed out ({elapsed:.2f} > {self.timeout_sec}) s"
-            )
-
-        return timed_out
+        self.logger.error(f"Error for {self.ip_address}: {error_message}")
 
     def __str__(self) -> str:
         """

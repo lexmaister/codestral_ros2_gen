@@ -125,6 +125,43 @@ Minimal state transitions
 Efficient memory usage
 Thread/async coordination
 
+### New Block Diagram
+
+```mermaid
+flowchart TD
+    classDef external fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef core fill:#fff8e1,stroke:#ff8f00,stroke-width:2px
+    classDef operation fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    classDef utility fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef external_api fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,stroke-dasharray: 5 3
+
+    %% External Application
+    ExternalApp[External Application]:::external
+
+    %% Convenience Methods
+    QuickScan[quick_scan\nsimple_sync_scan]:::external_api
+
+    %% Core Scanner & Operation
+    NetworkScanner[NetworkScanner\n- configuration\n- recurring scans]:::core
+    ScanOperation[ScanOperation\n- socket management\n- packet handling]:::operation
+
+    %% Utility Classes
+    NetworkHost[NetworkHost]:::utility
+    NetworkParser[parse_network_targets]:::utility
+
+    %% Flow - TWO PATHS
+    ExternalApp -->|"One-time scan"| QuickScan
+    QuickScan -->|"Direct creation"| ScanOperation
+
+    ExternalApp -->|"Recurring scans"| NetworkScanner
+    NetworkScanner -->|"Creates"| ScanOperation
+
+    ScanOperation -->|"Uses"| NetworkHost
+    ScanOperation -->|"Uses"| NetworkParser
+
+```
+
+
 ## Package Structure
 ROS2 package structure for the service:
 ```

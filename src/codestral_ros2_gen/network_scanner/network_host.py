@@ -122,8 +122,8 @@ class NetworkHost:
             "!BBHHH", icmp_type, icmp_code, icmp_checksum, self.icmp_id, self.icmp_seq
         )
 
-        # Create payload:
-        payload_data = b"PING"  # Placeholder payload
+        # Placeholder payload data
+        payload_data = b"abcdefghijklmnopqrstuvwxyz"
 
         # Pad the payload to reach the requested packet size
         padding_size = max(0, self.packet_size - len(header) - len(payload_data))
@@ -209,8 +209,18 @@ class NetworkHost:
             "!BBHHH", icmp_packet[:8]
         )
 
+        # Filter out Echo Requests with our ID - these are our own packets
+        if icmp_type == 8 and recv_id == self.icmp_id:
+            self.logger.debug(
+                f"Filtering out our own outgoing packet (seq: {recv_seq})"
+            )
+            self.mark_error("Received our own outgoing packet")
+            return
+
         if icmp_type != 0 or icmp_code != 0:
-            self.mark_error("Received ICMP packet is not an Echo Reply")
+            self.mark_error(
+                f"Received ICMP packet is not an Echo Reply - type/code: {icmp_type}/{icmp_code}"
+            )
             return
 
         if recv_id != self.icmp_id or recv_seq != self.icmp_seq:

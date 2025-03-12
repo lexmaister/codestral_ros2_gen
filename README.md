@@ -2,8 +2,8 @@
 
 [![License](https://img.shields.io/github/license/lexmaister/codestral_ros2_gen.svg)](https://github.com/lexmaister/codestral_ros2_gen/blob/main/LICENSE)
 [![Linux](https://img.shields.io/badge/Linux-supported-green.svg)](https://www.linux.org/)
-[![Windows](https://img.shields.io/badge/Windows-supported-green.svg)](https://www.microsoft.com/en-us/windows)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![ROS 2 Humble](https://img.shields.io/badge/ROS2-Humble-blue)](https://docs.ros.org/en/humble/)
 [![Coverage Status](https://coveralls.io/repos/github/lexmaister/codestral_ros2_gen/badge.svg?branch=main)](https://coveralls.io/github/lexmaister/codestral_ros2_gen?branch=main)
 
 Generate ROS2 elements (nodes, interfaces, etc) with Codestral AI model.

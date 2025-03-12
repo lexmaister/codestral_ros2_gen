@@ -291,7 +291,50 @@ class TestHandlingResponce:
         host.handle_response(malformed_packet)
 
         assert host.state == HostState.ERROR
-        assert host.error_message == "Received ICMP packet is not an Echo Reply"
+        assert (
+            host.error_message
+            == "Received ICMP packet is not an Echo Reply - type/code: 89/89"
+        )
         mock_ros2_logger.error.assert_called_with(
             f"Error for {host.ip_address}: {host.error_message}"
         )
+
+
+class TestCheckSumCalc:
+    """Test the checksum calculation."""
+
+    @pytest.fixture
+    def sample_ping_packet(self):
+        """Return a real ICMP echo request packet with known checksum."""
+        # Values from Wireshark capture
+        return {
+            "type": 8,  # Echo request
+            "code": 0,
+            "checksum": 0x8730,
+            "identifier": 0x0F51,
+            "sequence": 1,
+        }
+
+    @pytest.fixture
+    def network_host(self):
+        """Create a NetworkHost instance with proper configuration."""
+        host = NetworkHost("192.168.10.253")
+        return host
+
+    def test_checksum_calculation(self, sample_ping_packet):
+        """Test that our checksum calculation matches Wireshark's value."""
+        # Configure host with values from the captured packet
+        host = NetworkHost(
+            "192.168.10.253",
+            icmp_id=sample_ping_packet["identifier"],
+            icmp_seq=sample_ping_packet["sequence"],
+        )
+        packet = host._create_icmp_packet()
+
+        # Extract calculated checksum from positions 2-3
+        calculated_checksum = (packet[2] << 8) | packet[3]
+
+        # Assert checksum matches Wireshark value
+        assert (
+            calculated_checksum == sample_ping_packet["checksum"]
+        ), f"Checksum mismatch: got 0x{calculated_checksum:04x}, expected 0x{sample_ping_packet['checksum']:04x}"

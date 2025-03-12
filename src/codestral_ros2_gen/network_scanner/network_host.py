@@ -150,39 +150,72 @@ class NetworkHost:
 
         return packet
 
+    # def _calculate_checksum(self, data: bytes) -> int:
+    #     """
+    #     Calculate the checksum for an ICMP packet.
+
+    #     Args:
+    #         data: The data to calculate the checksum for
+
+    #     Returns:
+    #         int: Calculated checksum value
+    #     """
+    #     sum = 0
+    #     countTo = (len(data) // 2) * 2
+    #     count = 0
+
+    #     while count < countTo:
+    #         val = data[count + 1] * 256 + data[count]
+    #         sum = sum + val
+    #         sum = sum & 0xFFFFFFFF
+    #         count = count + 2
+
+    #     if countTo < len(data):
+    #         sum = sum + data[len(data) - 1]
+    #         sum = sum & 0xFFFFFFFF
+
+    #     sum = (sum >> 16) + (sum & 0xFFFF)
+    #     sum = sum + (sum >> 16)
+    #     answer = ~sum & 0xFFFF
+
+    #     # Validate the checksum
+    #     if answer == 0:
+    #         self.logger.warning("Calculated checksum is 0")
+
+    #     return answer
+
     def _calculate_checksum(self, data: bytes) -> int:
-        """
-        Calculate the checksum for an ICMP packet.
+        """Calculate the checksum for an ICMP packet.
 
         Args:
             data: The data to calculate the checksum for
 
         Returns:
-            int: Calculated checksum value
+            int: The calculated checksum
         """
-        sum = 0
-        countTo = (len(data) // 2) * 2
-        count = 0
+        # Start with 0 sum
+        checksum = 0
 
-        while count < countTo:
-            val = data[count + 1] * 256 + data[count]
-            sum = sum + val
-            sum = sum & 0xFFFFFFFF
-            count = count + 2
+        # Handle data in 16-bit chunks
+        for i in range(0, len(data), 2):
+            if i + 1 < len(data):
+                word = (data[i] << 8) + data[i + 1]
+            else:
+                word = data[i] << 8  # Pad with zero if odd length
 
-        if countTo < len(data):
-            sum = sum + data[len(data) - 1]
-            sum = sum & 0xFFFFFFFF
+            checksum += word
 
-        sum = (sum >> 16) + (sum & 0xFFFF)
-        sum = sum + (sum >> 16)
-        answer = ~sum & 0xFFFF
+        # Add carry bits
+        checksum = (checksum >> 16) + (checksum & 0xFFFF)
+        checksum += checksum >> 16
 
-        # Validate the checksum
-        if answer == 0:
+        # Take one's complement
+        checksum = ~checksum & 0xFFFF
+
+        if checksum == 0:
             self.logger.warning("Calculated checksum is 0")
 
-        return answer
+        return checksum
 
     def handle_response(self, packet: bytes) -> None:
         """

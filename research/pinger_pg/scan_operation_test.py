@@ -14,7 +14,7 @@ async def run_scan(target):
 
     try:
         # Use ScanOperation as an async context manager
-        async with ScanOperation(targets=target, timeout=10) as scan_op:
+        async with ScanOperation(targets=target, timeout=5) as scan_op:
             # Execute the scan
             await scan_op.execute()
 

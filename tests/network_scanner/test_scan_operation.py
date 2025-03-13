@@ -43,7 +43,7 @@ class TestScanOperationInit:
         )
 
         assert scan_op.targets == basic_scan_params["targets"]
-        assert scan_op.timeout == 1.0  # Default value
+        assert scan_op.timeout == 5.0  # Default value
         assert scan_op.packet_size == 64  # Default value
         assert scan_op.logger == mock_ros2_logger
 

@@ -223,8 +223,8 @@ class ScanOperation:
                     f"Socket {sock!r} not initialized. Cannot execute scan."
                 )
 
-        # Send ICMP packets to all hosts
-        await self._send_packets()
+        # Send ICMP packets to all hosts in synchronous manner
+        self._send_packets()
 
         # Collect responses with timeout
         await self._collect_responses()
@@ -233,7 +233,7 @@ class ScanOperation:
 
         return self._prepare_results()
 
-    async def _send_packets(self) -> None:
+    def _send_packets(self) -> None:
         """Send ICMP echo request packets to all hosts.
 
         This method sends ICMP echo request packets to each target IP address and logs the progress.
@@ -242,6 +242,7 @@ class ScanOperation:
 
         total_hosts = len(self.hosts)
         sent_count = 0
+        prev_completion = 0
 
         # Start time for overall progress tracking
         start_time = time.time()
@@ -249,23 +250,24 @@ class ScanOperation:
         for ip, host in self.hosts.items():
             self.logger.debug(f"Sending packet to {ip}")
             try:
-                # Still using blocking socket.sendto, but in async context
+                # Using blocking socket.sendto
                 self.send_sock.sendto(host.packet, (host.ip_address, 0))
                 host.mark_sent()
 
-                # Update progress after each successful send
+                # # Update progress after each successful send
                 sent_count += 1
-                completion_percentage = (sent_count / total_hosts) * 100
+                completion = round(sent_count / total_hosts * 100, -1)
 
-                # Log progress at regular intervals
-                if sent_count == total_hosts or sent_count % (total_hosts // 10) == 0:
+                # Log progress at regular intervals 10% increments
+
+                if sent_count == total_hosts or completion - prev_completion >= 10:
                     self.logger.info(
-                        f"Progress: {sent_count}/{total_hosts} hosts ({round(completion_percentage)}%)"
+                        f"Progress: {sent_count}/{total_hosts} hosts ({round(completion)}%)"
                     )
+                    prev_completion = completion
 
-                # Use asyncio.sleep instead of time.sleep
                 if sent_count < total_hosts:  # Don't sleep after the last packet
-                    await asyncio.sleep(self.sending_interval)
+                    time.sleep(self.sending_interval)
 
             except Exception as e:
                 host.mark_error(str(e))

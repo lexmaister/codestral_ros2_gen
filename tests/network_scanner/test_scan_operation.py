@@ -327,3 +327,200 @@ class TestScanOperationIntegration:
 
         assert scan_op.send_sock is None
         assert scan_op.recv_sock is None
+
+
+class TestScanOperationSendPackets:
+    """Test cases for ScanOperation._send_packets method."""
+
+    def test_send_packets_basic(self, mock_ros2_logger):
+        """Test basic packet sending functionality with one host."""
+        # Create scan operation
+        scan_op = ScanOperation(targets="192.168.1.1", logger=mock_ros2_logger)
+
+        # Mock the socket and host
+        scan_op.send_sock = Mock()
+        mock_host = Mock()
+        mock_host.ip_address = "192.168.1.1"
+        mock_host.packet = b"test_packet"
+        scan_op.hosts = {mock_host.ip_address: mock_host}
+
+        # Execute the method
+        scan_op._send_packets()
+
+        # Verify socket was called with correct parameters
+        scan_op.send_sock.sendto.assert_called_once_with(
+            mock_host.packet, (mock_host.ip_address, 0)
+        )
+        mock_ros2_logger.debug.assert_called()
+
+    def test_send_packets_multiple_hosts(self, mock_ros2_logger):
+        """Test sending packets to multiple hosts."""
+        # Create scan operation
+        scan_op = ScanOperation(
+            targets=["192.168.1.1", "192.168.1.2"], logger=mock_ros2_logger
+        )
+
+        # Mock the socket and hosts
+        scan_op.send_sock = Mock()
+
+        host1 = Mock()
+        host1.ip_address = "192.168.1.1"
+        host1.packet = b"test_packet_1"
+
+        host2 = Mock()
+        host2.ip_address = "192.168.1.2"
+        host2.packet = b"test_packet_2"
+
+        scan_op.hosts = {host1.ip_address: host1, host2.ip_address: host2}
+
+        # Execute the method
+        scan_op._send_packets()
+
+        # Verify socket was called with correct parameters for both hosts
+        assert scan_op.send_sock.sendto.call_count == 2
+        scan_op.send_sock.sendto.assert_any_call(host1.packet, (host1.ip_address, 0))
+        scan_op.send_sock.sendto.assert_any_call(host2.packet, (host2.ip_address, 0))
+
+    def test_send_packets_socket_error(self, mock_ros2_logger):
+        """Test handling of socket errors during packet sending."""
+        # Create scan operation
+        scan_op = ScanOperation(targets="192.168.1.1", logger=mock_ros2_logger)
+
+        # Mock the socket to raise an error
+        scan_op.send_sock = Mock()
+        scan_op.send_sock.sendto.side_effect = OSError("Test network error")
+
+        # Setup test host
+        mock_host = Mock()
+        mock_host.ip_address = "192.168.1.1"
+        mock_host.packet = b"test_packet"
+        scan_op.hosts = {mock_host.ip_address: mock_host}
+
+        # Execute the method
+        scan_op._send_packets()
+
+        # Verify error was logged
+        mock_ros2_logger.error.assert_called()
+
+    def test_send_packets_empty_hosts(self, mock_ros2_logger):
+        """Test behavior when hosts list is empty."""
+        # Create scan operation
+        scan_op = ScanOperation(targets=[], logger=mock_ros2_logger)
+
+        # Mock the socket
+        scan_op.send_sock = Mock()
+        scan_op.hosts = {}
+
+        # Execute the method
+        scan_op._send_packets()
+
+        # Verify socket was not called
+        scan_op.send_sock.sendto.assert_not_called()
+        # Verify debug message about no hosts
+        mock_ros2_logger.debug.assert_called()
+
+    def test_send_packets_with_delay(self, mock_ros2_logger):
+        """Test packet sending with proper interval between packets."""
+        # Create scan operation with sending_interval parameter
+        scan_op = ScanOperation(
+            targets="192.168.1.1,192.168.1.2,192.168.1.3",  # Use three hosts to ensure sleep is needed
+            logger=mock_ros2_logger,
+            sending_interval=0.5,
+        )
+
+        # Mock the socket
+        scan_op.send_sock = Mock(spec=socket.socket)
+
+        # Create actual NetworkHost objects rather than mocks
+        # This ensures the class's actual host creation logic is used
+        scan_op._create_hosts()
+
+        # Get the list of hosts for verification
+        hosts = list(scan_op.hosts.values())
+
+        with patch("time.sleep") as mock_sleep:
+            # Execute the method
+            scan_op._send_packets()
+
+            # Verify packets were sent to all hosts
+            assert scan_op.send_sock.sendto.call_count == len(hosts)
+
+            mock_sleep.assert_called()
+            assert mock_sleep.call_count == len(hosts) - 1
+
+            # If sleep was called, verify it was called with the correct interval
+            if mock_sleep.call_count > 0:
+                mock_sleep.assert_called_with(0.5)
+
+
+class TestScanOperationCollectResponses:
+    """Test cases for ScanOperation._collect_responses method."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "responded, state",
+        [
+            (False, HostState.TIMEOUT),
+            (True, HostState.RESPONDED),
+        ],
+    )
+    async def test_collect_responses_one_host(self, mock_ros2_logger, responded, state):
+        """Test response collection when all hosts respond."""
+        # Create scan operation
+        scan_op = ScanOperation(
+            targets="192.168.1.1",
+            logger=mock_ros2_logger,
+        )
+
+        # Mock socket and setup response data
+        scan_op.recv_sock = Mock(spec=socket.socket)
+
+        scan_op._create_hosts()
+
+        # Setup socket to return two responses
+        response = (b"response1", ("192.168.1.1", 0))
+
+        scan_op.hosts["192.168.1.1"].handle_response = Mock(
+            side_effect=lambda packet, host=scan_op.hosts[
+                "192.168.1.1"
+            ]: host.mark_responded()
+        )
+
+        if responded:
+            scan_op.hosts["192.168.1.1"].mark_sent()  # Simulate sent state
+
+        # Patch socket to set non-blocking mode without actual socket operations
+        with (
+            patch(
+                "codestral_ros2_gen.network_scanner.scan_operation.ScanOperation._receive_packet",
+                return_value=response,
+            ),
+        ):
+            # Execute the method
+            await scan_op._collect_responses()
+
+            assert scan_op.hosts["192.168.1.1"].state == state
+
+    @pytest.mark.asyncio
+    async def test_collect_responses_no_hosts(self, mock_ros2_logger):
+        """Test response collection with no hosts configured."""
+        # Create scan operation with no hosts
+        scan_op = ScanOperation(
+            targets=[], logger=mock_ros2_logger, sending_interval=1.0
+        )
+
+        # Mock socket
+        scan_op.recv_sock = Mock(spec=socket.socket)
+
+        # Empty hosts dictionary
+        scan_op.hosts = {}
+
+        # Execute the method
+        await scan_op._collect_responses()
+
+        # Verify socket operations weren't performed
+        scan_op.recv_sock.recvfrom.assert_not_called()
+        # Should log info about no pending hosts
+        mock_ros2_logger.info.assert_called_with(
+            "All hosts processed: stopping response collection"
+        )

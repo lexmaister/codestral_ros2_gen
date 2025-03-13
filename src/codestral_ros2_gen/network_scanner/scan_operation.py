@@ -32,7 +32,7 @@ class ScanOperation:
         self,
         targets: str,
         scanner=None,  # Optional scanner
-        timeout: float = 1.0,
+        timeout: float = 5.0,
         packet_size: int = 64,
         sending_interval: float = 0.05,
         send_buff_size: int = 65536,

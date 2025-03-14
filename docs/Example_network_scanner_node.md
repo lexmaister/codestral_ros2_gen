@@ -3,164 +3,46 @@
 <!-- This example demonstrates generating a ROS2 service that calculates real-world object height using camera parameters. -->
 
 ## Network Scanner Description
-Asynchronous network scanner using ICMP echo requests (ping) with pre-initialized hosts and non-blocking socket operations. Uses hybrid architecture combining synchronous sending and asynchronous receiving.
 
-### Components Structure
-
-```mermaid
-classDiagram
-    class NetworkScanner {
-        -List[Host] hosts
-        -Socket sock
-        -EventLoop loop
-        -Executor send_executor
-        +async scan()
-        -async _receive_responses()
-        -_send_packets()
-    }
-
-    class Host {
-        -str ip_address
-        -int sequence
-        -bytes packet
-        -bool is_alive
-        -float response_time
-        -HostState state
-        +calculate_packet()
-        +validate_response()
-        +update_state()
-    }
-
-    class HostState {
-        <<enumeration>>
-        INIT
-        WAITING
-        RESPONDED
-        TIMEOUT
-    }
-
-    NetworkScanner "1" *-- "many" Host
-    Host -- HostState
-```
+The network scanner initializes both send and receive sockets upfront when entering the scan operation. In the ScanOperation context, hosts are created and both raw sockets are configured to be operational. ICMP echo request packets are sent synchronously using the blocking send socket (_send_packets), ensuring precise control over packet transmission timing. After sending all packets, an asynchronous loop (_collect_responses) is started on the non-blocking receive socket to gather responses, allowing efficient concurrent handling of multiple replies while enforcing a timeout.
 
 ### Operational flow
 
 ```mermaid
 flowchart TD
-    classDef phase fill:#2f4f4f,stroke:#fff,stroke-width:2px,color:#fff
+    classDef phase fill:#A0C878,stroke:#fff,stroke-width:2px,color:#333
     classDef operation fill:#fff5e6,stroke:#666,color:#333
     classDef decision fill:#ffcc99,stroke:#666,color:#333
 
-    Init[INITIALIZATION PHASE]:::phase
-    Init --> CreateHosts[Create Host Objects]:::operation
-    CreateHosts --> CalcPackets[Pre-calculate ICMP Packets]:::operation
-    CalcPackets --> CreateSocket[Create Raw Socket]:::operation
-
-    CreateSocket --> StartLoop[Start Event Loop]:::phase
-    StartLoop --> Par{Parallel Execution}:::decision
-
-    Par --> Receive[RECEIVE PHASE]:::phase
-    Par --> Send[SEND PHASE]:::phase
-
-    Receive --> AsyncReceive[Async Response Handler]:::operation
-    AsyncReceive --> ValidateResp[Validate Responses]:::operation
-    ValidateResp --> UpdateStates[Update Host States]:::operation
-
-    Send --> ExecSend[Executor Send Handler]:::operation
-    ExecSend --> BatchSend[Send All Packets]:::operation
-
-    UpdateStates --> Complete{All Processed?}:::decision
-    Complete -->|Yes| Finish[Finish Scan]:::operation
-    Complete -->|No| AsyncReceive
-
-    BatchSend --> WaitReceive[Wait for Responses]:::operation
+    Init["Initialize: Configure Sockets & Create Hosts"]:::phase
+    Init --> Send["Send Packets Synchronously"]:::operation
+    Send --> Async["Start Async Receive Loop"]:::phase
+    Async --> Validate["Validate & Update Host States"]:::operation
+    Validate --> Complete{"All Hosts Processed?"}:::decision
+    Complete -->|Yes| Finish["Finish Scan & Prepare Results"]:::operation
+    Complete -->|No| Async
 ```
 
 ### Component Details
 
+**ScanOperation**
+• __Entering the context__: Both send and receive sockets are created and made ready.
+• __Synchronous send__: The _send_packets method sends ICMP packets one-by-one, blocking between packets to maintain a controlled sending interval.
+• __Asynchronous response collection__: Once sending is complete, _collect_responses uses asyncio and the non-blocking receive socket to handle incoming packets concurrently until timeout.
+
 **NetworkScanner**
-Purpose: Main coordinator for network scanning operations
-Responsibilities:
-Host object management
-Socket initialization
-Event loop coordination
-Results collection
-Host
-Purpose: Encapsulates single target properties and operations
-Attributes:
-IP address
-Sequence number
-Pre-calculated packet
-Response data
-Current state
-Methods:
-Packet calculation
-Response validation
-State management
-Operational Phases
-1. Initialization
-Create raw socket (IPPROTO_ICMP)
-Initialize host objects
-Pre-calculate ICMP packets
-Set up async event loop
-2. Sending (Synchronous)
-Execute in ThreadPoolExecutor
-Single batch send operation
-No retries
-Sequential packet transmission
-3. Receiving (Asynchronous)
-Non-blocking socket operations
-Response matching
-Host state updates
-Timeout handling
-Error Handling
-Socket exceptions
-Timeout management
-Invalid packet detection
-Resource cleanup
-Performance Considerations
-Pre-calculated packets
-Batch operations
-Minimal state transitions
-Efficient memory usage
-Thread/async coordination
+• Coordinates multiple scan operations and formats results after the scan completes.
 
-### New Block Diagram
+### Example Usage
 
-```mermaid
-flowchart TD
-    classDef external fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef core fill:#fff8e1,stroke:#ff8f00,stroke-width:2px
-    classDef operation fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
-    classDef utility fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    classDef external_api fill:#bbdefb,stroke:#0d47a1,stroke-width:3px,stroke-dasharray: 5 3
+```python
+from network_scanner import NetworkScanner
 
-    %% External Application
-    ExternalApp[External Application]:::external
-
-    %% Convenience Methods
-    QuickScan[quick_scan\nsimple_sync_scan]:::external_api
-
-    %% Core Scanner & Operation
-    NetworkScanner[NetworkScanner\n- configuration\n- recurring scans]:::core
-    ScanOperation[ScanOperation\n- socket management\n- packet handling]:::operation
-
-    %% Utility Classes
-    NetworkHost[NetworkHost]:::utility
-    NetworkParser[parse_network_targets]:::utility
-
-    %% Flow - TWO PATHS
-    ExternalApp -->|"One-time scan"| QuickScan
-    QuickScan -->|"Direct creation"| ScanOperation
-
-    ExternalApp -->|"Recurring scans"| NetworkScanner
-    NetworkScanner -->|"Creates"| ScanOperation
-
-    ScanOperation -->|"Uses"| NetworkHost
-    ScanOperation -->|"Uses"| NetworkParser
-
+# Basic scan with results display
+scanner = NetworkScanner()
+hosts = scanner.scan("192.168.10.0/24")
+print(scanner.format_results(hosts, show_all=False))
 ```
-
 
 ## Package Structure
 ROS2 package structure for the service:

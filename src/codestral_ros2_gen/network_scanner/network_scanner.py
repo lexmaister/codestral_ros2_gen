@@ -11,7 +11,11 @@ crg_logger = get_codestral_ros2_gen_logger()
 
 class NetworkScanner:
     """
-    Network scanner that performs scans and handles formatted results.
+    NetworkScanner performs a complete network scan by:
+    - Setting scan parameters.
+    - Utilizing a ScanOperation context manager that configures both send and receive sockets.
+    - Sending ICMP packets synchronously and then collecting responses asynchronously.
+    - Formatting and reporting the results upon scan completion.
     """
 
     def __init__(
@@ -50,13 +54,18 @@ class NetworkScanner:
 
     def scan(self, targets: str) -> Dict[str, dict]:
         """
-        Perform a scan synchronously for the specified targets.
+        Execute a network scan synchronously for the specified targets.
+
+        This method uses asyncio.run to run an asynchronous scan operation which:
+         - Configures the scan environment within a ScanOperation context.
+         - Synchronously sends ICMP packets via a blocking send socket.
+         - Asynchronously gathers responses via a non-blocking receive socket.
 
         Args:
-            targets: Network targets in CIDR notation or as comma-separated IPs.
+            targets: Network targets in CIDR format or as comma-separated IP addresses.
 
         Returns:
-            Dict[str, dict]: Processed scan results with fields `state`, `response_time_ms`, and `error`.
+            A dictionary mapping host IP addresses to their scan results (state, response time, error).
         """
         try:
             self.scan_start = time.time()
@@ -75,13 +84,16 @@ class NetworkScanner:
 
     async def _scan_async(self, targets: str) -> Dict[str, dict]:
         """
-        Perform an asynchronous scan.
+        Asynchronously execute the network scan operation.
+
+        Within the ScanOperation context, this method first configures both send and receive sockets,
+        then sends ICMP packets synchronously, and finally initiates an asynchronous loop to collect responses.
 
         Args:
-            targets: Network targets in CIDR notation or as comma-separated IPs.
+            targets: Network targets in CIDR or comma-separated IP format.
 
         Returns:
-            Dict[str, dict]: Processed scan results with fields `state`, `response_time_ms`, and `error`.
+            A dictionary of scan results for each target host.
         """
         async with ScanOperation(
             targets=targets,
@@ -97,14 +109,18 @@ class NetworkScanner:
 
     def format_results(self, results: Dict[str, dict], show_all: bool = False) -> str:
         """
-        Format the scan results in a table format.
+        Format the scan results into a human-readable table.
+
+        The table includes headers for IP address, state, response time (ms), and any error messages.
+        An appended summary shows the total scanned hosts, counts for hosts that are up, down, with errors,
+        and the total scan duration. If show_all is False, only hosts with state "UP" are displayed.
 
         Args:
-            results: Scan results returned by `scan()` or `_scan_async()`.
-            show_all: Whether to show all hosts or only those with state "UP".
+            results: The dictionary of scan results returned by scan().
+            show_all: Whether to display all hosts or only those with state "UP".
 
         Returns:
-            str: Formatted results as a string.
+            A formatted string report of the scan results.
         """
         self.logger.info("Formatting scan results")
         out = ""

@@ -9,7 +9,7 @@
 project = "Codestral ROS2 Generator"
 copyright = "2025, Lexmaister"
 author = "Lexmaister"
-version = "0.1.0"
+version = "0.2.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -52,3 +52,18 @@ napoleon_include_private_with_doc = True
 # autodoc configuration
 autodoc_member_order = "bysource"
 autodoc_typehints = "description"
+
+# suppress warnings for ``` markers
+suppress_warnings = [
+    "docutils.parsers.rst.inline_literal",
+]
+
+import warnings
+
+
+def setup(app):
+    warnings.filterwarnings(
+        "ignore",
+        message="Inline literal start-string without end-string",
+        module="docutils.parsers.rst.states",
+    )

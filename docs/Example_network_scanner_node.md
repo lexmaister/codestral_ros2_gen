@@ -45,30 +45,31 @@ print(scanner.format_results(hosts, show_all=False))
 ```
 
 ## Package Structure
-ROS2 package structure for the service:
+ROS2 package structure for the network scanner node:
 ```
-object_height/
-├── object_height/              # Python package
+network_scanner/
+├── network_scanner/                  # Python package
 │   ├── __init__.py
-│   └── service_node.py         # Test service implementation for package init
-├── srv/
-│   └── ObjectHeight.srv        # Service definition
+│   └── network_scanner_node.py       # Test node for package init
+├── msg/
+│   ├── IPStatus.msg                  # Message for one host
+|   └── NetworkStatus.msg             # Message for array of hosts
 ├── test/
-│   └── test_service_node.py    # Unit tests
-├── CMakeLists.txt              # Build configuration
-└── package.xml                 # Package metadata
+│   └── test_network_scanner_node.py  # Unit tests
+├── CMakeLists.txt                    # Build configuration
+└── package.xml                       # Package metadata
 ```
 
 ## Example Explanation
 
 **Configuration**:
-   - The project uses a configuration file (`config.yaml`) to manage settings for the model, generation, test, metrics collection, output, and input files. You can find this file in the `examples/object_height` directory.
+   - The project uses a configuration file (`config.yaml`) to manage settings for the model, generation, test, metrics collection, output, and input files. You can find this file in the `examples/network_scanner` directory.
 
 **Generator Script**:
-   - The `generator.py` script in the `examples/object_height` directory prepares the prompt, interacts with the AI model, and handles the generation process. This script is the entry point for generating ROS2 service nodes.
+   - The `generator.py` script in the `examples/network_scanner` directory prepares the prompt, interacts with the AI model, and handles the generation process. This script is the entry point for generating ROS2 service nodes.
 
-**Service Interface and Test Files**:
-   - These files are specified in the configuration and are used to construct the prompt for the AI model. You can find them in the `src/object_height/srv` and `src/object_height/test` directories, respectively.
+**Node Interface and Test Files**:
+   - These files are specified in the configuration and are used to construct the prompt for the AI model. You can find them in the `src/network_scanner/msg` and `src/network_scanner/test` directories, respectively.
 
 ## Setup and Testing (ROS2 Humble)
 
@@ -76,7 +77,7 @@ object_height/
 ```bash
 cd codestral_ros2_gen/scripts
 chmod +x setup_pkg.sh
-./setup_pkg.sh -p object_height
+./setup_pkg.sh -p network_scanner
 ```
 
 2. Verify the package setup:
@@ -87,26 +88,39 @@ source /opt/ros/humble/setup.bash
 source install/setup.bash
 
 # Check if package is installed
-ros2 pkg list | grep object_height
+ros2 pkg list | grep network_scanner
 
 # Verify service interface
-ros2 interface package object_height
+ros2 interface package network_scanner
 
 # List available executables
-ros2 pkg executables object_height
+ros2 pkg executables network_scanner
 
 # Run test service
-ros2 run object_height object_height_service
+ros2 run network_scanner network_scanner_node
 ```
 
-4. Open another terminal and test test that service publishes in topic `/service_status`:
+4. Open another terminal and test test that service publishes in topic `/network_status`:
 ``` bash
 # Navigate to the test_ws directory
 cd test_ws
 source /opt/ros/humble/setup.bash
 source install/setup.bash
-ros2 topic echo /service_status
+ros2 topic echo /network_status
 ```
+
+You should see messages like:
+```
+stamp:
+  sec: 1742381592
+  nanosec: 479597767
+addresses:
+- ip_address: 192.168.1.1
+  status: offline
+---
+```
+
+<!-- STOP HERE! -->
 
 ## Generating Service with the Model
 

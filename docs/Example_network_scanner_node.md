@@ -120,8 +120,6 @@ addresses:
 ---
 ```
 
-<!-- STOP HERE! -->
-
 ## Generating Service with the Model
 
 ### **Configuration File:**
@@ -142,14 +140,16 @@ Follow the following steps to generate the service implementation using the AI m
 
 Ensure you are in the test workspace directory (e.g., `test_ws`), then execute:
 ```bash
-python3 ../codestral_ros2_gen/examples/object_height/generator.py
+python3 ../codestral_ros2_gen/examples/network_scanner/generator.py
 ```
 
 This command will:
 - Load the local configuration from `config.yaml`
-- Construct a detailed prompt by reading the service interface and test file (as specified in the input section)
-- Use the AI model to create a ROS2 service node implementation
+- Construct a detailed prompt by reading the messages and test files (as specified in the input section)
+- Use the AI model to create a ROS2 node implementation
 - Save the generated code to the output file defined in the configuration
+
+<!-- STOP HERE -->
 
 ### **Review the Generation Output:**
 

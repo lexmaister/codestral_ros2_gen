@@ -1,0 +1,37 @@
+# Model Configuration
+model:
+  type: "codestral-latest"
+  api_key: "YOUR_API_KEY_HERE"
+  system_prompt: |
+    You are a ROS2 expert who specializes in nodes implementations.
+    Generate clean, efficient python code that follows ROS2 best practices.
+    Focus on proper error handling and input validation.
+  parameters:
+    temperature: 0.2
+
+# Generation Settings
+generation:
+  max_attempts: 1
+  evaluation_iterations: 1
+
+# Test Settings
+test:
+  #! for ROS2 humble
+  ws_setup: "source /opt/ros/humble/setup.bash && colcon build --packages-select network_scanner && source install/setup.bash"
+  node_command: "ros2 run network_scanner network_scanner_node"
+  test_command: "pytest -q -s -x src/network_scanner/test/test_network_scanner_node.py"
+  test_timeout: 30
+
+# Metrics Collection
+metrics:
+  metrics_file: "network_scanner_metrics.jsonl"
+
+# Path to the generated code
+output:
+  output_file: "src/network_scanner/network_scanner_node.py"
+
+# Input files used for prompting
+input:
+  msg_1_file: "src/network_scanner/msg/IPStatus.msg"
+  msg_2_file: "src/network_scanner/msg/NetworkStatus.msg"
+  test_file: "src/network_scanner/test/test_network_scanner_node.py"

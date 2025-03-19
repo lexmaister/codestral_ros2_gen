@@ -14,18 +14,14 @@ from .network_parser import parse_network_targets
 
 crg_logger = get_codestral_ros2_gen_logger()
 
-"""
-This module provides the ScanOperation class, which is a context manager for a single network scan operation.
-It handles the configuration of sockets, creation of NetworkHost objects, sending of ICMP packets, and collection of responses.
-"""
-
 
 class ScanOperation:
     """
     Context manager for a single network scan operation.
 
-    This class manages the lifecycle of a network scan, including socket configuration, host creation,
-    packet sending, and response collection. It uses asyncio for non-blocking operations.
+    This class manages the lifecycle of a network scan, including the configuration of sockets,
+    creation of NetworkHost objects, sending of ICMP packets, and collection of responses.
+    It uses sync blocking socket for sending and asyncio non-blocking operations for receiving packets.
     """
 
     def __init__(

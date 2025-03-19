@@ -15,12 +15,12 @@ def parse_network_targets(network_spec: str) -> List[str]:
     Parse various network target specifications and return a list of host IP addresses.
 
     Supported formats:
-    - Standard CIDR:         "192.168.1.0/24"
-    - IP range:              "192.168.1.1-192.168.1.254"
-    - Single IP:             "192.168.1.1"
-    - Multiple networks:     "192.168.1.0/24,10.0.0.0/16"
-    - Octet ranges:          "192.168.10-20.1-254"
-    - Wildcard notation:     "192.168.1.*"
+        * Standard CIDR:         "192.168.1.0/24"
+        * IP range:              "192.168.1.1-192.168.1.254"
+        * Single IP:             "192.168.1.1"
+        * Multiple networks:     "192.168.1.0/24,10.0.0.0/16"
+        * Octet ranges:          "192.168.10-20.1-254"
+        * Wildcard notation:     "192.168.1.*"
 
     Args:
         network_spec (str): String specifying network(s) to scan
@@ -28,7 +28,7 @@ def parse_network_targets(network_spec: str) -> List[str]:
     Returns:
         List[str]: List of IP addresses to scan
 
-        Raises:
+    Raises:
         ValueError: If the network specification is not in a recognized format.
         TypeError: If the network specification contains invalid types.
     """

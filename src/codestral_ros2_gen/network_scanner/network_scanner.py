@@ -12,10 +12,16 @@ crg_logger = get_codestral_ros2_gen_logger()
 class NetworkScanner:
     """
     NetworkScanner performs a complete network scan by:
-    - Setting scan parameters.
-    - Utilizing a ScanOperation context manager that configures both send and receive sockets.
-    - Sending ICMP packets synchronously and then collecting responses asynchronously.
-    - Formatting and reporting the results upon scan completion.
+        * Setting scan parameters.
+        * Utilizing a ScanOperation context manager that configures both send and receive sockets.
+        * Sending ICMP packets synchronously and then collecting responses asynchronously.
+        * Formatting and reporting the results upon scan completion.
+
+    Example usage:
+        >>> from codestral_ros2_gen.network_scanner.network_scanner import NetworkScanner
+        >>> scanner = NetworkScanner()
+        >>> hosts = scanner.scan("192.168.10.0/24")
+        >>> print(scanner.format_results(hosts, show_all=False))
     """
 
     def __init__(

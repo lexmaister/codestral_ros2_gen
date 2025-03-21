@@ -48,16 +48,16 @@ print(scanner.format_results(hosts, show_all=False))
 ROS2 package structure for the network scanner node:
 ```
 network_scanner/
-├── network_scanner/                  # Python package
+├── network_scanner/          # Python package
 │   ├── __init__.py
-│   └── network_scanner_node.py       # Test node for package init
+│   └── scanner_node.py       # Test node for package init
 ├── msg/
-│   ├── IPStatus.msg                  # Message for one host
-|   └── NetworkStatus.msg             # Message for array of hosts
+│   ├── IPStatus.msg          # Message for one host
+|   └── NetworkStatus.msg     # Message for array of hosts
 ├── test/
-│   └── test_network_scanner_node.py  # Unit tests
-├── CMakeLists.txt                    # Build configuration
-└── package.xml                       # Package metadata
+│   └── test_scanner_node.py  # Unit tests
+├── CMakeLists.txt            # Build configuration
+└── package.xml               # Package metadata
 ```
 
 ## Example Explanation
@@ -121,6 +121,41 @@ addresses:
 ```
 
 ## Generating Service with the Model
+
+<!-- ### Permissions for raw socket
+
+THIS METHOD CORRUPT ROS2 WORK
+
+The network scanner uses raw sockets to send and receive ICMP packets. On Linux, this functionality requires elevated permissions. You can grant these permissions (from your test workspace directory, e.g., `test_ws`) by running the following command::
+
+```bash
+sudo setcap cap_net_raw+ep $(readlink -f $(which python3))
+```
+
+To evert the capabilities setting, use the following command:
+```bash
+sudo setcap -r $(readlink -f $(which python3))
+```
+
+After setting the necessary permissions, verify that the scanner works correctly by pinging the `8.8.8.8` address with the test script. Run the following command:
+```bash
+python3 ../codestral_ros2_gen/examples/network_scanner/network_scanner_test.py
+```
+
+If everything is set up correctly, you should see output similar to:
+```
+============================= Network Scan Results =============================
+IP Address       State      Response Time (ms)   Error
+--------------------------------------------------------------------------------
+8.8.8.8          UP         0 ms
+=================================== Summary ====================================
+Total hosts scanned: 1
+Hosts up: 1
+Hosts down: 0
+Hosts with errors: 0
+Scan duration: 0.20 seconds
+================================================================================
+``` -->
 
 ### **Configuration File:**
 

@@ -18,8 +18,8 @@ generation:
 test:
   #! for ROS2 humble
   ws_setup: "source /opt/ros/humble/setup.bash && colcon build --packages-select network_scanner && source install/setup.bash"
-  node_command: "ros2 run network_scanner network_scanner_node"
-  test_command: "pytest -q -s -x src/network_scanner/test/test_network_scanner_node.py"
+  node_command: "echo 'No node command needed'"
+  test_command: "pytest -q -s -x src/network_scanner/test/test_scanner_node.py"
   test_timeout: 30
 
 # Metrics Collection
@@ -28,10 +28,10 @@ metrics:
 
 # Path to the generated code
 output:
-  output_file: "src/network_scanner/network_scanner_node.py"
+  output_file: "src/network_scanner/network_scanner/scanner_node.py"
 
 # Input files used for prompting
 input:
   msg_1_file: "src/network_scanner/msg/IPStatus.msg"
   msg_2_file: "src/network_scanner/msg/NetworkStatus.msg"
-  test_file: "src/network_scanner/test/test_network_scanner_node.py"
+  test_file: "src/network_scanner/test/test_scanner_node.py"

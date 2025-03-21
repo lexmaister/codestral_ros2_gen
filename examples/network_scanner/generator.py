@@ -28,7 +28,13 @@ class ExampleNetworkScannerGenerator(BaseGenerator):
 
             # Updated task description.
             task_description = (
-                "Your task is to generate a ROS2 node for network scanning that:\n"
+                "Your task is to generate a ROS2 node 'network_scanner_node.py' for network scanning that:\n"
+                "  - Contains NetworkScannerNode class describing publisher.\n"
+                "  - Accepts two runtime parameters:\n"
+                "      - network (string): The target network to scan - using in scan method.\n"
+                "This value is required and must not be empty. Default is 8.8.8.8\n"
+                "      - scan_period (int): The number of seconds between each repeated scan execution.\n"
+                "This value is required and must be greater than 0. Default is 10.\n"
                 "  - Imports the NetworkScanner class from codestral_ros2_gen.network_scanner.network_scanner.\n"
                 "  - Instantiates a NetworkScanner object and calls its scan method, e.g., scan('192.168.1.0/24').\n"
                 "    Example usage:\n"
@@ -39,9 +45,6 @@ class ExampleNetworkScannerGenerator(BaseGenerator):
                 "      - state (e.g., 'UP' or 'DOWN'),\n"
                 "      - response_time_ms (integer or None), and\n"
                 "      - error (string, if any).\n"
-                "  - Accepts two runtime parameters:\n"
-                "      - network (string): The target network to scan - using in scan method. This value is required and must not be empty.\n"
-                "      - scan_period (int): The number of seconds between each repeated scan execution.\n"
                 "  - Implements a loop that calls scan() every scan_period seconds. If a scan takes longer than scan_period,\n"
                 "    the node should buffer and avoid overlapping scans by waiting for the current scan to finish before starting a new one.\n"
                 "  - Sends the scan results as a ROS2 message on the 'network_status' topic.\n"

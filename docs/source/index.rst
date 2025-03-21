@@ -19,11 +19,11 @@ Welcome to Codestral ROS2 Generator's documentation!
    utils/file_io
    utils/metrics_handler
    utils/ros2_runner
-   network_scanner/network_scanner
-   network_scanner/scan_operation
-   network_scanner/network_host
-   network_scanner/network_parser
-   network_scanner/utils
+   network_scan/network_scanner
+   network_scan/scan_operation
+   network_scan/network_host
+   network_scan/network_parser
+   network_scan/utils
 
 Indices and tables
 ==================

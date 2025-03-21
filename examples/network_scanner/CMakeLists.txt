@@ -21,9 +21,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 # Install Python executable
 install(
   PROGRAMS
-    network_scanner/network_scanner_node.py
+    network_scanner/scanner_node.py
   DESTINATION lib/${PROJECT_NAME}
-  RENAME network_scanner_node
+  RENAME scanner_node
 )
 
 ament_export_dependencies(rosidl_default_runtime)

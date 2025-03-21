@@ -1,6 +1,7 @@
 # Example: Network Scanner
 
-<!-- This example demonstrates generating a ROS2 service that calculates real-world object height using camera parameters. -->
+This example demonstrates generating a ROS2 node that performs network scanning using ICMP echo requests to detect active hosts on a network.
+
 
 ## Network Scanner Description
 
@@ -26,12 +27,12 @@ flowchart TD
 ### Component Details
 
 **ScanOperation**
-• __Entering the context__: Both send and receive sockets are created and made ready.
-• __Synchronous send__: The _send_packets method sends ICMP packets one-by-one, blocking between packets to maintain a controlled sending interval.
-• __Asynchronous response collection__: Once sending is complete, _collect_responses uses asyncio and the non-blocking receive socket to handle incoming packets concurrently until timeout.
+- __Entering the context__: Both send and receive sockets are created and made ready.
+- __Synchronous send__: The _send_packets method sends ICMP packets one-by-one, blocking between packets to maintain a controlled sending interval.
+- __Asynchronous response collection__: Once sending is complete, _collect_responses uses asyncio and the non-blocking receive socket to handle incoming packets concurrently until timeout.
 
 **NetworkScanner**
-• Coordinates multiple scan operations and formats results after the scan completes.
+- Coordinates multiple scan operations and formats results after the scan completes.
 
 ### Example Usage
 
@@ -42,6 +43,44 @@ from network_scanner import NetworkScanner
 scanner = NetworkScanner()
 hosts = scanner.scan("192.168.10.0/24")
 print(scanner.format_results(hosts, show_all=False))
+```
+
+### Executable NSCAN
+
+To make the network scanner easily accessible from the command line, it's provided as a standalone executable called `nscan`. This command-line tool provides a simple interface to the core NetworkScanner functionality without requiring direct interaction with the ROS2 node system.
+
+**Permissions for raw socket operations**
+
+The network scanner uses raw sockets to send and receive ICMP packets. On Linux, this functionality requires elevated permissions. You can grant these permissions (from your test workspace directory, e.g., `test_ws`) to compiled network scanner's binary `nscan` by running the following command:
+
+```bash
+sudo setcap cap_net_raw+ep ../codestral_ros2_gen/scripts/nscan
+```
+
+After setting the necessary permissions, verify that the scanner works correctly by pinging the `8.8.8.8` address with the test script. Run the following command:
+```bash
+chmod +x ../codestral_ros2_gen/scripts/nscan
+../codestral_ros2_gen/scripts/nscan 8.8.8.8
+```
+
+If everything is set up correctly, you should see output similar to:
+```
+============================= Network Scan Results =============================
+IP Address       State      Response Time (ms)   Error
+--------------------------------------------------------------------------------
+8.8.8.8          UP         1 ms
+=================================== Summary ====================================
+Total hosts scanned: 1
+Hosts up: 1
+Hosts down: 0
+Hosts with errors: 0
+Scan duration: 0.20 seconds
+================================================================================
+```
+
+To revert the capabilities setting, use the following command:
+```bash
+sudo setcap -r cap_net_raw+ep ../codestral_ros2_gen/scripts/nscan
 ```
 
 ## Package Structure
@@ -121,39 +160,6 @@ addresses:
 ```
 
 ## Generating Service with the Model
-
-### Permissions for raw socket operations
-
-The network scanner uses raw sockets to send and receive ICMP packets. On Linux, this functionality requires elevated permissions. You can grant these permissions (from your test workspace directory, e.g., `test_ws`) to compiled network scanner's binary by running the following command:
-
-```bash
-sudo setcap cap_net_raw+ep ../codestral_ros2_gen/scripts/nscan
-```
-
-After setting the necessary permissions, verify that the scanner works correctly by pinging the `8.8.8.8` address with the test script. Run the following command:
-```bash
-../codestral_ros2_gen/scripts/nscan 8.8.8.8
-```
-
-If everything is set up correctly, you should see output similar to:
-```
-============================= Network Scan Results =============================
-IP Address       State      Response Time (ms)   Error
---------------------------------------------------------------------------------
-8.8.8.8          UP         1 ms
-=================================== Summary ====================================
-Total hosts scanned: 1
-Hosts up: 1
-Hosts down: 0
-Hosts with errors: 0
-Scan duration: 0.20 seconds
-================================================================================
-```
-
-To revert the capabilities setting, use the following command:
-```bash
-sudo setcap -r cap_net_raw+ep ../codestral_ros2_gen/scripts/nscan
-```
 
 ### **Configuration File:**
 

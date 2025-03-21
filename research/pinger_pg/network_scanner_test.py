@@ -1,6 +1,6 @@
 #!/home/alex/Projects/ros2/.venv/bin/python3
 
-from codestral_ros2_gen.network_scanner.network_scanner import NetworkScanner
+from codestral_ros2_gen.network_scan.network_scanner import NetworkScanner
 
 # Basic scan with results display
 scanner = NetworkScanner()

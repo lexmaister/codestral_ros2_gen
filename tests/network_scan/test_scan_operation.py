@@ -3,8 +3,8 @@ import socket
 from unittest.mock import Mock, patch
 import time
 
-from codestral_ros2_gen.network_scanner.scan_operation import ScanOperation
-from codestral_ros2_gen.network_scanner.network_host import (
+from codestral_ros2_gen.network_scan.scan_operation import ScanOperation
+from codestral_ros2_gen.network_scan.network_host import (
     NetworkHost,
     HostState,
 )
@@ -492,7 +492,7 @@ class TestScanOperationCollectResponses:
         # Patch socket to set non-blocking mode without actual socket operations
         with (
             patch(
-                "codestral_ros2_gen.network_scanner.scan_operation.ScanOperation._receive_packet",
+                "codestral_ros2_gen.network_scan.scan_operation.ScanOperation._receive_packet",
                 return_value=response,
             ),
         ):

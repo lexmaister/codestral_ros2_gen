@@ -6,7 +6,7 @@ from unittest.mock import patch
 from typing import Dict, Any
 
 # Import the module under test
-from codestral_ros2_gen.network_scanner.network_host import (
+from codestral_ros2_gen.network_scan.network_host import (
     NetworkHost,
     HostState,
 )
@@ -85,7 +85,7 @@ class TestHostInitialization:
 
     def test_initialization_without_logger(self, host_params):
         """Test host initialization without any logger"""
-        with patch("codestral_ros2_gen.network_scanner.network_host.crg_logger", None):
+        with patch("codestral_ros2_gen.network_scan.network_host.crg_logger", None):
             with pytest.raises(
                 RuntimeError, match="No logger provided and default logger is not set"
             ):

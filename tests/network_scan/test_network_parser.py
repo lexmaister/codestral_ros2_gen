@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from codestral_ros2_gen.network_scanner.network_parser import parse_network_targets
+from codestral_ros2_gen.network_scan.network_parser import parse_network_targets
 
 
 def test_cidr_notation():

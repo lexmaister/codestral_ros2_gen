@@ -5,7 +5,7 @@ simple_scanner.py - Minimal example of using ScanOperation context manager
 
 import asyncio
 import sys
-from codestral_ros2_gen.network_scanner.scan_operation import ScanOperation, HostState
+from codestral_ros2_gen.network_scan.scan_operation import ScanOperation, HostState
 
 
 async def run_scan(target):

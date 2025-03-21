@@ -3,9 +3,9 @@ from unittest.mock import Mock, patch, AsyncMock
 import socket
 import asyncio
 
-from codestral_ros2_gen.network_scanner.network_scanner import NetworkScanner
-from codestral_ros2_gen.network_scanner.network_host import NetworkHost
-from codestral_ros2_gen.network_scanner.scan_operation import ScanOperation
+from codestral_ros2_gen.network_scan.network_scanner import NetworkScanner
+from codestral_ros2_gen.network_scan.network_host import NetworkHost
+from codestral_ros2_gen.network_scan.scan_operation import ScanOperation
 
 
 @pytest.fixture
@@ -63,7 +63,7 @@ class TestNetworkScanner:
 
         # Patch the ScanOperation class to return our async mock
         with patch(
-            "codestral_ros2_gen.network_scanner.network_scanner.ScanOperation",
+            "codestral_ros2_gen.network_scan.network_scanner.ScanOperation",
             return_value=mock_scan_op,
         ):
             # Execute scan
@@ -96,7 +96,7 @@ class TestNetworkScanner:
 
         # Patch ScanOperation to return our async mock
         with patch(
-            "codestral_ros2_gen.network_scanner.network_scanner.ScanOperation",
+            "codestral_ros2_gen.network_scan.network_scanner.ScanOperation",
             return_value=mock_scan_op,
         ):
             # Execute scan - the scan method should store results internally

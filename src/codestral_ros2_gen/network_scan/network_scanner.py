@@ -18,7 +18,7 @@ class NetworkScanner:
         * Formatting and reporting the results upon scan completion.
 
     Example usage:
-        >>> from codestral_ros2_gen.network_scanner.network_scanner import NetworkScanner
+        >>> from codestral_ros2_gen.network_scan.network_scanner import NetworkScanner
         >>> scanner = NetworkScanner()
         >>> hosts = scanner.scan("192.168.10.0/24")
         >>> print(scanner.format_results(hosts, show_all=False))

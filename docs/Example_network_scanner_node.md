@@ -122,24 +122,17 @@ addresses:
 
 ## Generating Service with the Model
 
-<!-- ### Permissions for raw socket
+### Permissions for raw socket operations
 
-THIS METHOD CORRUPT ROS2 WORK
-
-The network scanner uses raw sockets to send and receive ICMP packets. On Linux, this functionality requires elevated permissions. You can grant these permissions (from your test workspace directory, e.g., `test_ws`) by running the following command::
+The network scanner uses raw sockets to send and receive ICMP packets. On Linux, this functionality requires elevated permissions. You can grant these permissions (from your test workspace directory, e.g., `test_ws`) to compiled network scanner's binary by running the following command:
 
 ```bash
-sudo setcap cap_net_raw+ep $(readlink -f $(which python3))
-```
-
-To evert the capabilities setting, use the following command:
-```bash
-sudo setcap -r $(readlink -f $(which python3))
+sudo setcap cap_net_raw+ep ../codestral_ros2_gen/scripts/nscan
 ```
 
 After setting the necessary permissions, verify that the scanner works correctly by pinging the `8.8.8.8` address with the test script. Run the following command:
 ```bash
-python3 ../codestral_ros2_gen/examples/network_scanner/network_scanner_test.py
+../codestral_ros2_gen/scripts/nscan 8.8.8.8
 ```
 
 If everything is set up correctly, you should see output similar to:
@@ -155,7 +148,12 @@ Hosts down: 0
 Hosts with errors: 0
 Scan duration: 0.20 seconds
 ================================================================================
-``` -->
+```
+
+To revert the capabilities setting, use the following command:
+```bash
+sudo setcap -r cap_net_raw+ep ../codestral_ros2_gen/scripts/nscan
+```
 
 ### **Configuration File:**
 

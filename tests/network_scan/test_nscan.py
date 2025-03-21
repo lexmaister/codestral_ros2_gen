@@ -19,17 +19,19 @@ class DummyScanner:
 
 
 def test_main(monkeypatch, capsys):
-    # Override NetworkScanner with DummyScanner
-    monkeypatch.setattr(nscan, "NetworkScanner", DummyScanner)
+    import logging
 
-    # Prepare dummy command-line arguments
+    # Reconfigure logger so that its output is captured by capsys
+    logger = logging.getLogger("nscan")
+    logger.handlers = []  # remove previously added handlers
+    handler = logging.StreamHandler(sys.stdout)
+    logger.addHandler(handler)
+
+    monkeypatch.setattr(nscan, "NetworkScanner", DummyScanner)
     testargs = ["nscan.py", "192.168.1.0/24", "--show-all", "-t", "3"]
     monkeypatch.setattr(sys, "argv", testargs)
 
-    # Run main
-    ret = nscan.main()
-
-    # Capture standard output and assert the expected dummy output
+    nscan.main()
     captured = capsys.readouterr().out
     assert "formatted dummy results" in captured
 
@@ -40,3 +42,27 @@ def test_missing_target(monkeypatch):
     monkeypatch.setattr(sys, "argv", testargs)
     with pytest.raises(SystemExit):
         nscan.main()
+
+
+def test_save_json(monkeypatch, tmp_path):
+    import importlib
+
+    module = importlib.import_module("codestral_ros2_gen.network_scan.nscan")
+    monkeypatch.setattr(module, "NetworkScanner", DummyScanner)
+
+    # Prepare dummy command-line arguments with out_path set to tmp_path directory
+    test_dir = str(tmp_path)
+    testargs = ["nscan.py", "192.168.1.0/24", "-t", "3", "-o", test_dir]
+    monkeypatch.setattr(sys, "argv", testargs)
+
+    # Run main from the module
+    module.main()
+
+    # Check that the JSON file exists and contains the expected dummy result
+    result_file = tmp_path / "nscan_results.json"
+    assert result_file.exists(), f"Expected JSON file {result_file} not found"
+    import json
+
+    with result_file.open() as f:
+        data = json.load(f)
+    assert data == {"dummy": True}

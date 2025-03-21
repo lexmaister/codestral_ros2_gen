@@ -55,7 +55,8 @@ class NetworkScanner:
         if logger is not None:
             self.logger = logger
         elif nscan_logger is not None:
-            self.logger = init_pkg_logger(nscan_logger)
+            self.logger = init_pkg_logger()
+            self.logger.name = nscan_logger
         else:
             raise RuntimeError("No logger provided and default logger is not set")
 

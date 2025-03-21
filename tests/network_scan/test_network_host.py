@@ -187,7 +187,7 @@ class TestMarks:
 
         # Verify debug message was logged
         mock_ros2_logger.debug.assert_any_call(
-            f"Response from {host.ip_address} after {host.rtt_ms} ms"
+            f"Round transfer time for {host.ip_address}: {host.rtt_ms} ms"
         )
 
     def test_mark_responded_with_explicit_time(self, host_params, mock_ros2_logger):

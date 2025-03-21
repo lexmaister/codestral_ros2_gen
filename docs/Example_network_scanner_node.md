@@ -140,7 +140,7 @@ If everything is set up correctly, you should see output similar to:
 ============================= Network Scan Results =============================
 IP Address       State      Response Time (ms)   Error
 --------------------------------------------------------------------------------
-8.8.8.8          UP         0 ms
+8.8.8.8          UP         1 ms
 =================================== Summary ====================================
 Total hosts scanned: 1
 Hosts up: 1

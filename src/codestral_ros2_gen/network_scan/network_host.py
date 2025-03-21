@@ -281,8 +281,12 @@ class NetworkHost:
         """
         self._state = HostState.RESPONDED
         self.recv_time = recv_time or time.time()
-        self.rtt_ms = round((self.recv_time - self.send_time) * 1000)
-        self.logger.debug(f"Response from {self.ip_address} after {self.rtt_ms} ms")
+        self.logger.debug(f"Response from {self.ip_address} at {self.recv_time}")
+        rtt_ms = round((self.recv_time - self.send_time) * 1000)
+        self.rtt_ms = rtt_ms if rtt_ms > 0 else 1
+        self.logger.debug(
+            f"Round transfer time for {self.ip_address}: {self.rtt_ms} ms"
+        )
 
     def mark_timeout(self) -> None:
         """

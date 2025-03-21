@@ -1,6 +1,10 @@
 import os
 from pathlib import Path
-from codestral_ros2_gen import logger
+from codestral_ros2_gen import logger_main
+import logging
+
+
+logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
 
 
 def save_code(code: str, output_path: Path) -> bool:

@@ -121,21 +121,12 @@ def setup_logger(name: str = "root", config_path: Path = None) -> logging.Logger
     return logger
 
 
-# Initialize package-level logger
+# Package-level logger name
 logger_main = "root"
-try:
-    logger = setup_logger(logger_main)
-except (FileNotFoundError, ValueError) as e:
-    print(f"Failed to initialize logger: {str(e)}")
-    raise SystemExit(1)
-except Exception as e:
-    print(f"Unexpected error during logger initialization: {str(e)}")
-    raise SystemExit(1)
-
 
 # Public interface and reusability
 __all__ = [
-    "logger",
+    "setup_logger",
     "logger_main",
     "get_project_root",
     "get_config_path",

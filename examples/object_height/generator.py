@@ -1,7 +1,10 @@
 from pathlib import Path
-import json
-from codestral_ros2_gen import load_config, logger
-from codestral_ros2_gen.generators.base_generator import BaseGenerator
+from codestral_ros2_gen import load_config
+from codestral_ros2_gen.generators.base_generator import BaseGenerator, logger
+from codestral_ros2_gen.utils.init_pkg_logger import init_pkg_logger
+
+
+logger = init_pkg_logger()
 
 
 class ExampleServiceNodeGenerator(BaseGenerator):

@@ -2,13 +2,18 @@ import time
 from pathlib import Path
 from typing import Optional, Type
 from abc import ABC, abstractmethod
+import logging
 
-from codestral_ros2_gen import get_config_path, load_config, logger
+from codestral_ros2_gen import *
+from codestral_ros2_gen.utils.init_pkg_logger import init_pkg_logger
 from codestral_ros2_gen.utils.metrics_handler import MetricsHandler
 from codestral_ros2_gen.models.mistral_client import MistralClient
 from codestral_ros2_gen.generators.generation_attempt import GenerationAttempt
 from codestral_ros2_gen.utils.file_io import save_code
 from codestral_ros2_gen.utils.config_utils import validate_config_keys
+
+
+logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
 
 
 class BaseGenerator(ABC):

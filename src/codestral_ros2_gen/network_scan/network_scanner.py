@@ -6,6 +6,7 @@ import time
 from .utils import get_codestral_ros2_gen_logger
 from .scan_operation import ScanOperation
 
+
 crg_logger = get_codestral_ros2_gen_logger()
 
 

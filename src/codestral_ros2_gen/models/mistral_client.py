@@ -6,6 +6,7 @@ import logging
 
 from codestral_ros2_gen import logger_main
 
+
 logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
 
 

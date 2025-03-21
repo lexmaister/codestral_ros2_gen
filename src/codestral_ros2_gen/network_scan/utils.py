@@ -15,9 +15,17 @@ def get_codestral_ros2_gen_logger() -> logging.Logger | None:
         logging.Logger | None: The codestral_ros2_gen logger for the network scanner.
     """
     try:
-        from codestral_ros2_gen import logger_main, logging
+        #     from codestral_ros2_gen import logger_main, setup_logger
 
-        default_logger = logging.getLogger(f"{logger_main}.network_scan")
+        #     try:
+        #         default_logger = setup_logger(f"{logger_main}.network_scan")
+        #     except (FileNotFoundError, ValueError) as e:
+        #         print(f"Failed to initialize logger: {str(e)}")
+        #         raise
+        #     except Exception as e:
+        #         print(f"Unexpected error during logger initialization: {str(e)}")
+        #         raise
+        default_logger = logging.getLogger("codestral_ros2_gen.network_scan")
 
     except ImportError:
         default_logger = None  # should work with exteral logger

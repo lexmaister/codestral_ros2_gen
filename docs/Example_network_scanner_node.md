@@ -136,7 +136,7 @@ ros2 interface package network_scanner
 ros2 pkg executables network_scanner
 
 # Run test service
-ros2 run network_scanner network_scanner_node
+ros2 run network_scanner scanner_node
 ```
 
 4. Open another terminal and test test that service publishes in topic `/network_status`:

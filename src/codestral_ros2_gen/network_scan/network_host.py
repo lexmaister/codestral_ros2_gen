@@ -13,9 +13,7 @@ from enum import Enum, auto
 from typing import Optional
 import logging
 
-from .utils import get_codestral_ros2_gen_logger
-
-crg_logger = get_codestral_ros2_gen_logger()
+from . import nscan_logger
 
 
 class HostState(Enum):
@@ -82,8 +80,8 @@ class NetworkHost:
 
         if logger is not None:
             self.logger = logger
-        elif crg_logger is not None:
-            self.logger = crg_logger
+        elif nscan_logger is not None:
+            self.logger = logging.getLogger(f"{nscan_logger}.host")
         else:
             raise RuntimeError("No logger provided and default logger is not set")
 

@@ -2,7 +2,7 @@ import argparse
 import sys
 import logging
 
-from .network_scanner import NetworkScanner
+from codestral_ros2_gen.network_scan.network_scanner import NetworkScanner
 
 
 logger = logging.getLogger("nscan")

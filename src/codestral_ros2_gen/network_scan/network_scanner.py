@@ -3,11 +3,11 @@ import logging
 from typing import Dict, Optional
 import time
 
-from .utils import get_codestral_ros2_gen_logger
 from .scan_operation import ScanOperation
+from . import nscan_logger
 
-
-crg_logger = get_codestral_ros2_gen_logger()
+if nscan_logger is not None:
+    from codestral_ros2_gen.utils.init_pkg_logger import init_pkg_logger
 
 
 class NetworkScanner:
@@ -54,8 +54,8 @@ class NetworkScanner:
 
         if logger is not None:
             self.logger = logger
-        elif crg_logger is not None:
-            self.logger = crg_logger
+        elif nscan_logger is not None:
+            self.logger = init_pkg_logger(nscan_logger)
         else:
             raise RuntimeError("No logger provided and default logger is not set")
 

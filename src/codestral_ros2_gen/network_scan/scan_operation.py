@@ -7,12 +7,9 @@ import random
 from typing import Dict, Optional
 import logging
 
-from .utils import get_codestral_ros2_gen_logger
 from .network_host import NetworkHost, HostState
 from .network_parser import parse_network_targets
-
-
-crg_logger = get_codestral_ros2_gen_logger()
+from . import nscan_logger
 
 
 class ScanOperation:
@@ -57,10 +54,11 @@ class ScanOperation:
 
         if hasattr(scanner, "logger"):
             self.logger = getattr(scanner, "logger")
+            self.logger.name = f"{self.logger.name}.scan_operation"
         elif logger is not None:
             self.logger = logger
-        elif crg_logger is not None:
-            self.logger = crg_logger
+        elif nscan_logger is not None:
+            self.logger = logging.getLogger(f"{nscan_logger}.scan_operation")
         else:
             raise RuntimeError("No logger provided and default logger is not set")
 

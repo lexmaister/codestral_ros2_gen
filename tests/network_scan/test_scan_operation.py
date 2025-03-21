@@ -1,7 +1,6 @@
 import pytest
 import socket
 from unittest.mock import Mock, patch
-import time
 
 from codestral_ros2_gen.network_scan.scan_operation import ScanOperation
 from codestral_ros2_gen.network_scan.network_host import (
@@ -77,6 +76,48 @@ class TestScanOperationInit:
 
         assert scan_op.scanner == mock_scanner
         # Would need to check if scanner attributes are used properly in the real implementation
+
+    def test_init_with_scanner_logger(self, basic_scan_params):
+        """Test initialization with a scanner object that has a logger attribute."""
+        import logging
+        from codestral_ros2_gen.network_scan.scan_operation import ScanOperation
+
+        # Create a dummy scanner with a logger attribute
+        scanner = type("DummyScanner", (), {})()
+        dummy_logger = logging.getLogger("custom")
+        scanner.logger = dummy_logger
+        scan_op = ScanOperation(targets=basic_scan_params["targets"], scanner=scanner)
+        # Verify logger name is updated
+        assert scan_op.logger.name == "custom.scan_operation"
+
+    def test_init_with_default_logger(self, basic_scan_params):
+        """Test initialization using the default logger from nscan_logger."""
+        from codestral_ros2_gen.network_scan import scan_operation
+
+        # Backup and set default logger value
+        original_default = scan_operation.nscan_logger
+        scan_operation.nscan_logger = "default_logger"
+        try:
+            scan_op = scan_operation.ScanOperation(targets=basic_scan_params["targets"])
+            expected_name = "default_logger.scan_operation"
+            assert scan_op.logger.name == expected_name
+        finally:
+            scan_operation.nscan_logger = original_default
+
+    def test_init_no_logger_raises(self, basic_scan_params):
+        """Test that initialization fails if no logger provided and default logger not set."""
+        from codestral_ros2_gen.network_scan import scan_operation
+
+        # Backup and clear nscan_logger
+        original_default = scan_operation.nscan_logger
+        scan_operation.nscan_logger = None
+        try:
+            with pytest.raises(
+                RuntimeError, match="No logger provided and default logger is not set"
+            ):
+                scan_operation.ScanOperation(targets=basic_scan_params["targets"])
+        finally:
+            scan_operation.nscan_logger = original_default
 
 
 @pytest.mark.asyncio

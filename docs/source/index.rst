@@ -23,7 +23,6 @@ Welcome to Codestral ROS2 Generator's documentation!
    network_scan/scan_operation
    network_scan/network_host
    network_scan/network_parser
-   network_scan/utils
 
 Indices and tables
 ==================

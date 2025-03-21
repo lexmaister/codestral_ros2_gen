@@ -5,9 +5,14 @@ from typing import List
 import re
 import logging
 
-from codestral_ros2_gen import logger_main
+from . import nscan_logger
 
-logger = logging.getLogger(f"{logger_main}.{__name__.split('.')[-1]}")
+if nscan_logger:
+    lname = f"{nscan_logger}.parser"
+else:
+    lname = "nscan.parser"
+
+logger = logging.getLogger(lname)
 
 
 def parse_network_targets(network_spec: str) -> List[str]:

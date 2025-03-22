@@ -65,13 +65,22 @@ log "Using ROS2 $ROS_DISTRO"
 # Source ROS2 setup script
 source "/opt/ros/$ROS_DISTRO/setup.bash" || error_exit "Failed to source ROS2 setup script"
 
-# Get the script's directory
+# Get the script's directory - should be ending with .venv/bin after pkg installation
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 log "Script directory: $SCRIPT_DIR"
 
+# Get package directory from pip (get parent directory of the package)
+CODESTRAL_PACKAGE_DIR=$(python3 -c "
+import os
+import pkg_resources
+pkg_path = pkg_resources.resource_filename('codestral_ros2_gen', '')
+print(os.path.dirname(os.path.dirname(pkg_path)))
+") || error_exit "Failed to get package directory"
+log "Codestral package directory: $CODESTRAL_PACKAGE_DIR"
+
 # Set workspace directories
-EXAMPLES_DIR="$SCRIPT_DIR/../examples/$PACKAGE_NAME"
-WS_DIR="$SCRIPT_DIR/../../test_ws"
+EXAMPLES_DIR="$CODESTRAL_PACKAGE_DIR/examples/$PACKAGE_NAME"
+WS_DIR="$CODESTRAL_PACKAGE_DIR/../test_ws"
 SRC_DIR="$WS_DIR/src"
 PACKAGE_DIR="$SRC_DIR/$PACKAGE_NAME"
 

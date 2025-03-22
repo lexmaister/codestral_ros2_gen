@@ -35,6 +35,11 @@ git clone https://github.com/lexmaister/codestral_ros2_gen.git
 cd codestral_ros2_gen
 ```
 
+* Make the scripts executable:
+```bash
+chmod +x scripts/*
+```
+
 * Install the package in the editable mode:
 ```bash
 pip install --upgrade pip

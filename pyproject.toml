@@ -58,3 +58,12 @@ pythonpath = ["src"]
 addopts = "-vv --cov=codestral_ros2_gen --cov-report=term"
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
+
+[tool.setuptools.package-data]
+"codestral_ros2_gen.scripts" = ["*.sh", "nscan"]
+
+[tool.setuptools]
+script-files = [
+    "scripts/build_docs.sh",
+    "scripts/setup_pkg.sh",
+]

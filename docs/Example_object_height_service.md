@@ -39,17 +39,15 @@ object_height/
 
 ## Setup and Testing (ROS2 Humble)
 
-1. Make setup script executable and run it:
+1. Run setup script:
 ```bash
-cd codestral_ros2_gen/scripts
-chmod +x setup_pkg.sh
-./setup_pkg.sh -p object_height
+setup_pkg.sh -p object_height
 ```
 
 2. Verify the package setup:
 ```bash
 # Navigate to the test_ws directory
-cd ../../test_ws
+cd ../test_ws
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 

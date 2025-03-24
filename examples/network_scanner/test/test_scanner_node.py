@@ -3,62 +3,146 @@ import rclpy
 import subprocess
 import time
 import pytest
+from codestral_ros2_gen.utils.ros2_runner import ROS2Runner
 
 
-@pytest.fixture(scope="module")
-def network_scanner_node():
-    # Start node similarly to "ros2 run network_scanner scanner_node"
-    process = subprocess.Popen(
-        ["ros2", "run", "network_scanner", "scanner_node"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    time.sleep(2)  # Allow node time to initialize
-    yield process
-    process.terminate()
-    process.wait()
-
-
-@pytest.fixture(scope="module")
-def network_status_client():
+@pytest.fixture(scope="function")
+def network_scanner_node(request):
     if not rclpy.ok():
         rclpy.init()
+
+    # Default parameters
+    network = "8.8.8.8"
+    scan_period = 10
+    if hasattr(request, "param"):
+        params = request.param
+        network = params.get("network", network)
+        scan_period = params.get("scan_period", scan_period)
+
+    runner = ROS2Runner(
+        node_command=f"ros2 run network_scanner scanner_node --ros-args -p network:={network!r} -p scan_period:={scan_period}",
+        test_command="",
+    )
+    runner.start_node()
+    yield runner.node_process
+    if runner.node_process:
+        runner.kill_node()
+        time.sleep(2)  # Allow time to shutdown
+
+
+@pytest.fixture(scope="function")
+def network_status_client():
+    # Initialize RCL if needed
+    if not rclpy.ok():
+        rclpy.init()
+
+    # Create a fresh client node for each test
     client_node = rclpy.create_node("network_status_client")
     received_msgs = []
 
     def callback(msg):
         received_msgs.append(msg)
 
+    # Create subscription
     subscription = client_node.create_subscription(
         NetworkStatus, "/network_status", callback, 10
     )
+
+    # Give some time for subscription to be established
+    time.sleep(0.5)
+
+    # Yield both the node and message buffer to the test
     yield client_node, received_msgs
+
+    # Cleanup
     client_node.destroy_subscription(subscription)
     client_node.destroy_node()
 
 
+def test_nscan_app_start(tmpdir):
+    # Start the network scanner app
+    process = subprocess.Popen(
+        ["nscan", "8.8.8.8", "-t", "1", "-o", tmpdir],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    process.wait()
+    assert process.returncode == 0
+
+
 def test_node_running(network_scanner_node):
-    # Verify the node process is still running.
+    # Verify the node process is running.
     assert network_scanner_node.poll() is None
 
 
-def test_default_parameters(network_scanner_node, network_status_client):
+@pytest.mark.parametrize(
+    "network_scanner_node,expected",
+    [
+        (
+            {"network": "8.8.8.8", "scan_period": 10},
+            {"expected_ip": ["8.8.8.8"], "expected_interval": 10},
+        ),
+        (
+            {"network": "1.1.1.1, 8.8.4.4", "scan_period": 5},
+            {"expected_ip": ["1.1.1.1", "8.8.4.4"], "expected_interval": 5},
+        ),
+    ],
+    indirect=["network_scanner_node"],
+)
+def test_network_scanner_parameters(
+    network_scanner_node, network_status_client, expected
+):
+    # Helper function to wait for messages
+    def wait_for_messages(node, messages, count=2, timeout=30):
+        start_time = time.time()
+        while time.time() - start_time < timeout and len(messages) < count:
+            rclpy.spin_once(node, timeout_sec=0.1)
+
+        # Print received messages for debugging
+        print(f"Received {len(messages)} messages:")
+        for i, msg in enumerate(messages):
+            print(f"Message {i}:")
+            for addr in msg.addresses:
+                print(f"  IP: {addr.ip_address}, Status: {addr.status}")
+
+        return len(messages) >= count
+
+    # Helper function to validate message content
+    def validate_message(msg, expected_ips):
+        found_ips = [addr.ip_address for addr in msg.addresses]
+        for expected_ip in expected_ips:
+            assert (
+                expected_ip in found_ips
+            ), f"Expected IP '{expected_ip}' not found. Found: {found_ips}"
+
+        for addr in msg.addresses:
+            assert (
+                addr.status == "UP"
+            ), f"IP '{addr.ip_address}' is not UP: {addr.status}"
+
+    # Verify the node process is running
+    assert network_scanner_node.poll() is None, "Network scanner node is not running"
+
     client_node, received_msgs = network_status_client
-    start_time = time.time()
-    timeout = 30  # seconds
-    while time.time() - start_time < timeout and len(received_msgs) < 2:
-        rclpy.spin_once(client_node, timeout_sec=1)
-    assert len(received_msgs) >= 2, "Didn't receive at least two messages"
+
+    # Wait for at least 2 messages
+    assert wait_for_messages(
+        client_node, received_msgs, count=2
+    ), f"Timeout waiting for messages. Received: {len(received_msgs)}"
+
+    # Validate the content of the first two messages
+    for msg in received_msgs[:2]:
+        validate_message(msg, expected["expected_ip"])
+
+    # Calculate the interval using ROS timestamps
     first_msg = received_msgs[0]
     second_msg = received_msgs[1]
-    # Verify at least one IPStatus entry in the first message has ip_address "8.8.8.8"
-    assert any(
-        ip.ip_address == "8.8.8.8" for ip in first_msg.addresses
-    ), "Default IP '8.8.8.8' not found in first message"
-    # Compute the interval from ROS timestamps (with nanosec correction)
+
     interval = (second_msg.stamp.sec - first_msg.stamp.sec) + (
         (second_msg.stamp.nanosec - first_msg.stamp.nanosec) * 1e-9
     )
+
+    # Allow 1 second of tolerance for the interval check
     assert (
-        abs(interval - 10) < 2
-    ), f"Interval between messages is {interval} sec, expected ~10 seconds"
+        abs(interval - expected["expected_interval"]) < 1
+    ), f"Interval {interval:.2f} sec, expected ~{expected['expected_interval']} sec"

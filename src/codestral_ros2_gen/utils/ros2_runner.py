@@ -53,26 +53,30 @@ class ROS2Runner:
             RuntimeError: If the node fails to start or register with ROS2.
         """
         logger.info("Starting the ROS2 node...")
-        self.node_process = subprocess.Popen(
-            self.node_command,
-            shell=True,
-            executable="/bin/bash",
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            text=True,
-        )
+        if "skip" in self.node_command.lower():
+            logger.info("Skipping node start as requested.")
+            return
+        else:
+            self.node_process = subprocess.Popen(
+                self.node_command,
+                shell=True,
+                executable="/bin/bash",
+                stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                text=True,
+            )
 
-        # Wait briefly for node to initialize
-        time.sleep(2)
+            # Wait briefly for node to initialize
+            time.sleep(2)
 
-        # Check if process is still running
-        if self.node_process.poll() is not None:
-            # Process terminated - get error output
-            stdout, stderr = self.node_process.communicate()
-            error_msg = f"Node process terminated immediately.\nStdout: {stdout}\nStderr: {stderr}"
-            raise RuntimeError(error_msg)
+            # Check if process is still running
+            if self.node_process.poll() is not None:
+                # Process terminated - get error output
+                stdout, stderr = self.node_process.communicate()
+                error_msg = f"Node process terminated immediately.\nStdout: {stdout}\nStderr: {stderr}"
+                raise RuntimeError(error_msg)
 
-        logger.info("Node started successfully.")
+            logger.info("Node started successfully.")
 
     def run_tests(self) -> int:
         """

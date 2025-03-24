@@ -49,18 +49,29 @@ print(scanner.format_results(hosts, show_all=False))
 
 To make the network scanner easily accessible from the command line, it's provided as a standalone executable called `nscan`. This command-line tool provides a simple interface to the core NetworkScanner functionality without requiring direct interaction with the ROS2 node system.
 
-**Permissions for raw socket operations**
+**Installation**
 
-The network scanner uses raw sockets to send and receive ICMP packets. On Linux, this functionality requires elevated permissions. You can grant these permissions (from your test workspace directory, e.g., `test_ws`) to compiled network scanner's binary `nscan` by running the following command:
-
+To make the scanner accessible from the command line, install it to your virtual environment
+with the following commands from `test_gen` directory:
 ```bash
-sudo setcap cap_net_raw+ep ../codestral_ros2_gen/scripts/nscan
+cp ./codestral_ros2_gen/scripts/nscan .venv/bin
+chmod +x .venv/bin/nscan
 ```
 
-After setting the necessary permissions, verify that the scanner works correctly by pinging the `8.8.8.8` address with the test script. Run the following command:
+**Required Permissions**
+
+Since the scanner uses raw sockets to send and receive ICMP packets, it requires elevated permissions on Linux systems. Grant these permissions with:
 ```bash
-chmod +x ../codestral_ros2_gen/scripts/nscan
-../codestral_ros2_gen/scripts/nscan 8.8.8.8
+sudo setcap cap_net_raw+ep .venv/bin/nscan
+```
+
+This allows the executable to create raw network sockets without running as root.
+
+**Quick Test**
+
+After installation and setting permissions, test the scanner by pinging Google's DNS server:
+```bash
+nscan 8.8.8.8
 ```
 
 If everything is set up correctly, you should see output similar to:
@@ -80,8 +91,18 @@ Scan duration: 0.20 seconds
 
 To revert the capabilities setting, use the following command:
 ```bash
-sudo setcap -r cap_net_raw+ep ../codestral_ros2_gen/scripts/nscan
+sudo setcap -r cap_net_raw+ep .venv/bin/nscan
 ```
+
+**Troubleshooting**
+
+If you encounter permission errors:
+
+- Verify the capabilities were correctly set.
+- Ensure your virtual environment is activated.
+- Check that the binary is executable.
+- For "command not found" errors, ensure your virtual environment is activated.
+
 
 ## Package Structure
 ROS2 package structure for the network scanner node:

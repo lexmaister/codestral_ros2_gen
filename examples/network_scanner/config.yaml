@@ -18,9 +18,9 @@ generation:
 test:
   #! for ROS2 humble
   ws_setup: "source /opt/ros/humble/setup.bash && colcon build --packages-select network_scanner && source install/setup.bash"
-  node_command: "echo 'No node command needed'"
+  node_command: "SKIP"
   test_command: "pytest -q -s -x src/network_scanner/test/test_scanner_node.py"
-  test_timeout: 30
+  test_timeout: 180
 
 # Metrics Collection
 metrics:

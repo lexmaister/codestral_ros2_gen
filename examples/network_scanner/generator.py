@@ -33,30 +33,26 @@ class ExampleNetworkScannerGenerator(BaseGenerator):
             # Updated task description.
             task_description = (
                 "Your task is to generate a ROS2 node 'network_scanner_node.py' for network scanning that:\n"
-                "  - Contains NetworkScannerNode class describing publisher.\n"
+                "  - Contains a NetworkScannerNode class which acts as a publisher.\n"
                 "  - Accepts two runtime parameters:\n"
-                "      - network (string): The target network to scan - using in scan method.\n"
-                "This value is required and must not be empty. Default is 8.8.8.8\n"
-                "      - scan_period (int): The number of seconds between each repeated scan execution.\n"
-                "This value is required and must be greater than 0. Default is 10.\n"
-                "  - Imports the NetworkScanner class from codestral_ros2_gen.network_scanner.network_scanner.\n"
-                "  - Instantiates a NetworkScanner object and calls its scan method, e.g., scan('192.168.1.0/24').\n"
-                "    Example usage:\n"
-                "      from codestral_ros2_gen.network_scanner.network_scanner import NetworkScanner\n"
-                "      scanner = NetworkScanner()\n"
-                "      results = scanner.scan('192.168.1.0/24')\n"
-                "  - Expects the scan method to return a dictionary mapping IP addresses to a dict containing at least:\n"
-                "      - state (e.g., 'UP' or 'DOWN'),\n"
-                "      - response_time_ms (integer or None), and\n"
-                "      - error (string, if any).\n"
-                "  - Implements a loop that calls scan() every scan_period seconds. If a scan takes longer than scan_period,\n"
-                "    the node should buffer and avoid overlapping scans by waiting for the current scan to finish before starting a new one.\n"
-                "  - Sends the scan results as a ROS2 message on the 'network_status' topic.\n"
+                "      - network (string): The target network to scan. This value is required and must not be empty. Default is 8.8.8.8\n"
+                "      - scan_period (int): The number of seconds between each repeated scan execution. This value is required and must be greater than 0. Default is 10.\n"
+                "  - Executes the compiled nscan binary (subprocess.Popen(['nscan', network]) to perform network scanning.\n"
+                "    - The node should call the binary as a subprocess, pass the network target as an argument,\n"
+                "      capture its JSON output from '/tmp/nscan_results.json', and parse it to obtain the scan results.\n"
+                "JSON example:\n"
+                "{"
+                "'8.8.8.8': {\n"
+                "    'state': 'UP',\n"
+                "    'response_time_ms': 1,\n"
+                "    'error': null\n"
+                "   },\n"
+                "}\n"
+                "  - Implements a loop that invokes the nscan binary every scan_period seconds. If a scan takes longer than scan_period,\n"
+                "    the node should wait for the current scan to finish before starting a new one to avoid overlapping scans.\n"
+                "  - Sends the parsed scan results as a ROS2 message on the 'network_status' topic.\n"
                 "  - Logs the scan results and any errors using the node's logger.\n"
-                "  - Publishes the scan results every scan_period seconds.\n"
-                "  - Uses the ROS2 clock to set the timestamp in the message.\n"
-                "  - Uses proper error handling.\n"
-                "  - Adheres to ROS2 best practices."
+                "  - Uses the ROS2 clock to set the timestamp in the message and adheres to ROS2 best practices."
             )
 
             # Build composite prompt.
@@ -88,11 +84,6 @@ def main():
     # Create generator instance and assign configuration.
     generator = ExampleNetworkScannerGenerator(config_path=config_path)
     generator.config = config
-
-    # Prepare the prompt (for debugging or inspection purposes).
-    prompt = generator.prepare_prompt(scanner_name="network_scanner")
-    logger.debug("Generated prompt:")
-    logger.debug(prompt)
 
     # Run the generation process.
     generator.run(scanner_name="network_scanner")

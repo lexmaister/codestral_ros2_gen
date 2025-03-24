@@ -37,6 +37,7 @@ class ExampleNetworkScannerGenerator(BaseGenerator):
                 "  - Accepts two runtime parameters:\n"
                 "      - network (string): The target network to scan. This value is required and must not be empty. Default is 8.8.8.8\n"
                 "      - scan_period (int): The number of seconds between each repeated scan execution. This value is required and must be greater than 0. Default is 10.\n"
+                "  - Node should exit when provided invalid parameters.\n"
                 "  - Executes the compiled nscan binary (subprocess.Popen(['nscan', network]) to perform network scanning.\n"
                 "    - The node should call the binary as a subprocess, pass the network target as an argument,\n"
                 "      capture its JSON output from '/tmp/nscan_results.json', and parse it to obtain the scan results.\n"
@@ -51,6 +52,8 @@ class ExampleNetworkScannerGenerator(BaseGenerator):
                 "  - Implements a loop that invokes the nscan binary every scan_period seconds. If a scan takes longer than scan_period,\n"
                 "    the node should wait for the current scan to finish before starting a new one to avoid overlapping scans.\n"
                 "  - Sends the parsed scan results as a ROS2 message on the 'network_status' topic.\n"
+                "  - The message should be of type NetworkStatus, which is defined in the provided message files.\n"
+                "  - It also should check for time JSON was last modified and if it is older than 10 seconds, it should send an empty addresses list.\n"
                 "  - Logs the scan results and any errors using the node's logger.\n"
                 "  - Uses the ROS2 clock to set the timestamp in the message and adheres to ROS2 best practices."
             )

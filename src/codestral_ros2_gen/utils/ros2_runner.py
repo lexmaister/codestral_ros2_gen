@@ -49,6 +49,8 @@ class ROS2Runner:
         """
         Start the ROS2 node and verify it launched successfully.
 
+        If "skip / SKIP" is found in the node_command, the node is not started.
+
         Raises:
             RuntimeError: If the node fails to start or register with ROS2.
         """

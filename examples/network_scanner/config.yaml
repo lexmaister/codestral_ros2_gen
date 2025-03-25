@@ -11,7 +11,7 @@ model:
 
 # Generation Settings
 generation:
-  max_attempts: 1
+  max_attempts: 5
   evaluation_iterations: 1
 
 # Test Settings

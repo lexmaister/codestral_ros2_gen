@@ -5,7 +5,7 @@ This example demonstrates generating a ROS2 node that performs network scanning 
 
 ## Network Scanner Description
 
-The network scanner initializes both send and receive sockets upfront when entering the scan operation. In the ScanOperation context, hosts are created and both raw sockets are configured to be operational. ICMP echo request packets are sent synchronously using the blocking send socket (_send_packets), ensuring precise control over packet transmission timing. After sending all packets, an asynchronous loop (_collect_responses) is started on the non-blocking receive socket to gather responses, allowing efficient concurrent handling of multiple replies while enforcing a timeout.
+The network scanner initializes both send and receive sockets upfront when entering the scan operation. In the [ScanOperation](src/codestral_ros2_gen/generators/scan_operation.py) context, hosts are created and both raw sockets are configured to be operational. ICMP echo request packets are sent synchronously using the blocking send socket, ensuring precise control over packet transmission timing. After sending all packets, an asynchronous loop is started on the non-blocking receive socket to gather responses, allowing efficient concurrent handling of multiple replies while enforcing a timeout.
 
 ### Operational flow
 

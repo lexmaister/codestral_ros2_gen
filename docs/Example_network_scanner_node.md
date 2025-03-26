@@ -141,7 +141,7 @@ setup_pkg.sh -p network_scanner
 2. Verify the package setup:
 ```bash
 # Navigate to the test_ws directory
-cd ../test_ws
+cd test_ws
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 
@@ -158,10 +158,8 @@ ros2 pkg executables network_scanner
 ros2 run network_scanner scanner_node
 ```
 
-4. Open another terminal and test test that service publishes in topic `/network_status`:
+1. Open another terminal (in `test_ws` directory) and test that service publishes in topic `/network_status`:
 ``` bash
-# Navigate to the test_ws directory
-cd test_ws
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 ros2 topic echo /network_status
@@ -236,14 +234,16 @@ The generator will output summary metrics and status messages. Check the console
 Once the code is generated, test it as described below (ensure you have sourced the ROS2 setup files and the workspace setup files):
 
 - **Start the Scanner Node:**
-  In Terminal 1, run:
+  In Terminal 1, run the scanner node with the desired parameters, for example, to scan `8.8.8.8` every 2 seconds, use:
   ```bash
   ros2 run network_scanner scanner_node --ros-args -p network:='8.8.8.8' -p scan_period:=2
   ```
 
-- **Call the Service:**
-  In Terminal 2, issue a service call with appropriate parameters:
+- **Echo the Network Status Topic:**
+  In Terminal 2, echo the `/network_status` topic to verify the node's output. Ensure you have sourced the ROS2 setup files and the workspace setup files before running the command, for example:
   ```bash
+  source /opt/ros/humble/setup.bash
+  source install/setup.bash
   ros2 topic echo /network_status
   ```
 

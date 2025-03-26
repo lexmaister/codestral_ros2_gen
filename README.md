@@ -65,8 +65,8 @@ test_gen/
 └── test_ws/
 ```
 
-* [Generating a simple service node](docs/Example_object_height_service.md)
 * [Generating a network scanner node](docs/docs/Example_network_scanner_node.md)
+* [Generating a simple service node](docs/Example_object_height_service.md)
 
 ## Documentation
 

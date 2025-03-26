@@ -19,6 +19,7 @@ dependencies = [
     "pytest",
     "pytest-mock",
     "pytest-cov",
+    "pytest-order",
     "pandas",
     "tabulate",
     "matplotlib",

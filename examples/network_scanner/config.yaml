@@ -19,7 +19,9 @@ test:
   #! for ROS2 humble
   ws_setup: "source /opt/ros/humble/setup.bash && colcon build --packages-select network_scanner && source install/setup.bash"
   node_command: "SKIP"
-  test_command: "pytest -q -s -x src/network_scanner/test/test_scanner_node.py"
+  test_command: "pytest -q -s -x src/network_scanner/test/test_scanner_node.py::TestBasic"
+  # test_command: "pytest -q -s -x src/network_scanner/test/test_scanner_node.py::TestAdditional"
+  # test_command: "pytest -q -s -x src/network_scanner/test/test_scanner_node.py::TestFull"
   test_timeout: 180
 
 # Metrics Collection

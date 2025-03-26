@@ -184,7 +184,7 @@ addresses:
 
 ### **Configuration File:**
 
-The configuration file (`config.yaml`) defines the input and output paths for the service interface and test files, as well as other parameters for the AI model. Use it to specify Mistral API key and other settings:
+The configuration file (`config.yaml`) defines the input and output paths for the service interface and test files, as well as other parameters for the AI model. Use it to specify Mistral API key and other settings. And also you can choose which test to run by uncommenting the corresponding line in the `test_command` field.
 ```yaml
 model:
   api_key: "YOUR_API_KEY_HERE"
@@ -192,6 +192,12 @@ model:
 generation:
   max_attempts: 10
   evaluation_iterations: 1
+
+test:
+  # ... other tests settings ...
+  test_command: "pytest -q -s -x src/network_scanner/test/test_scanner_node.py::TestBasic"
+  # test_command: "pytest -q -s -x src/network_scanner/test/test_scanner_node.py::TestAdditional"
+  # test_command: "pytest -q -s -x src/network_scanner/test/test_scanner_node.py::TestFull"
 ```
 
 Follow the following steps to generate the service implementation using the AI model.
@@ -209,8 +215,6 @@ This command will:
 - Use the AI model to create a ROS2 node implementation
 - Save the generated code to the output file defined in the configuration
 
-<!-- STOP HERE -->
-
 ### **Review the Generation Output:**
 
 The generator will output summary metrics and status messages. Check the console for:
@@ -219,55 +223,56 @@ The generator will output summary metrics and status messages. Check the console
 
 **Report Example:**
 ```
-2025-03-01 21:57:35,950 - root - INFO - Generation report:
+2025-03-26 16:53:54,790 - root.base_generator - INFO - Generation report:
 +-----------+---------+----------+--------------+---------------------+------------------+
 | iteration | success | attempts | tests_passed | avg attempt time, s | avg total tokens |
 +-----------+---------+----------+--------------+---------------------+------------------+
-|     1     |   ✅    |    10    |      14      |          7          |       2202       |
+|     1     |   ✅    |    1     |      7       |         79          |       4414       |
 +-----------+---------+----------+--------------+---------------------+------------------+
-2025-03-01 21:57:35,950 - root - INFO - Phase: REPORT -> Metrics analysis finished.
-2025-03-01 21:57:35,950 - root - INFO - Generation process finished in 79 seconds.
+2025-03-26 16:53:54,790 - root.base_generator - INFO - Phase: REPORT -> Metrics analysis finished.
+2025-03-26 16:53:54,790 - root.base_generator - INFO - Generation process finished in 80 seconds.
 ```
 
-## Testing the Generated Service
+## Testing the Generated Node
 
 Once the code is generated, test it as described below (ensure you have sourced the ROS2 setup files and the workspace setup files):
 
-- **Start the Service Node:**
+- **Start the Scanner Node:**
   In Terminal 1, run:
   ```bash
-  ros2 run object_height object_height_service
+  ros2 run network_scanner scanner_node --ros-args -p network:='8.8.8.8' -p scan_period:=2
   ```
 
 - **Call the Service:**
   In Terminal 2, issue a service call with appropriate parameters:
   ```bash
-  ros2 service call /calculate_object_height object_height/srv/ObjectHeight \
-  "{focal_length: 35.0, image_height: 1152, pixel_size: 3.45, object_distance: 6.5}"
+  ros2 topic echo /network_status
   ```
 
-## Expected Output
+### Expected Output
 
-The service call should return a response similar to:
+The scanner node should start scanning the target `8.8.8.8` and publish the results to the `/network_status` topic similar to:
 ```
-waiting for service to become available...
-requester: making request: object_height.srv.ObjectHeight_Request(focal_length=35.0, image_height=1152, pixel_size=3.45, object_distance=6.5)
-
-response:
-object_height.srv.ObjectHeight_Response(object_height=738.1028442382812, success=True, feedback='Calculation successful.')
+stamp:
+  sec: 1742999673
+  nanosec: 91795635
+addresses:
+- ip_address: 8.8.8.8
+  status: UP
+---
 ```
 
 ## Troubleshooting
 
-If the service fails to generate or the output is not as expected, verify:
+If the node fails to generate or the output is not as expected, verify:
 - **ROS2 Environment:** Ensure you have sourced the ROS2 setup files:
   ```bash
   source /opt/ros/humble/setup.bash
   source install/setup.bash
   ```
-- **Package Status:** Confirm the `object_height` package is installed:
+- **Package Status:** Confirm the `hetwork_scanner` package is installed:
   ```bash
-  ros2 pkg list | grep object_height
+  ros2 pkg list | grep hetwork_scanner
   ```
 - **Node and Service Status:** Check active nodes and services:
   ```bash

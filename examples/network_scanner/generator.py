@@ -30,34 +30,35 @@ class ExampleNetworkScannerGenerator(BaseGenerator):
             with open(test_path, "r") as f:
                 test_content = f.read()
 
-            # Updated task description.
-            task_description = (
-                "Your task is to generate a ROS2 node 'network_scanner_node.py' for network scanning that:\n"
-                "  - Contains a NetworkScannerNode class which acts as a publisher.\n"
-                "  - Accepts two runtime parameters:\n"
-                "      - network (string): The target network to scan. This value is required and must not be empty.\n"
-                "      - scan_period (int): The number of seconds between each repeated scan execution. This value is required and must be greater than 0.\n"
-                "  - Node should exit with error code when provided invalid parameters.\n"
-                "  - Executes the compiled nscan binary (subprocess.Popen(['nscan', network]) to perform network scanning.\n"
-                "  - The node should call the binary as a subprocess, pass the network target as an argument,\n"
-                "  capture its JSON output from '/tmp/nscan_results.json', and parse it to obtain the scan results.\n"
-                "JSON example:\n"
-                "{"
-                "'8.8.8.8': {\n"
-                "    'state': 'UP',\n"
-                "    'response_time_ms': 1,\n"
-                "    'error': null\n"
-                "   },\n"
-                "}\n"
-                "  - If the JSON is not valid, node should exit with error code without publishing any messages.\n"
-                "  - Implements a loop that invokes the nscan binary every scan_period seconds. If a scan takes longer than scan_period,\n"
-                "    the node should wait for the current scan to finish before starting a new one to avoid overlapping scans.\n"
-                "  - Sends the parsed scan results as a ROS2 message on the 'network_status' topic.\n"
-                "  - The message should be of type NetworkStatus, which is defined in the provided message files.\n"
-                "  - It also should check for time JSON was last modified and if it is older than 3*scan_period, it should send an empty addresses list.\n"
-                "  - Node should log each its step (start, sending scan results, etc.) and any errors using the ros2 logger.\n"
-                "  - Uses the ROS2 clock to set the timestamp in the message and adheres to ROS2 best practices."
-            )
+            task_description = """
+                Your task is to generate a ROS2 node 'network_scanner_node.py' for network scanning that:
+                  - Contains a NetworkScannerNode class which acts as a publisher.
+                  - Accepts two runtime parameters:
+                      - network (string): The target network to scan. This value is required and must not be empty.
+                      - scan_period (int): The number of seconds between each repeated scan execution.
+                      This value is required and must be greater than 0.
+                  - Node must validate the input parameters and exit with error code 1 when provided invalid parameters.
+                  - Executes the compiled nscan binary (subprocess.Popen(['nscan', network]) to perform network scanning.
+                  - The node should call the binary as a subprocess, pass the network target as an argument,
+                  capture its JSON output from '/tmp/nscan_results.json', and parse it to obtain the scan results.
+                JSON example:
+                {
+                '8.8.8.8': {
+                    'state': 'UP',
+                    'response_time_ms': 1,
+                    'error': null
+                   },
+                }
+                  - If the JSON is not valid, node must log the error and exit with error code 2 without publishing any messages.
+                  - Implements a loop that invokes the nscan binary every scan_period seconds. If a scan takes longer than scan_period,
+                    the node should wait for the current scan to finish before starting a new one to avoid overlapping scans.
+                  - Sends the parsed scan results as a ROS2 message on the 'network_status' topic.
+                  - The message should be of type NetworkStatus, which is defined in the provided message files.
+                  - It also must check for time JSON was last modified and if it is older than 3*scan_period
+                it must send an empty addresses list using the NetworkStatus message until the JSON is updated.
+                  - Node should log each its step (start, sending scan results, etc.) and any errors using the ros2 logger.
+                  - Uses the ROS2 clock to set the timestamp in the message and adheres to ROS2 best practices.
+            """
 
             # Build composite prompt.
             prompt = (

@@ -341,10 +341,14 @@ from initialization through success or failure.</p>
 <dt class="sig sig-object py" id="codestral_ros2_gen.generators.generation_attempt.attempt_state">
 <span class="sig-prename descclassname"><span class="pre">codestral_ros2_gen.generators.generation_attempt.</span></span><span class="sig-name descname"><span class="pre">attempt_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/generation_attempt.html#attempt_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.generation_attempt.attempt_state" title="Link to this definition"></a></dt>
 <dd><p>Decorator for methods representing a state in GenerationAttempt.</p>
-<p>This decorator wraps methods in the GenerationAttempt class to:
-1. Catch exceptions and set error state.
-2. Log errors when they occur.
-3. Transition to FAILURE state on error.</p>
+<dl class="simple">
+<dt>This decorator wraps methods in the GenerationAttempt class to:</dt><dd><ol class="arabic simple">
+<li><p>Catch exceptions and set error state.</p></li>
+<li><p>Log errors when they occur.</p></li>
+<li><p>Transition to FAILURE state on error.</p></li>
+</ol>
+</dd>
+</dl>
 <p>When an exception occurs in the wrapped method, the decorator sets the error
 message, logs the error, transitions to FAILURE state, and returns None.</p>
 <dl class="field-list simple">
@@ -373,11 +377,15 @@ message, logs the error, transitions to FAILURE state, and returns None.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">codestral_ros2_gen.generators.generation_attempt.</span></span><span class="sig-name descname"><span class="pre">GenerationAttempt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/generation_attempt.html#GenerationAttempt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A state machine that orchestrates a single generation attempt using Mistral AI.</p>
-<p>This class handles the complete lifecycle of a code generation attempt, including:
-- Generating code by interacting with the Mistral client.
-- Parsing generated code with ROS2CodeParser.
-- Saving parsed code using a provided callback.
-- Running tests on the generated code using ROS2Runner.</p>
+<dl class="simple">
+<dt>This class handles the complete lifecycle of a code generation attempt, including:</dt><dd><ul class="simple">
+<li><p>Generating code by interacting with the Mistral client.</p></li>
+<li><p>Parsing generated code with ROS2CodeParser.</p></li>
+<li><p>Saving parsed code using a provided callback.</p></li>
+<li><p>Running tests on the generated code using ROS2Runner.</p></li>
+</ul>
+</dd>
+</dl>
 <p>The class implements a state machine pattern to manage transitions between
 different phases of the generation process.</p>
 <dl class="field-list simple">

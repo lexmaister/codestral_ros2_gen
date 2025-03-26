@@ -89,10 +89,14 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">codestral_ros2_gen.generators.base_generator.</span></span><span class="sig-name descname"><span class="pre">BaseGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generation_attempt_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_handler_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_client_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/base_generator.html#BaseGenerator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Abstract base class for code generation modules in the codestral_ros2_gen framework.</p>
-<p>This class implements the template method pattern with a three-phase generation process:
-1. Initialization: Set up the environment, load configuration, and prepare resources.
-2. Generation: Execute the actual code generation with multiple attempts and iterations.
-3. Reporting: Analyze and display metrics about the generation process.</p>
+<dl class="simple">
+<dt>This class implements the template method pattern with a three-phase generation process:</dt><dd><ol class="arabic simple">
+<li><p>Initialization: Set up the environment, load configuration, and prepare resources.</p></li>
+<li><p>Generation: Execute the actual code generation with multiple attempts and iterations.</p></li>
+<li><p>Reporting: Analyze and display metrics about the generation process.</p></li>
+</ol>
+</dd>
+</dl>
 <p>Derived classes must implement the abstract method <cite>prepare_prompt()</cite> to define
 the specific prompting strategy for their generation task.</p>
 <dl class="field-list simple">
@@ -163,16 +167,25 @@ prompting strategy for their generation task.</p>
 <span class="sig-name descname"><span class="pre">_validate_environment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/base_generator.html#BaseGenerator._validate_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._validate_environment" title="Link to this definition"></a></dt>
 <dd><p>Validate that the configuration has a ‘generation’ section with required keys,
 and ensure that the output directory is accessible.</p>
-<p>Checks for required configuration sections and keys:
-- ‘generation’ section with ‘max_attempts’ and ‘evaluation_iterations’
-- ‘output’ section with ‘output_file’</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Checks for required configuration sections and keys:</dt><dd><ul class="simple">
+<li><p>‘generation’ section with ‘max_attempts’ and ‘evaluation_iterations’</p></li>
+<li><p>‘output’ section with ‘output_file’</p></li>
+</ul>
+</dd>
+</dl>
 <p>Also attempts to create the output directory if it doesn’t exist.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>RuntimeError</strong> – If configuration is invalid or output directory is inaccessible.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -196,34 +209,42 @@ i.e. contains either a ‘src’ or ‘install’ directory.</p>
 <dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator._initialization_phase">
 <span class="sig-name descname"><span class="pre">_initialization_phase</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/base_generator.html#BaseGenerator._initialization_phase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._initialization_phase" title="Link to this definition"></a></dt>
 <dd><p>Execute the initialization phase of the generation process.</p>
-<p>This phase:
-1. Loads the configuration from the specified file.
-2. Validates the environment and configuration.
-3. Initializes the metrics handler and the model client.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>This phase:</dt><dd><ol class="arabic simple">
+<li><p>Loads the configuration from the specified file.</p></li>
+<li><p>Validates the environment and configuration.</p></li>
+<li><p>Initializes the metrics handler and the model client.</p></li>
+</ol>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>RuntimeError</strong> – If there’s an issue with configuration or initialization.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator._abc_impl">
-<span class="sig-name descname"><span class="pre">_abc_impl</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._abc_impl" title="Link to this definition"></a></dt>
-<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator._generation_phase">
 <span class="sig-name descname"><span class="pre">_generation_phase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/base_generator.html#BaseGenerator._generation_phase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._generation_phase" title="Link to this definition"></a></dt>
 <dd><p>Execute the generation phase by performing multiple iterations and attempts.</p>
-<p>This phase:
-1. Prepares the prompt using the subclass-specific implementation.
-2. Runs the configured number of iterations.
-3. For each iteration, makes multiple generation attempts until success or max attempts.
-4. Records metrics for each attempt.</p>
+<dl class="simple">
+<dt>This phase:</dt><dd><ol class="arabic simple">
+<li><p>Prepares the prompt using the subclass-specific implementation.</p></li>
+<li><p>Runs the configured number of iterations.</p></li>
+<li><p>For each iteration, makes multiple generation attempts until success or max attempts.</p></li>
+<li><p>Records metrics for each attempt.</p></li>
+</ol>
+</dd>
+</dl>
 <p>The process stops early if a successful generation is achieved.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -242,28 +263,36 @@ i.e. contains either a ‘src’ or ‘install’ directory.</p>
 <dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator._report_phase">
 <span class="sig-name descname"><span class="pre">_report_phase</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/base_generator.html#BaseGenerator._report_phase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator._report_phase" title="Link to this definition"></a></dt>
 <dd><p>Analyze the metrics collected during the generation process and display a summary report.</p>
-<p>This phase:
-1. Processes all collected metrics from generation attempts.
-2. Generates a comprehensive report on the generation performance.
-3. Logs the report at INFO level.</p>
-<p>This method is typically called in the finally block to ensure reports are generated
-even if exceptions occur during generation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
 </dd>
 </dl>
+<dl class="simple">
+<dt>This phase:</dt><dd><ol class="arabic simple">
+<li><p>Processes all collected metrics from generation attempts.</p></li>
+<li><p>Generates a comprehensive report on the generation performance.</p></li>
+<li><p>Logs the report at INFO level.</p></li>
+</ol>
+</dd>
+</dl>
+<p>This method is typically called in the finally block to ensure reports are generated
+even if exceptions occur during generation.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="codestral_ros2_gen.generators.base_generator.BaseGenerator.run">
 <span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/generators/base_generator.html#BaseGenerator.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.generators.base_generator.BaseGenerator.run" title="Link to this definition"></a></dt>
 <dd><p>Run the complete generation process (initialization, generation, reporting).</p>
-<p>This is the main entry point for executing the generation workflow:
-1. Runs the initialization phase.
-2. Executes the generation phase.
-3. Ensures the reporting phase is executed even if errors occur.
-4. Logs the total execution time.</p>
+<dl class="simple">
+<dt>This is the main entry point for executing the generation workflow:</dt><dd><ol class="arabic simple">
+<li><p>Runs the initialization phase.</p></li>
+<li><p>Executes the generation phase.</p></li>
+<li><p>Ensures the reporting phase is executed even if errors occur.</p></li>
+<li><p>Logs the total execution time.</p></li>
+</ol>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>**kwargs</strong> – Additional keyword arguments to prepare prompt (e.g., service_name, node_name) and other parameters for the generation process. These are passed to the generation phase.</p>

@@ -47,7 +47,7 @@ setup_pkg.sh -p object_height
 2. Verify the package setup:
 ```bash
 # Navigate to the test_ws directory
-cd ../test_ws
+cd test_ws
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 

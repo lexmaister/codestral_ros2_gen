@@ -135,9 +135,9 @@ def attempt_state(func) -> Callable | None:
     Decorator for methods representing a state in GenerationAttempt.
 
     This decorator wraps methods in the GenerationAttempt class to:
-    1. Catch exceptions and set error state.
-    2. Log errors when they occur.
-    3. Transition to FAILURE state on error.
+        1. Catch exceptions and set error state.
+        2. Log errors when they occur.
+        3. Transition to FAILURE state on error.
 
     When an exception occurs in the wrapped method, the decorator sets the error
     message, logs the error, transitions to FAILURE state, and returns None.
@@ -178,10 +178,10 @@ class GenerationAttempt:
     A state machine that orchestrates a single generation attempt using Mistral AI.
 
     This class handles the complete lifecycle of a code generation attempt, including:
-    - Generating code by interacting with the Mistral client.
-    - Parsing generated code with ROS2CodeParser.
-    - Saving parsed code using a provided callback.
-    - Running tests on the generated code using ROS2Runner.
+        - Generating code by interacting with the Mistral client.
+        - Parsing generated code with ROS2CodeParser.
+        - Saving parsed code using a provided callback.
+        - Running tests on the generated code using ROS2Runner.
 
     The class implements a state machine pattern to manage transitions between
     different phases of the generation process.

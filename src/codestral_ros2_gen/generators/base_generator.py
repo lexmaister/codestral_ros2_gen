@@ -21,9 +21,9 @@ class BaseGenerator(ABC):
     Abstract base class for code generation modules in the codestral_ros2_gen framework.
 
     This class implements the template method pattern with a three-phase generation process:
-    1. Initialization: Set up the environment, load configuration, and prepare resources.
-    2. Generation: Execute the actual code generation with multiple attempts and iterations.
-    3. Reporting: Analyze and display metrics about the generation process.
+        1. Initialization: Set up the environment, load configuration, and prepare resources.
+        2. Generation: Execute the actual code generation with multiple attempts and iterations.
+        3. Reporting: Analyze and display metrics about the generation process.
 
     Derived classes must implement the abstract method `prepare_prompt()` to define
     the specific prompting strategy for their generation task.
@@ -84,8 +84,8 @@ class BaseGenerator(ABC):
         and ensure that the output directory is accessible.
 
         Checks for required configuration sections and keys:
-        - 'generation' section with 'max_attempts' and 'evaluation_iterations'
-        - 'output' section with 'output_file'
+            - 'generation' section with 'max_attempts' and 'evaluation_iterations'
+            - 'output' section with 'output_file'
 
         Also attempts to create the output directory if it doesn't exist.
 
@@ -131,9 +131,9 @@ class BaseGenerator(ABC):
         Execute the initialization phase of the generation process.
 
         This phase:
-        1. Loads the configuration from the specified file.
-        2. Validates the environment and configuration.
-        3. Initializes the metrics handler and the model client.
+            1. Loads the configuration from the specified file.
+            2. Validates the environment and configuration.
+            3. Initializes the metrics handler and the model client.
 
         Raises:
             RuntimeError: If there's an issue with configuration or initialization.
@@ -169,10 +169,10 @@ class BaseGenerator(ABC):
         Execute the generation phase by performing multiple iterations and attempts.
 
         This phase:
-        1. Prepares the prompt using the subclass-specific implementation.
-        2. Runs the configured number of iterations.
-        3. For each iteration, makes multiple generation attempts until success or max attempts.
-        4. Records metrics for each attempt.
+            1. Prepares the prompt using the subclass-specific implementation.
+            2. Runs the configured number of iterations.
+            3. For each iteration, makes multiple generation attempts until success or max attempts.
+            4. Records metrics for each attempt.
 
         The process stops early if a successful generation is achieved.
 
@@ -222,9 +222,9 @@ class BaseGenerator(ABC):
         Analyze the metrics collected during the generation process and display a summary report.
 
         This phase:
-        1. Processes all collected metrics from generation attempts.
-        2. Generates a comprehensive report on the generation performance.
-        3. Logs the report at INFO level.
+            1. Processes all collected metrics from generation attempts.
+            2. Generates a comprehensive report on the generation performance.
+            3. Logs the report at INFO level.
 
         This method is typically called in the finally block to ensure reports are generated
         even if exceptions occur during generation.
@@ -239,10 +239,10 @@ class BaseGenerator(ABC):
         Run the complete generation process (initialization, generation, reporting).
 
         This is the main entry point for executing the generation workflow:
-        1. Runs the initialization phase.
-        2. Executes the generation phase.
-        3. Ensures the reporting phase is executed even if errors occur.
-        4. Logs the total execution time.
+            1. Runs the initialization phase.
+            2. Executes the generation phase.
+            3. Ensures the reporting phase is executed even if errors occur.
+            4. Logs the total execution time.
 
         Args:
             **kwargs: Additional keyword arguments to prepare prompt (e.g., service_name, node_name) and other parameters for the generation process. These are passed to the generation phase.

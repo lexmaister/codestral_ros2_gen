@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Generation Attempt &mdash; Codestral ROS2 Generator 0.2 documentation</title>
+  <title>Generation Attempt &mdash; Codestral ROS2 Generator  documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
 
 
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=10f1778b"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
       <script src="../_static/doctools.js?v=9bcbadda"></script>
       <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
@@ -45,61 +45,17 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="base_generator.html">Base Generator</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Generation Attempt</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics"><code class="docutils literal notranslate"><span class="pre">AttemptMetrics</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics.attempt_time"><code class="docutils literal notranslate"><span class="pre">AttemptMetrics.attempt_time</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics.success"><code class="docutils literal notranslate"><span class="pre">AttemptMetrics.success</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics.final_state"><code class="docutils literal notranslate"><span class="pre">AttemptMetrics.final_state</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics.tests_passed"><code class="docutils literal notranslate"><span class="pre">AttemptMetrics.tests_passed</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics.tests_failed"><code class="docutils literal notranslate"><span class="pre">AttemptMetrics.tests_failed</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics.tests_skipped"><code class="docutils literal notranslate"><span class="pre">AttemptMetrics.tests_skipped</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics.prompt_tokens"><code class="docutils literal notranslate"><span class="pre">AttemptMetrics.prompt_tokens</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics.completion_tokens"><code class="docutils literal notranslate"><span class="pre">AttemptMetrics.completion_tokens</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics.total_tokens"><code class="docutils literal notranslate"><span class="pre">AttemptMetrics.total_tokens</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics.error"><code class="docutils literal notranslate"><span class="pre">AttemptMetrics.error</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics.as_dict"><code class="docutils literal notranslate"><span class="pre">AttemptMetrics.as_dict</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics.as_series"><code class="docutils literal notranslate"><span class="pre">AttemptMetrics.as_series</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptState"><code class="docutils literal notranslate"><span class="pre">AttemptState</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptState.INITIALIZE"><code class="docutils literal notranslate"><span class="pre">AttemptState.INITIALIZE</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptState.GENERATE"><code class="docutils literal notranslate"><span class="pre">AttemptState.GENERATE</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptState.PARSE"><code class="docutils literal notranslate"><span class="pre">AttemptState.PARSE</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptState.SAVE"><code class="docutils literal notranslate"><span class="pre">AttemptState.SAVE</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptState.TEST"><code class="docutils literal notranslate"><span class="pre">AttemptState.TEST</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptState.SUCCESS"><code class="docutils literal notranslate"><span class="pre">AttemptState.SUCCESS</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.AttemptState.FAILURE"><code class="docutils literal notranslate"><span class="pre">AttemptState.FAILURE</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.attempt_state"><code class="docutils literal notranslate"><span class="pre">attempt_state()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.model"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt.model</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.config"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt.config</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.state"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt.state</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.previous_state"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt.previous_state</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.start_time"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt.start_time</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.generated_code"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt.generated_code</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.parsed_code"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt.parsed_code</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.usage"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt.usage</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.test_counts"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt.test_counts</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.error"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt.error</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.__init__"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt.__init__()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.run"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt.run()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt._initialize"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt._initialize()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt._generate"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt._generate()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt._parse"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt._parse()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt._save"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt._save()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt._test"><code class="docutils literal notranslate"><span class="pre">GenerationAttempt._test()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Generation Attempt</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../models/mistral_client.html">Mistral Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../utils/code_parser.html">Code Parser</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../utils/config_utils.html">Config Utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../utils/file_io.html">File IO</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../utils/metrics_handler.html">Metrics Handler</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../utils/ros2_runner.html">ROS2 Runner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../network_scan/network_scanner.html">Network scanner - Scanner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../network_scan/scan_operation.html">Network scanner - Scan Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../network_scan/network_host.html">Network scanner - Host</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../network_scan/network_parser.html">Network scanner - Targets parser</a></li>
 </ul>
 
         </div>

@@ -1,0 +1,532 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>codestral_ros2_gen.network_scan.scan_operation &mdash; Codestral ROS2 Generator  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+</head>
+
+<body class="wy-body-for-nav">
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+
+
+          <a href="../../../index.html" class="icon icon-home">
+            Codestral ROS2 Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../generators/base_generator.html">Base Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generators/generation_attempt.html">Generation Attempt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models/mistral_client.html">Mistral Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/code_parser.html">Code Parser</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/config_utils.html">Config Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/file_io.html">File IO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/metrics_handler.html">Metrics Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/ros2_runner.html">ROS2 Runner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../network_scan/network_scanner.html">Network scanner - Scanner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../network_scan/scan_operation.html">Network scanner - Scan Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../network_scan/network_host.html">Network scanner - Host</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../network_scan/network_parser.html">Network scanner - Targets parser</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Codestral ROS2 Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">codestral_ros2_gen.network_scan.scan_operation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+
+  <h1>Source code for codestral_ros2_gen.network_scan.scan_operation</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">socket</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.network_host</span><span class="w"> </span><span class="kn">import</span> <span class="n">NetworkHost</span><span class="p">,</span> <span class="n">HostState</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.network_parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_network_targets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">nscan_logger</span>
+
+
+<div class="viewcode-block" id="ScanOperation">
+<a class="viewcode-back" href="../../../network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ScanOperation</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Context manager for a single network scan operation.</span>
+
+<span class="sd">    This class manages the lifecycle of a network scan, including the configuration of sockets,</span>
+<span class="sd">    creation of NetworkHost objects, sending of ICMP packets, and collection of responses.</span>
+<span class="sd">    It uses sync blocking socket for sending and asyncio non-blocking operations for receiving packets.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ScanOperation.__init__">
+<a class="viewcode-back" href="../../../network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">targets</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">scanner</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Optional scanner</span>
+        <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
+        <span class="n">packet_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
+        <span class="n">sending_interval</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+        <span class="n">send_buff_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">65536</span><span class="p">,</span>
+        <span class="n">recv_buff_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">131072</span><span class="p">,</span>
+        <span class="n">logger</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the ScanOperation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            targets (str): The network targets to scan.</span>
+<span class="sd">            scanner (Optional[object]): An optional scanner object with configuration attributes.</span>
+<span class="sd">            timeout (float): The timeout for the scan operation.</span>
+<span class="sd">            packet_size (int): The size of the ICMP packets to send.</span>
+<span class="sd">            sending_interval (float): The interval between sending packets.</span>
+<span class="sd">            send_buff_size (int): The size of the send buffer.</span>
+<span class="sd">            recv_buff_size (int): The size of the receive buffer.</span>
+<span class="sd">            logger (Optional[logging.Logger]): The logger to use for logging messages.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">targets</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scanner</span> <span class="o">=</span> <span class="n">scanner</span>
+
+        <span class="c1"># Use scanner values if provided, otherwise use params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">scanner</span><span class="p">,</span> <span class="s2">&quot;timeout&quot;</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">packet_size</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">scanner</span><span class="p">,</span> <span class="s2">&quot;packet_size&quot;</span><span class="p">,</span> <span class="n">packet_size</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">scanner</span><span class="p">,</span> <span class="s2">&quot;logger&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">scanner</span><span class="p">,</span> <span class="s2">&quot;logger&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.scan_operation&quot;</span>
+        <span class="k">elif</span> <span class="n">logger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logger</span>
+        <span class="k">elif</span> <span class="n">nscan_logger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">nscan_logger</span><span class="si">}</span><span class="s2">.scan_operation&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No logger provided and default logger is not set&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">send_sock</span><span class="p">:</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recv_sock</span><span class="p">:</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send_buffer</span> <span class="o">=</span> <span class="n">send_buff_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recv_buffer</span> <span class="o">=</span> <span class="n">recv_buff_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sending_interval</span> <span class="o">=</span> <span class="n">sending_interval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scan_id</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mh">0xFFFF</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hosts</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NetworkHost</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ScanOperation initialized with targets: </span><span class="si">{</span><span class="n">targets</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__aenter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize socket and host data for this scan operation.</span>
+
+<span class="sd">        This method is called when entering the context manager.</span>
+<span class="sd">        It configures the sockets and creates NetworkHost objects for the scan targets.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ScanOperation: The initialized ScanOperation instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_configure_sockets</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_hosts</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__aexit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clean up resources when scan operation completes.</span>
+
+<span class="sd">        This method is called when exiting the context manager.</span>
+<span class="sd">        It closes the sockets and clears the hosts dictionary.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            exc_type: The type of the exception that caused the context to be exited.</span>
+<span class="sd">            exc_val: The exception instance that caused the context to be exited.</span>
+<span class="sd">            exc_tb: The traceback object for the exception that caused the context to be exited.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: False to indicate that exceptions should not be suppressed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_close_sockets</span><span class="p">()</span>
+        <span class="c1"># Clean up other resources</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hosts</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># Don&#39;t suppress exceptions</span>
+
+<div class="viewcode-block" id="ScanOperation._configure_sockets">
+<a class="viewcode-back" href="../../../network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._configure_sockets">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_configure_sockets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Configure send and receive sockets with optimal settings for Linux.</span>
+
+<span class="sd">        This method sets up the send and receive sockets with appropriate options for ICMP communication.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Send raw socket configuration</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span>
+                <span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_RAW</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">IPPROTO_ICMP</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_sock</span><span class="o">.</span><span class="n">setblocking</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_sock</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">SOL_IP</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">IP_TTL</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_sock</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span>
+                <span class="n">socket</span><span class="o">.</span><span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SO_SNDBUF</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_buffer</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Receive raw socket configuration</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">recv_sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span>
+                <span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_RAW</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">IPPROTO_ICMP</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">recv_sock</span><span class="o">.</span><span class="n">setblocking</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">recv_sock</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span>
+                <span class="n">socket</span><span class="o">.</span><span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SO_RCVBUF</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">recv_buffer</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">recv_sock</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SO_REUSEADDR</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Sockets configured for scan operation (ID: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scan_id</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_close_sockets</span><span class="p">()</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to create sockets: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ScanOperation._close_sockets">
+<a class="viewcode-back" href="../../../network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._close_sockets">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_close_sockets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Properly clean up and close sockets.</span>
+
+<span class="sd">        This method ensures that the sockets are closed properly, clearing any remaining data and shutting down the sockets.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Cleaning up and closing sockets for scan operation (ID: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scan_id</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">sock</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;send_sock&quot;</span><span class="p">,</span> <span class="s2">&quot;recv_sock&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Closing socket </span><span class="si">{</span><span class="n">sock</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">sock_obj</span><span class="p">:</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sock</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">sock_obj</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># 1. Set short timeout for cleanup operations</span>
+                    <span class="n">sock_obj</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+
+                    <span class="c1"># 2. Clear socket buffer</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                            <span class="n">sock_obj</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">4096</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="p">(</span><span class="ne">BlockingIOError</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">timeout</span><span class="p">):</span>
+                        <span class="k">pass</span>  <span class="c1"># Buffer is empty or timeout occurred</span>
+
+                    <span class="c1"># 3. Shutdown socket if supported</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">sock_obj</span><span class="o">.</span><span class="n">shutdown</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">SHUT_RDWR</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">):</span>
+                        <span class="k">pass</span>  <span class="c1"># Shutdown not supported or socket already closed</span>
+
+                    <span class="c1"># 4. Close socket</span>
+                    <span class="n">sock_obj</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error during socket cleanup: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                <span class="k">finally</span><span class="p">:</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Socket </span><span class="si">{</span><span class="n">sock</span><span class="si">!r}</span><span class="s2"> cleaned up and closed&quot;</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No socket </span><span class="si">{</span><span class="n">sock</span><span class="si">!r}</span><span class="s2"> to close&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ScanOperation._create_hosts">
+<a class="viewcode-back" href="../../../network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._create_hosts">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_hosts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create NetworkHost objects for the given targets.</span>
+
+<span class="sd">        This method parses the network targets and creates NetworkHost objects for each target IP address.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">host_ips</span> <span class="o">=</span> <span class="n">parse_network_targets</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">host_ips</span><span class="p">)</span><span class="si">}</span><span class="s2"> hosts to scan&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Create hosts with the same scan ID and default sequence numbers</span>
+        <span class="k">for</span> <span class="n">ip</span> <span class="ow">in</span> <span class="n">host_ips</span><span class="p">:</span>
+            <span class="n">host</span> <span class="o">=</span> <span class="n">NetworkHost</span><span class="p">(</span>
+                <span class="n">ip_address</span><span class="o">=</span><span class="n">ip</span><span class="p">,</span>
+                <span class="n">icmp_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">scan_id</span><span class="p">,</span>  <span class="c1"># Same ID for all hosts in this scan</span>
+                <span class="n">icmp_seq</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># Use default sequence numbers</span>
+                <span class="n">packet_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">packet_size</span><span class="p">,</span>
+                <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hosts</span><span class="p">[</span><span class="n">ip</span><span class="p">]</span> <span class="o">=</span> <span class="n">host</span></div>
+
+
+<div class="viewcode-block" id="ScanOperation.execute">
+<a class="viewcode-back" href="../../../network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation.execute">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the scan operation and return results.</span>
+
+<span class="sd">        This method orchestrates the sending of ICMP packets and the collection of responses.</span>
+<span class="sd">        It logs the progress and handles any errors that occur during the scan.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict[str, dict]: A dictionary containing the scan results for each target IP address.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Start of scanning&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">sock</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;send_sock&quot;</span><span class="p">,</span> <span class="s2">&quot;recv_sock&quot;</span><span class="p">):</span>
+            <span class="n">sock_obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sock</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">sock_obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Socket </span><span class="si">{</span><span class="n">sock</span><span class="si">!r}</span><span class="s2"> not initialized. Cannot execute scan.&quot;</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Send ICMP packets to all hosts in synchronous manner</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_send_packets</span><span class="p">()</span>
+
+        <span class="c1"># Collect responses with timeout</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collect_responses</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Scan completed&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_results</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ScanOperation._send_packets">
+<a class="viewcode-back" href="../../../network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._send_packets">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_send_packets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Send ICMP echo request packets to all hosts.</span>
+
+<span class="sd">        This method sends ICMP echo request packets to each target IP address and logs the progress.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sending ICMP echo request packets to all hosts&quot;</span><span class="p">)</span>
+
+        <span class="n">total_hosts</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hosts</span><span class="p">)</span>
+        <span class="n">sent_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">prev_completion</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Start time for overall progress tracking</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">ip</span><span class="p">,</span> <span class="n">host</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hosts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sending packet to </span><span class="si">{</span><span class="n">ip</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Using blocking socket.sendto</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">send_sock</span><span class="o">.</span><span class="n">sendto</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">packet</span><span class="p">,</span> <span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">ip_address</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+                <span class="n">host</span><span class="o">.</span><span class="n">mark_sent</span><span class="p">()</span>
+
+                <span class="c1"># # Update progress after each successful send</span>
+                <span class="n">sent_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">completion</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">sent_count</span> <span class="o">/</span> <span class="n">total_hosts</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+                <span class="c1"># Log progress at regular intervals 10% increments</span>
+
+                <span class="k">if</span> <span class="n">sent_count</span> <span class="o">==</span> <span class="n">total_hosts</span> <span class="ow">or</span> <span class="n">completion</span> <span class="o">-</span> <span class="n">prev_completion</span> <span class="o">&gt;=</span> <span class="mi">10</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Progress: </span><span class="si">{</span><span class="n">sent_count</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total_hosts</span><span class="si">}</span><span class="s2"> hosts (</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">completion</span><span class="p">)</span><span class="si">}</span><span class="s2">%)&quot;</span>
+                    <span class="p">)</span>
+                    <span class="n">prev_completion</span> <span class="o">=</span> <span class="n">completion</span>
+
+                <span class="k">if</span> <span class="n">sent_count</span> <span class="o">&lt;</span> <span class="n">total_hosts</span><span class="p">:</span>  <span class="c1"># Don&#39;t sleep after the last packet</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sending_interval</span><span class="p">)</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">host</span><span class="o">.</span><span class="n">mark_error</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to send to </span><span class="si">{</span><span class="n">ip</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Final timing statistics</span>
+        <span class="n">total_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="n">avg_rate</span> <span class="o">=</span> <span class="n">total_hosts</span> <span class="o">/</span> <span class="n">total_time</span> <span class="k">if</span> <span class="n">total_time</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;All packets sent (</span><span class="si">{</span><span class="n">total_hosts</span><span class="si">}</span><span class="s2"> hosts in </span><span class="si">{</span><span class="n">total_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">s, avg rate: </span><span class="si">{</span><span class="n">avg_rate</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> packets/sec)&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ScanOperation._collect_responses">
+<a class="viewcode-back" href="../../../network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._collect_responses">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_collect_responses</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Asynchronously collect ICMP responses with a timeout.</span>
+
+<span class="sd">        This method collects ICMP responses from the target IP addresses until the timeout is reached.</span>
+<span class="sd">        It uses asyncio to achieve non-blocking behavior.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: If the response collection fails.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Collecting responses until </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H:%M:%S&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">time</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">end_time</span><span class="p">))</span><span class="si">!r}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">pending_hosts</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hosts</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="c1"># Check if all hosts have been processed</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">pending_hosts</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;All hosts processed: stopping response collection&quot;</span><span class="p">)</span>
+                <span class="k">break</span>
+
+            <span class="c1"># Check timeout</span>
+            <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">end_time</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="s2">&quot;Timeout reached: marking all remaining hosts as unresponsive&quot;</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">ip</span> <span class="ow">in</span> <span class="n">pending_hosts</span><span class="p">:</span>
+                    <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hosts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span>
+                    <span class="n">host</span><span class="o">.</span><span class="n">mark_timeout</span><span class="p">()</span>
+                <span class="k">break</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Wait for a packet to be available with asyncio&#39;s event loop</span>
+                <span class="n">packet</span><span class="p">,</span> <span class="n">addr</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">wait_for</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_receive_packet</span><span class="p">(</span>
+                        <span class="n">sock</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">recv_sock</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">256</span>
+                    <span class="p">),</span>  <span class="c1"># reasonable buffer for ping (typically &lt;100 bytes)</span>
+                    <span class="n">timeout</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">end_time</span> <span class="o">-</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                    <span class="p">),</span>  <span class="c1"># remaining time for the loop iteration</span>
+                <span class="p">)</span>
+                <span class="n">src_ip</span> <span class="o">=</span> <span class="n">addr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Extract source IP</span>
+
+                <span class="n">matching_host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hosts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">src_ip</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">matching_host</span> <span class="ow">and</span> <span class="n">matching_host</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">SENT</span><span class="p">:</span>
+                    <span class="n">matching_host</span><span class="o">.</span><span class="n">handle_response</span><span class="p">(</span><span class="n">packet</span><span class="o">=</span><span class="n">packet</span><span class="p">)</span>
+                    <span class="n">pending_hosts</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">src_ip</span><span class="p">)</span>
+
+            <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">TimeoutError</span><span class="p">:</span>
+                <span class="c1"># No packets received during the wait time</span>
+                <span class="k">continue</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># Catch-all for unexpected errors</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in response collection: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span></div>
+
+
+<div class="viewcode-block" id="ScanOperation._receive_packet">
+<a class="viewcode-back" href="../../../network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._receive_packet">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_receive_packet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sock</span><span class="p">:</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Helper to get both packet and address with asyncio.</span>
+
+<span class="sd">        This method sets up a callback to receive packets asynchronously using asyncio&#39;s event loop.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sock (socket.socket): The socket to receive packets from.</span>
+<span class="sd">            size (int): The size of the buffer to use for receiving packets.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple: A tuple containing the received packet and the address of the sender.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">future</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Future</span><span class="p">()</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_read_callback</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">data</span><span class="p">,</span> <span class="n">addr</span> <span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">recvfrom</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">future</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
+                    <span class="n">future</span><span class="o">.</span><span class="n">set_result</span><span class="p">((</span><span class="n">data</span><span class="p">,</span> <span class="n">addr</span><span class="p">))</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">BlockingIOError</span><span class="p">,</span> <span class="ne">ConnectionRefusedError</span><span class="p">):</span>
+                <span class="c1"># Will retry on next readable event</span>
+                <span class="k">pass</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">future</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
+                    <span class="n">future</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+
+        <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_running_loop</span><span class="p">()</span>
+        <span class="n">loop</span><span class="o">.</span><span class="n">add_reader</span><span class="p">(</span><span class="n">sock</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="n">_read_callback</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="k">await</span> <span class="n">future</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">loop</span><span class="o">.</span><span class="n">remove_reader</span><span class="p">(</span><span class="n">sock</span><span class="o">.</span><span class="n">fileno</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="ScanOperation._prepare_results">
+<a class="viewcode-back" href="../../../network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._prepare_results">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare the scan results.</span>
+
+<span class="sd">        This method prepares the scan results by marking any remaining hosts as unresponsive and formatting the results.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict[str, dict]: A dictionary containing the scan results for each target IP address.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Mark any remaining hosts as unresponsive</span>
+        <span class="k">for</span> <span class="n">ip</span><span class="p">,</span> <span class="n">host</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hosts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">host</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">SENT</span><span class="p">:</span>
+                <span class="n">host</span><span class="o">.</span><span class="n">mark_timeout</span><span class="p">()</span>
+
+            <span class="c1"># Format the result</span>
+            <span class="n">results</span><span class="p">[</span><span class="n">ip</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;state&quot;</span><span class="p">:</span> <span class="s2">&quot;UP&quot;</span> <span class="k">if</span> <span class="n">host</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">RESPONDED</span> <span class="k">else</span> <span class="s2">&quot;DOWN&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;response_time_ms&quot;</span><span class="p">:</span> <span class="n">host</span><span class="o">.</span><span class="n">rtt_ms</span><span class="p">,</span>
+                <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="n">host</span><span class="o">.</span><span class="n">error_message</span><span class="p">,</span>
+            <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">results</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Lexmaister.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+</body>
+</html>

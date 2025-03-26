@@ -1,0 +1,274 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Network scanner - Scan Operation &mdash; Codestral ROS2 Generator  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Network scanner - Host" href="network_host.html" />
+    <link rel="prev" title="Network scanner - Scanner" href="network_scanner.html" />
+</head>
+
+<body class="wy-body-for-nav">
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+
+
+          <a href="../index.html" class="icon icon-home">
+            Codestral ROS2 Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../generators/base_generator.html">Base Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generators/generation_attempt.html">Generation Attempt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/mistral_client.html">Mistral Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/code_parser.html">Code Parser</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/config_utils.html">Config Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/file_io.html">File IO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/metrics_handler.html">Metrics Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/ros2_runner.html">ROS2 Runner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="network_scanner.html">Network scanner - Scanner</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Network scanner - Scan Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="network_host.html">Network scanner - Host</a></li>
+<li class="toctree-l1"><a class="reference internal" href="network_parser.html">Network scanner - Targets parser</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Codestral ROS2 Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Network scanner - Scan Operation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/network_scan/scan_operation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+
+  <section id="module-codestral_ros2_gen.network_scan.scan_operation">
+<span id="network-scanner-scan-operation"></span><h1>Network scanner - Scan Operation<a class="headerlink" href="#module-codestral_ros2_gen.network_scan.scan_operation" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.scan_operation.ScanOperation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">codestral_ros2_gen.network_scan.scan_operation.</span></span><span class="sig-name descname"><span class="pre">ScanOperation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">targets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scanner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">packet_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sending_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">send_buff_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">65536</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recv_buff_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">131072</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/scan_operation.html#ScanOperation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.scan_operation.ScanOperation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Context manager for a single network scan operation.</p>
+<p>This class manages the lifecycle of a network scan, including the configuration of sockets,
+creation of NetworkHost objects, sending of ICMP packets, and collection of responses.
+It uses sync blocking socket for sending and asyncio non-blocking operations for receiving packets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>targets</strong> (<em>str</em>)</p></li>
+<li><p><strong>timeout</strong> (<em>float</em>)</p></li>
+<li><p><strong>packet_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>sending_interval</strong> (<em>float</em>)</p></li>
+<li><p><strong>send_buff_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>recv_buff_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>logger</strong> (<em>Logger</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.scan_operation.ScanOperation.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">targets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scanner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">packet_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sending_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">send_buff_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">65536</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recv_buff_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">131072</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/scan_operation.html#ScanOperation.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.scan_operation.ScanOperation.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialize the ScanOperation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>targets</strong> (<em>str</em>) – The network targets to scan.</p></li>
+<li><p><strong>scanner</strong> (<em>Optional</em><em>[</em><em>object</em><em>]</em>) – An optional scanner object with configuration attributes.</p></li>
+<li><p><strong>timeout</strong> (<em>float</em>) – The timeout for the scan operation.</p></li>
+<li><p><strong>packet_size</strong> (<em>int</em>) – The size of the ICMP packets to send.</p></li>
+<li><p><strong>sending_interval</strong> (<em>float</em>) – The interval between sending packets.</p></li>
+<li><p><strong>send_buff_size</strong> (<em>int</em>) – The size of the send buffer.</p></li>
+<li><p><strong>recv_buff_size</strong> (<em>int</em>) – The size of the receive buffer.</p></li>
+<li><p><strong>logger</strong> (<em>Optional</em><em>[</em><em>logging.Logger</em><em>]</em>) – The logger to use for logging messages.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.scan_operation.ScanOperation._configure_sockets">
+<span class="sig-name descname"><span class="pre">_configure_sockets</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/scan_operation.html#ScanOperation._configure_sockets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._configure_sockets" title="Link to this definition"></a></dt>
+<dd><p>Configure send and receive sockets with optimal settings for Linux.</p>
+<p>This method sets up the send and receive sockets with appropriate options for ICMP communication.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.scan_operation.ScanOperation._close_sockets">
+<span class="sig-name descname"><span class="pre">_close_sockets</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/scan_operation.html#ScanOperation._close_sockets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._close_sockets" title="Link to this definition"></a></dt>
+<dd><p>Properly clean up and close sockets.</p>
+<p>This method ensures that the sockets are closed properly, clearing any remaining data and shutting down the sockets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.scan_operation.ScanOperation._create_hosts">
+<span class="sig-name descname"><span class="pre">_create_hosts</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/scan_operation.html#ScanOperation._create_hosts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._create_hosts" title="Link to this definition"></a></dt>
+<dd><p>Create NetworkHost objects for the given targets.</p>
+<p>This method parses the network targets and creates NetworkHost objects for each target IP address.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.scan_operation.ScanOperation.execute">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/scan_operation.html#ScanOperation.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.scan_operation.ScanOperation.execute" title="Link to this definition"></a></dt>
+<dd><p>Execute the scan operation and return results.</p>
+<p>This method orchestrates the sending of ICMP packets and the collection of responses.
+It logs the progress and handles any errors that occur during the scan.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary containing the scan results for each target IP address.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict[str, dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.scan_operation.ScanOperation._send_packets">
+<span class="sig-name descname"><span class="pre">_send_packets</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/scan_operation.html#ScanOperation._send_packets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._send_packets" title="Link to this definition"></a></dt>
+<dd><p>Send ICMP echo request packets to all hosts.</p>
+<p>This method sends ICMP echo request packets to each target IP address and logs the progress.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.scan_operation.ScanOperation._collect_responses">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_collect_responses</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/scan_operation.html#ScanOperation._collect_responses"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._collect_responses" title="Link to this definition"></a></dt>
+<dd><p>Asynchronously collect ICMP responses with a timeout.</p>
+<p>This method collects ICMP responses from the target IP addresses until the timeout is reached.
+It uses asyncio to achieve non-blocking behavior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – If the response collection fails.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.scan_operation.ScanOperation._receive_packet">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_receive_packet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sock</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/scan_operation.html#ScanOperation._receive_packet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._receive_packet" title="Link to this definition"></a></dt>
+<dd><p>Helper to get both packet and address with asyncio.</p>
+<p>This method sets up a callback to receive packets asynchronously using asyncio’s event loop.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sock</strong> (<em>socket.socket</em>) – The socket to receive packets from.</p></li>
+<li><p><strong>size</strong> (<em>int</em>) – The size of the buffer to use for receiving packets.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing the received packet and the address of the sender.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.scan_operation.ScanOperation._prepare_results">
+<span class="sig-name descname"><span class="pre">_prepare_results</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/scan_operation.html#ScanOperation._prepare_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._prepare_results" title="Link to this definition"></a></dt>
+<dd><p>Prepare the scan results.</p>
+<p>This method prepares the scan results by marking any remaining hosts as unresponsive and formatting the results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary containing the scan results for each target IP address.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict[str, dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="network_scanner.html" class="btn btn-neutral float-left" title="Network scanner - Scanner" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="network_host.html" class="btn btn-neutral float-right" title="Network scanner - Host" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Lexmaister.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,314 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Network scanner - Host &mdash; Codestral ROS2 Generator  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Network scanner - Targets parser" href="network_parser.html" />
+    <link rel="prev" title="Network scanner - Scan Operation" href="scan_operation.html" />
+</head>
+
+<body class="wy-body-for-nav">
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+
+
+          <a href="../index.html" class="icon icon-home">
+            Codestral ROS2 Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../generators/base_generator.html">Base Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generators/generation_attempt.html">Generation Attempt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/mistral_client.html">Mistral Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/code_parser.html">Code Parser</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/config_utils.html">Config Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/file_io.html">File IO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/metrics_handler.html">Metrics Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/ros2_runner.html">ROS2 Runner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="network_scanner.html">Network scanner - Scanner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scan_operation.html">Network scanner - Scan Operation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Network scanner - Host</a></li>
+<li class="toctree-l1"><a class="reference internal" href="network_parser.html">Network scanner - Targets parser</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Codestral ROS2 Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Network scanner - Host</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/network_scan/network_host.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+
+  <section id="module-codestral_ros2_gen.network_scan.network_host">
+<span id="network-scanner-host"></span><h1>Network scanner - Host<a class="headerlink" href="#module-codestral_ros2_gen.network_scan.network_host" title="Link to this heading"></a></h1>
+<p>Network Host Module for network scanning operations.</p>
+<p>This module provides classes for network host representation and handling
+during network scanning operations. It includes the host state tracking
+and ICMP packet generation capabilities.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.network_host.HostState">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">codestral_ros2_gen.network_scan.network_host.</span></span><span class="sig-name descname"><span class="pre">HostState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/network_host.html#HostState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.network_host.HostState" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>Enumeration of possible network host states during scanning.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.network_host.HostState.INIT">
+<span class="sig-name descname"><span class="pre">INIT</span></span><a class="headerlink" href="#codestral_ros2_gen.network_scan.network_host.HostState.INIT" title="Link to this definition"></a></dt>
+<dd><p>Initial state when host is created</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.network_host.HostState.SENT">
+<span class="sig-name descname"><span class="pre">SENT</span></span><a class="headerlink" href="#codestral_ros2_gen.network_scan.network_host.HostState.SENT" title="Link to this definition"></a></dt>
+<dd><p>ICMP packet has been sent to the host</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.network_host.HostState.RESPONDED">
+<span class="sig-name descname"><span class="pre">RESPONDED</span></span><a class="headerlink" href="#codestral_ros2_gen.network_scan.network_host.HostState.RESPONDED" title="Link to this definition"></a></dt>
+<dd><p>Host has responded to the ICMP packet</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.network_host.HostState.TIMEOUT">
+<span class="sig-name descname"><span class="pre">TIMEOUT</span></span><a class="headerlink" href="#codestral_ros2_gen.network_scan.network_host.HostState.TIMEOUT" title="Link to this definition"></a></dt>
+<dd><p>Host did not respond within the timeout period</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.network_host.HostState.ERROR">
+<span class="sig-name descname"><span class="pre">ERROR</span></span><a class="headerlink" href="#codestral_ros2_gen.network_scan.network_host.HostState.ERROR" title="Link to this definition"></a></dt>
+<dd><p>An error occurred during scanning</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.network_host.NetworkHost">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">codestral_ros2_gen.network_scan.network_host.</span></span><span class="sig-name descname"><span class="pre">NetworkHost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ip_address</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">icmp_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">icmp_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">packet_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/network_host.html#NetworkHost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.network_host.NetworkHost" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Single host handler for network scanning operations.</p>
+<p>This class represents a network host during scanning operations,
+tracking its state and managing ICMP packet generation and validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ip_address</strong> (<em>str</em>)</p></li>
+<li><p><strong>packet_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>logger</strong> (<em>Logger</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.network_host.NetworkHost.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ip_address</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">icmp_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">icmp_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">packet_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/network_host.html#NetworkHost.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.network_host.NetworkHost.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialize a NetworkHost object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ip_address</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – IP address of the host</p></li>
+<li><p><strong>icmp_id</strong> – ICMP identifier (random if None)</p></li>
+<li><p><strong>icmp_seq</strong> – ICMP sequence number (default: 1)</p></li>
+<li><p><strong>packet_size</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Size of the ICMP packet in bytes (default: 64)</p></li>
+<li><p><strong>logger</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Logger</span></code>]</span>) – External logger to use (typically a ROS2 logger)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.network_host.NetworkHost.state">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#codestral_ros2_gen.network_scan.network_host.HostState" title="codestral_ros2_gen.network_scan.network_host.HostState"><span class="pre">HostState</span></a></em><a class="headerlink" href="#codestral_ros2_gen.network_scan.network_host.NetworkHost.state" title="Link to this definition"></a></dt>
+<dd><p>Get the current state of the host.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Current state of the host</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#codestral_ros2_gen.network_scan.network_host.HostState" title="codestral_ros2_gen.network_scan.network_host.HostState">HostState</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.network_host.NetworkHost._create_icmp_packet">
+<span class="sig-name descname"><span class="pre">_create_icmp_packet</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/network_host.html#NetworkHost._create_icmp_packet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.network_host.NetworkHost._create_icmp_packet" title="Link to this definition"></a></dt>
+<dd><p>Create an ICMP echo request packet.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The ICMP packet ready to be sent</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bytes</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – If the generated packet size is not equal to provided packet size</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.network_host.NetworkHost._calculate_checksum">
+<span class="sig-name descname"><span class="pre">_calculate_checksum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/network_host.html#NetworkHost._calculate_checksum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.network_host.NetworkHost._calculate_checksum" title="Link to this definition"></a></dt>
+<dd><p>Calculate the checksum for an ICMP packet.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></span>) – The data to calculate the checksum for</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The calculated checksum</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.network_host.NetworkHost.handle_response">
+<span class="sig-name descname"><span class="pre">handle_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">packet</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/network_host.html#NetworkHost.handle_response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.network_host.NetworkHost.handle_response" title="Link to this definition"></a></dt>
+<dd><p>Validate ICMP echo reply packet for this host.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>packet</strong> (<em>bytes</em>) – The received ICMP packet.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Side Effects:</dt><dd><p>Updates the host state and response time based on the received packet.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.network_host.NetworkHost.mark_sent">
+<span class="sig-name descname"><span class="pre">mark_sent</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/network_host.html#NetworkHost.mark_sent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.network_host.NetworkHost.mark_sent" title="Link to this definition"></a></dt>
+<dd><p>Mark the host as having had a packet sent to it.</p>
+<p>Records the current time as the send time and updates the state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.network_host.NetworkHost.mark_responded">
+<span class="sig-name descname"><span class="pre">mark_responded</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recv_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/network_host.html#NetworkHost.mark_responded"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.network_host.NetworkHost.mark_responded" title="Link to this definition"></a></dt>
+<dd><p>Mark the host as having responded to the packet.</p>
+<p>Sets the state to RESPONDED, records the receive time, and calculates the RTT.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>recv_time</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</span>) – Time when response was received, defaults to current time</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.network_host.NetworkHost.mark_timeout">
+<span class="sig-name descname"><span class="pre">mark_timeout</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/network_host.html#NetworkHost.mark_timeout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.network_host.NetworkHost.mark_timeout" title="Link to this definition"></a></dt>
+<dd><p>Mark the host as having timed out (no response received).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="codestral_ros2_gen.network_scan.network_host.NetworkHost.mark_error">
+<span class="sig-name descname"><span class="pre">mark_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">error_message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/codestral_ros2_gen/network_scan/network_host.html#NetworkHost.mark_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#codestral_ros2_gen.network_scan.network_host.NetworkHost.mark_error" title="Link to this definition"></a></dt>
+<dd><p>Mark the host as having encountered an error.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>error_message</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Description of the error</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="scan_operation.html" class="btn btn-neutral float-left" title="Network scanner - Scan Operation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="network_parser.html" class="btn btn-neutral float-right" title="Network scanner - Targets parser" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Lexmaister.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+</body>
+</html>

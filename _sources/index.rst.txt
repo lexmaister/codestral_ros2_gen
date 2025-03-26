@@ -7,8 +7,9 @@ Welcome to Codestral ROS2 Generator's documentation!
 ====================================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
+   :titlesonly:
 
    generators/base_generator
    generators/generation_attempt
@@ -18,6 +19,10 @@ Welcome to Codestral ROS2 Generator's documentation!
    utils/file_io
    utils/metrics_handler
    utils/ros2_runner
+   network_scan/network_scanner
+   network_scan/scan_operation
+   network_scan/network_host
+   network_scan/network_parser
 
 Indices and tables
 ==================

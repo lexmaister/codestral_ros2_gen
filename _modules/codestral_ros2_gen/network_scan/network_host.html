@@ -1,0 +1,458 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>codestral_ros2_gen.network_scan.network_host &mdash; Codestral ROS2 Generator  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+</head>
+
+<body class="wy-body-for-nav">
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+
+
+          <a href="../../../index.html" class="icon icon-home">
+            Codestral ROS2 Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../generators/base_generator.html">Base Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generators/generation_attempt.html">Generation Attempt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models/mistral_client.html">Mistral Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/code_parser.html">Code Parser</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/config_utils.html">Config Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/file_io.html">File IO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/metrics_handler.html">Metrics Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/ros2_runner.html">ROS2 Runner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../network_scan/network_scanner.html">Network scanner - Scanner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../network_scan/scan_operation.html">Network scanner - Scan Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../network_scan/network_host.html">Network scanner - Host</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../network_scan/network_parser.html">Network scanner - Targets parser</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Codestral ROS2 Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">codestral_ros2_gen.network_scan.network_host</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+
+  <h1>Source code for codestral_ros2_gen.network_scan.network_host</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Network Host Module for network scanning operations.</span>
+
+<span class="sd">This module provides classes for network host representation and handling</span>
+<span class="sd">during network scanning operations. It includes the host state tracking</span>
+<span class="sd">and ICMP packet generation capabilities.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">struct</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">nscan_logger</span>
+
+
+<div class="viewcode-block" id="HostState">
+<a class="viewcode-back" href="../../../network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.HostState">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HostState</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enumeration of possible network host states during scanning.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        INIT: Initial state when host is created</span>
+<span class="sd">        SENT: ICMP packet has been sent to the host</span>
+<span class="sd">        RESPONDED: Host has responded to the ICMP packet</span>
+<span class="sd">        TIMEOUT: Host did not respond within the timeout period</span>
+<span class="sd">        ERROR: An error occurred during scanning</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">INIT</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">SENT</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">RESPONDED</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">TIMEOUT</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+    <span class="n">ERROR</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="NetworkHost">
+<a class="viewcode-back" href="../../../network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NetworkHost</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Single host handler for network scanning operations.</span>
+
+<span class="sd">    This class represents a network host during scanning operations,</span>
+<span class="sd">    tracking its state and managing ICMP packet generation and validation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="NetworkHost.__init__">
+<a class="viewcode-back" href="../../../network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ip_address</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">icmp_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">icmp_seq</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">packet_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
+        <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a NetworkHost object.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ip_address: IP address of the host</span>
+<span class="sd">            icmp_id: ICMP identifier (random if None)</span>
+<span class="sd">            icmp_seq: ICMP sequence number (default: 1)</span>
+<span class="sd">            packet_size: Size of the ICMP packet in bytes (default: 64)</span>
+<span class="sd">            logger: External logger to use (typically a ROS2 logger)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">HostState</span><span class="o">.</span><span class="n">INIT</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ip_address</span> <span class="o">=</span> <span class="n">ip_address</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">packet_size</span> <span class="o">=</span> <span class="n">packet_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send_time</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recv_time</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rtt_ms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error_message</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Generate random identifier if none provided</span>
+        <span class="k">if</span> <span class="n">icmp_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Generate random 16-bit integer (0-65535)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">icmp_id</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mh">0xFFFF</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">icmp_id</span> <span class="o">=</span> <span class="n">icmp_id</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">icmp_seq</span> <span class="o">=</span> <span class="n">icmp_seq</span>
+
+        <span class="k">if</span> <span class="n">logger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logger</span>
+        <span class="k">elif</span> <span class="n">nscan_logger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">nscan_logger</span><span class="si">}</span><span class="s2">.host&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No logger provided and default logger is not set&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">packet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_icmp_packet</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created NetworkHost object for </span><span class="si">{</span><span class="n">ip_address</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HostState</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the current state of the host.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            HostState: Current state of the host</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span>
+
+<div class="viewcode-block" id="NetworkHost._create_icmp_packet">
+<a class="viewcode-back" href="../../../network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost._create_icmp_packet">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_icmp_packet</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create an ICMP echo request packet.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bytes: The ICMP packet ready to be sent</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: If the generated packet size is not equal to provided packet size</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Creating ICMP packet for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ip_address</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># ICMP type 8 (echo request), code 0</span>
+        <span class="n">icmp_type</span> <span class="o">=</span> <span class="mi">8</span>
+        <span class="n">icmp_code</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">icmp_checksum</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Create header without checksum</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span>
+            <span class="s2">&quot;!BBHHH&quot;</span><span class="p">,</span> <span class="n">icmp_type</span><span class="p">,</span> <span class="n">icmp_code</span><span class="p">,</span> <span class="n">icmp_checksum</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">icmp_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">icmp_seq</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Placeholder payload data</span>
+        <span class="n">payload_data</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;abcdefghijklmnopqrstuvwxyz&quot;</span>
+
+        <span class="c1"># Pad the payload to reach the requested packet size</span>
+        <span class="n">padding_size</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">packet_size</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload_data</span><span class="p">))</span>
+        <span class="n">padding</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">([</span><span class="n">i</span> <span class="o">&amp;</span> <span class="mh">0xFF</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">padding_size</span><span class="p">)])</span>
+
+        <span class="c1"># Combine the payload</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">payload_data</span> <span class="o">+</span> <span class="n">padding</span>
+
+        <span class="c1"># Calculate checksum on the header and payload</span>
+        <span class="n">full_packet</span> <span class="o">=</span> <span class="n">header</span> <span class="o">+</span> <span class="n">payload</span>
+        <span class="n">checksum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_checksum</span><span class="p">(</span><span class="n">full_packet</span><span class="p">)</span>
+
+        <span class="c1"># Insert checksum into header</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span>
+            <span class="s2">&quot;!BBHHH&quot;</span><span class="p">,</span> <span class="n">icmp_type</span><span class="p">,</span> <span class="n">icmp_code</span><span class="p">,</span> <span class="n">checksum</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">icmp_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">icmp_seq</span>
+        <span class="p">)</span>
+        <span class="n">packet</span> <span class="o">=</span> <span class="n">header</span> <span class="o">+</span> <span class="n">payload</span>
+
+        <span class="c1"># Validate the packet</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">packet</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">packet_size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Packet size mismatch: expected </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">packet_size</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">packet</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">packet</span></div>
+
+
+    <span class="c1"># def _calculate_checksum(self, data: bytes) -&gt; int:</span>
+    <span class="c1">#     &quot;&quot;&quot;</span>
+    <span class="c1">#     Calculate the checksum for an ICMP packet.</span>
+
+    <span class="c1">#     Args:</span>
+    <span class="c1">#         data: The data to calculate the checksum for</span>
+
+    <span class="c1">#     Returns:</span>
+    <span class="c1">#         int: Calculated checksum value</span>
+    <span class="c1">#     &quot;&quot;&quot;</span>
+    <span class="c1">#     sum = 0</span>
+    <span class="c1">#     countTo = (len(data) // 2) * 2</span>
+    <span class="c1">#     count = 0</span>
+
+    <span class="c1">#     while count &lt; countTo:</span>
+    <span class="c1">#         val = data[count + 1] * 256 + data[count]</span>
+    <span class="c1">#         sum = sum + val</span>
+    <span class="c1">#         sum = sum &amp; 0xFFFFFFFF</span>
+    <span class="c1">#         count = count + 2</span>
+
+    <span class="c1">#     if countTo &lt; len(data):</span>
+    <span class="c1">#         sum = sum + data[len(data) - 1]</span>
+    <span class="c1">#         sum = sum &amp; 0xFFFFFFFF</span>
+
+    <span class="c1">#     sum = (sum &gt;&gt; 16) + (sum &amp; 0xFFFF)</span>
+    <span class="c1">#     sum = sum + (sum &gt;&gt; 16)</span>
+    <span class="c1">#     answer = ~sum &amp; 0xFFFF</span>
+
+    <span class="c1">#     # Validate the checksum</span>
+    <span class="c1">#     if answer == 0:</span>
+    <span class="c1">#         self.logger.warning(&quot;Calculated checksum is 0&quot;)</span>
+
+    <span class="c1">#     return answer</span>
+
+<div class="viewcode-block" id="NetworkHost._calculate_checksum">
+<a class="viewcode-back" href="../../../network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost._calculate_checksum">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_checksum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the checksum for an ICMP packet.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data: The data to calculate the checksum for</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            int: The calculated checksum</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Start with 0 sum</span>
+        <span class="n">checksum</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Handle data in 16-bit chunks</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+                <span class="n">word</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">+</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">word</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span>  <span class="c1"># Pad with zero if odd length</span>
+
+            <span class="n">checksum</span> <span class="o">+=</span> <span class="n">word</span>
+
+        <span class="c1"># Add carry bits</span>
+        <span class="n">checksum</span> <span class="o">=</span> <span class="p">(</span><span class="n">checksum</span> <span class="o">&gt;&gt;</span> <span class="mi">16</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">checksum</span> <span class="o">&amp;</span> <span class="mh">0xFFFF</span><span class="p">)</span>
+        <span class="n">checksum</span> <span class="o">+=</span> <span class="n">checksum</span> <span class="o">&gt;&gt;</span> <span class="mi">16</span>
+
+        <span class="c1"># Take one&#39;s complement</span>
+        <span class="n">checksum</span> <span class="o">=</span> <span class="o">~</span><span class="n">checksum</span> <span class="o">&amp;</span> <span class="mh">0xFFFF</span>
+
+        <span class="k">if</span> <span class="n">checksum</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Calculated checksum is 0&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">checksum</span></div>
+
+
+<div class="viewcode-block" id="NetworkHost.handle_response">
+<a class="viewcode-back" href="../../../network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost.handle_response">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">packet</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validate ICMP echo reply packet for this host.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            packet (bytes): The received ICMP packet.</span>
+
+<span class="sd">        Side Effects:</span>
+<span class="sd">            Updates the host state and response time based on the received packet.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Handling response for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ip_address</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Skip IP header (length in bytes = first 4 bits * 4)</span>
+        <span class="n">ip_header_length</span> <span class="o">=</span> <span class="p">(</span><span class="n">packet</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x0F</span><span class="p">)</span> <span class="o">*</span> <span class="mi">4</span>
+        <span class="n">icmp_packet</span> <span class="o">=</span> <span class="n">packet</span><span class="p">[</span><span class="n">ip_header_length</span><span class="p">:]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">icmp_packet</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">8</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mark_error</span><span class="p">(</span><span class="s2">&quot;Received ICMP packet is too short&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Parse ICMP Echo Reply header (Type 0, Code 0)</span>
+        <span class="n">icmp_type</span><span class="p">,</span> <span class="n">icmp_code</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">recv_id</span><span class="p">,</span> <span class="n">recv_seq</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span>
+            <span class="s2">&quot;!BBHHH&quot;</span><span class="p">,</span> <span class="n">icmp_packet</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Filter out Echo Requests with our ID - these are our own packets</span>
+        <span class="k">if</span> <span class="n">icmp_type</span> <span class="o">==</span> <span class="mi">8</span> <span class="ow">and</span> <span class="n">recv_id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">icmp_id</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Filtering out our own outgoing packet (seq: </span><span class="si">{</span><span class="n">recv_seq</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mark_error</span><span class="p">(</span><span class="s2">&quot;Received our own outgoing packet&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">icmp_type</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">icmp_code</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mark_error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Received ICMP packet is not an Echo Reply - type/code: </span><span class="si">{</span><span class="n">icmp_type</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">icmp_code</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">recv_id</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">icmp_id</span> <span class="ow">or</span> <span class="n">recv_seq</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">icmp_seq</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mark_error</span><span class="p">(</span><span class="s2">&quot;Received ICMP packet has incorrect ID or Sequence&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mark_responded</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="NetworkHost.mark_sent">
+<a class="viewcode-back" href="../../../network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost.mark_sent">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mark_sent</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Mark the host as having had a packet sent to it.</span>
+
+<span class="sd">        Records the current time as the send time and updates the state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">HostState</span><span class="o">.</span><span class="n">SENT</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Packet sent to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ip_address</span><span class="si">}</span><span class="s2"> at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">send_time</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NetworkHost.mark_responded">
+<a class="viewcode-back" href="../../../network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost.mark_responded">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mark_responded</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recv_time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Mark the host as having responded to the packet.</span>
+
+<span class="sd">        Sets the state to RESPONDED, records the receive time, and calculates the RTT.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            recv_time: Time when response was received, defaults to current time</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">HostState</span><span class="o">.</span><span class="n">RESPONDED</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recv_time</span> <span class="o">=</span> <span class="n">recv_time</span> <span class="ow">or</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Response from </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ip_address</span><span class="si">}</span><span class="s2"> at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">recv_time</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">rtt_ms</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">recv_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_time</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rtt_ms</span> <span class="o">=</span> <span class="n">rtt_ms</span> <span class="k">if</span> <span class="n">rtt_ms</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Round transfer time for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ip_address</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">rtt_ms</span><span class="si">}</span><span class="s2"> ms&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NetworkHost.mark_timeout">
+<a class="viewcode-back" href="../../../network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost.mark_timeout">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mark_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Mark the host as having timed out (no response received).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">HostState</span><span class="o">.</span><span class="n">TIMEOUT</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Timeout for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ip_address</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NetworkHost.mark_error">
+<a class="viewcode-back" href="../../../network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost.mark_error">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mark_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error_message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Mark the host as having encountered an error.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            error_message: Description of the error</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">HostState</span><span class="o">.</span><span class="n">ERROR</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error_message</span> <span class="o">=</span> <span class="n">error_message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ip_address</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">error_message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a string representation of the host.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: String description of the host</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Host(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ip_address</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Lexmaister.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+</body>
+</html>

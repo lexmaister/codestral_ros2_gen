@@ -1,0 +1,260 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>codestral_ros2_gen.network_scan.network_parser &mdash; Codestral ROS2 Generator  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+</head>
+
+<body class="wy-body-for-nav">
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+
+
+          <a href="../../../index.html" class="icon icon-home">
+            Codestral ROS2 Generator
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../generators/base_generator.html">Base Generator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generators/generation_attempt.html">Generation Attempt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models/mistral_client.html">Mistral Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/code_parser.html">Code Parser</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/config_utils.html">Config Utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/file_io.html">File IO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/metrics_handler.html">Metrics Handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils/ros2_runner.html">ROS2 Runner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../network_scan/network_scanner.html">Network scanner - Scanner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../network_scan/scan_operation.html">Network scanner - Scan Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../network_scan/network_host.html">Network scanner - Host</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../network_scan/network_parser.html">Network scanner - Targets parser</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Codestral ROS2 Generator</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">codestral_ros2_gen.network_scan.network_parser</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+
+  <h1>Source code for codestral_ros2_gen.network_scan.network_parser</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">ipaddress</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">nscan_logger</span>
+
+<span class="k">if</span> <span class="n">nscan_logger</span><span class="p">:</span>
+    <span class="n">lname</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">nscan_logger</span><span class="si">}</span><span class="s2">.parser&quot;</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">lname</span> <span class="o">=</span> <span class="s2">&quot;nscan.parser&quot;</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">lname</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="parse_network_targets">
+<a class="viewcode-back" href="../../../network_scan/network_parser.html#codestral_ros2_gen.network_scan.network_parser.parse_network_targets">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_network_targets</span><span class="p">(</span><span class="n">network_spec</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse various network target specifications and return a list of host IP addresses.</span>
+
+<span class="sd">    Supported formats:</span>
+<span class="sd">        * Standard CIDR:         &quot;192.168.1.0/24&quot;</span>
+<span class="sd">        * IP range:              &quot;192.168.1.1-192.168.1.254&quot;</span>
+<span class="sd">        * Single IP:             &quot;192.168.1.1&quot;</span>
+<span class="sd">        * Multiple networks:     &quot;192.168.1.0/24,10.0.0.0/16&quot;</span>
+<span class="sd">        * Octet ranges:          &quot;192.168.10-20.1-254&quot;</span>
+<span class="sd">        * Wildcard notation:     &quot;192.168.1.*&quot;</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        network_spec (str): String specifying network(s) to scan</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[str]: List of IP addresses to scan</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the network specification is not in a recognized format.</span>
+<span class="sd">        TypeError: If the network specification contains invalid types.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Remove whitespace and split by commas for multiple networks</span>
+    <span class="n">networks</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">network_spec</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+    <span class="n">result_hosts</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">network</span> <span class="ow">in</span> <span class="n">networks</span><span class="p">:</span>
+        <span class="c1"># Try processing as standard CIDR notation</span>
+        <span class="k">if</span> <span class="s2">&quot;/&quot;</span> <span class="ow">in</span> <span class="n">network</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span> <span class="ow">in</span> <span class="n">network</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">]):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">ip_network</span> <span class="o">=</span> <span class="n">ipaddress</span><span class="o">.</span><span class="n">ip_network</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">ip_network</span><span class="o">.</span><span class="n">version</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                    <span class="c1"># For IPv4, exclude network and broadcast addresses</span>
+                    <span class="n">result_hosts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span> <span class="k">for</span> <span class="n">ip</span> <span class="ow">in</span> <span class="n">ip_network</span><span class="o">.</span><span class="n">hosts</span><span class="p">())</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># For IPv6, include all addresses</span>
+                    <span class="n">result_hosts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span> <span class="k">for</span> <span class="n">ip</span> <span class="ow">in</span> <span class="n">ip_network</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="c1"># Not a valid CIDR, try other formats</span>
+                <span class="k">pass</span>
+
+        <span class="c1"># Try processing as IP range (e.g., 192.168.1.1-192.168.1.254)</span>
+        <span class="k">if</span> <span class="s2">&quot;-&quot;</span> <span class="ow">in</span> <span class="n">network</span> <span class="ow">and</span> <span class="n">network</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">6</span><span class="p">:</span>  <span class="c1"># At least 7 dots for a range</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">start_ip</span><span class="p">,</span> <span class="n">end_ip</span> <span class="o">=</span> <span class="n">network</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
+                <span class="n">start_ip</span> <span class="o">=</span> <span class="n">ipaddress</span><span class="o">.</span><span class="n">ip_address</span><span class="p">(</span><span class="n">start_ip</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+                <span class="n">end_ip</span> <span class="o">=</span> <span class="n">ipaddress</span><span class="o">.</span><span class="n">ip_address</span><span class="p">(</span><span class="n">end_ip</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+                <span class="c1"># Generate all IPs in the range</span>
+                <span class="n">current</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">start_ip</span><span class="p">)</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">end_ip</span><span class="p">)</span>
+
+                <span class="k">while</span> <span class="n">current</span> <span class="o">&lt;=</span> <span class="n">end</span><span class="p">:</span>
+                    <span class="n">result_hosts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ipaddress</span><span class="o">.</span><span class="n">ip_address</span><span class="p">(</span><span class="n">current</span><span class="p">)))</span>
+                    <span class="n">current</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                <span class="c1"># Not a valid IP range, try other formats</span>
+                <span class="k">pass</span>
+
+        <span class="c1"># Try processing as octet ranges (e.g., 192.168.10-20.1-254)</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\d+-\d+&quot;</span><span class="p">,</span> <span class="n">network</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Parse each octet which may contain ranges</span>
+                <span class="n">octets</span> <span class="o">=</span> <span class="n">network</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">octets</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid IP format&quot;</span><span class="p">)</span>
+
+                <span class="c1"># Generate all combinations</span>
+                <span class="n">octet_values</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">octet</span> <span class="ow">in</span> <span class="n">octets</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s2">&quot;-&quot;</span> <span class="ow">in</span> <span class="n">octet</span><span class="p">:</span>
+                        <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">octet</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">))</span>
+                        <span class="n">octet_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">octet_values</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">octet</span><span class="p">)])</span>
+
+                <span class="c1"># Generate all IP combinations</span>
+                <span class="k">for</span> <span class="n">o1</span> <span class="ow">in</span> <span class="n">octet_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                    <span class="k">for</span> <span class="n">o2</span> <span class="ow">in</span> <span class="n">octet_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                        <span class="k">for</span> <span class="n">o3</span> <span class="ow">in</span> <span class="n">octet_values</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
+                            <span class="k">for</span> <span class="n">o4</span> <span class="ow">in</span> <span class="n">octet_values</span><span class="p">[</span><span class="mi">3</span><span class="p">]:</span>
+                                <span class="n">result_hosts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">o1</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">o2</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">o3</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">o4</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                <span class="c1"># Not a valid octet range, try other formats</span>
+                <span class="k">pass</span>
+
+        <span class="c1"># Try processing as wildcard notation (e.g., 192.168.1.*)</span>
+        <span class="k">if</span> <span class="s2">&quot;*&quot;</span> <span class="ow">in</span> <span class="n">network</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">parts</span> <span class="o">=</span> <span class="n">network</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid IP format&quot;</span><span class="p">)</span>
+
+                <span class="c1"># Generate all combinations</span>
+                <span class="n">octet_values</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">part</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">parts</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">part</span> <span class="o">==</span> <span class="s2">&quot;*&quot;</span><span class="p">:</span>
+                        <span class="n">octet_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">256</span><span class="p">)))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">octet_values</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">part</span><span class="p">)])</span>
+
+                <span class="c1"># Generate all IP combinations</span>
+                <span class="k">for</span> <span class="n">o1</span> <span class="ow">in</span> <span class="n">octet_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                    <span class="k">for</span> <span class="n">o2</span> <span class="ow">in</span> <span class="n">octet_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                        <span class="k">for</span> <span class="n">o3</span> <span class="ow">in</span> <span class="n">octet_values</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
+                            <span class="k">for</span> <span class="n">o4</span> <span class="ow">in</span> <span class="n">octet_values</span><span class="p">[</span><span class="mi">3</span><span class="p">]:</span>
+                                <span class="n">result_hosts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">o1</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">o2</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">o3</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">o4</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                <span class="c1"># Not a valid wildcard notation, try other formats</span>
+                <span class="k">pass</span>
+
+        <span class="c1"># Try as a single IP address</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ip</span> <span class="o">=</span> <span class="n">ipaddress</span><span class="o">.</span><span class="n">ip_address</span><span class="p">(</span><span class="n">network</span><span class="p">)</span>
+            <span class="n">result_hosts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ip</span><span class="p">))</span>
+            <span class="k">continue</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="c1"># Not a valid IP address</span>
+            <span class="k">pass</span>
+
+        <span class="c1"># If we reach here, the format wasn&#39;t recognized</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not parse network format: &#39;</span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">result_hosts</span><span class="p">))</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Lexmaister.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+</body>
+</html>

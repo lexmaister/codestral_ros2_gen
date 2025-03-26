@@ -5,14 +5,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; Codestral ROS2 Generator 0.2 documentation</title>
+  <title>Index &mdash; Codestral ROS2 Generator  documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
 
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=10f1778b"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -49,6 +49,10 @@
 <li class="toctree-l1"><a class="reference internal" href="utils/file_io.html">File IO</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils/metrics_handler.html">Metrics Handler</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils/ros2_runner.html">ROS2 Runner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="network_scan/network_scanner.html">Network scanner - Scanner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="network_scan/scan_operation.html">Network scanner - Scan Operation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="network_scan/network_host.html">Network scanner - Host</a></li>
+<li class="toctree-l1"><a class="reference internal" href="network_scan/network_parser.html">Network scanner - Targets parser</a></li>
 </ul>
 
         </div>
@@ -86,6 +90,7 @@
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
+ | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
  | <a href="#K"><strong>K</strong></a>
  | <a href="#L"><strong>L</strong></a>
@@ -109,6 +114,12 @@
 </li>
         <li><a href="models/mistral_client.html#codestral_ros2_gen.models.mistral_client.MistralClient.__init__">(codestral_ros2_gen.models.mistral_client.MistralClient method)</a>
 </li>
+        <li><a href="network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost.__init__">(codestral_ros2_gen.network_scan.network_host.NetworkHost method)</a>
+</li>
+        <li><a href="network_scan/network_scanner.html#codestral_ros2_gen.network_scan.network_scanner.NetworkScanner.__init__">(codestral_ros2_gen.network_scan.network_scanner.NetworkScanner method)</a>
+</li>
+        <li><a href="network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation.__init__">(codestral_ros2_gen.network_scan.scan_operation.ScanOperation method)</a>
+</li>
         <li><a href="utils/metrics_handler.html#codestral_ros2_gen.utils.metrics_handler.MetricsHandler.__init__">(codestral_ros2_gen.utils.metrics_handler.MetricsHandler method)</a>
 </li>
         <li><a href="utils/ros2_runner.html#codestral_ros2_gen.utils.ros2_runner.ROS2Runner.__init__">(codestral_ros2_gen.utils.ros2_runner.ROS2Runner method)</a>
@@ -116,16 +127,28 @@
       </ul></li>
       <li><a href="generators/base_generator.html#codestral_ros2_gen.generators.base_generator.BaseGenerator._abc_impl">_abc_impl (codestral_ros2_gen.generators.base_generator.BaseGenerator attribute)</a>
 </li>
+      <li><a href="network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost._calculate_checksum">_calculate_checksum() (codestral_ros2_gen.network_scan.network_host.NetworkHost method)</a>
+</li>
       <li><a href="generators/base_generator.html#codestral_ros2_gen.generators.base_generator.BaseGenerator._check_ros2_workspace">_check_ros2_workspace() (codestral_ros2_gen.generators.base_generator.BaseGenerator method)</a>
 </li>
+      <li><a href="network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._close_sockets">_close_sockets() (codestral_ros2_gen.network_scan.scan_operation.ScanOperation method)</a>
+</li>
+      <li><a href="network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._collect_responses">_collect_responses() (codestral_ros2_gen.network_scan.scan_operation.ScanOperation method)</a>
+</li>
+      <li><a href="network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._configure_sockets">_configure_sockets() (codestral_ros2_gen.network_scan.scan_operation.ScanOperation method)</a>
+</li>
+      <li><a href="network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._create_hosts">_create_hosts() (codestral_ros2_gen.network_scan.scan_operation.ScanOperation method)</a>
+</li>
+      <li><a href="network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost._create_icmp_packet">_create_icmp_packet() (codestral_ros2_gen.network_scan.network_host.NetworkHost method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt._generate">_generate() (codestral_ros2_gen.generators.generation_attempt.GenerationAttempt method)</a>
 </li>
       <li><a href="generators/base_generator.html#codestral_ros2_gen.generators.base_generator.BaseGenerator._generation_phase">_generation_phase() (codestral_ros2_gen.generators.base_generator.BaseGenerator method)</a>
 </li>
       <li><a href="models/mistral_client.html#codestral_ros2_gen.models.mistral_client.MistralClient._get_api_key">_get_api_key() (codestral_ros2_gen.models.mistral_client.MistralClient method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="utils/ros2_runner.html#codestral_ros2_gen.utils.ros2_runner.ROS2Runner._get_tests_stat">_get_tests_stat() (codestral_ros2_gen.utils.ros2_runner.ROS2Runner method)</a>
 </li>
       <li><a href="generators/base_generator.html#codestral_ros2_gen.generators.base_generator.BaseGenerator._initialization_phase">_initialization_phase() (codestral_ros2_gen.generators.base_generator.BaseGenerator method)</a>
@@ -136,11 +159,19 @@
 </li>
       <li><a href="models/mistral_client.html#codestral_ros2_gen.models.mistral_client.MistralClient._prepare_messages">_prepare_messages() (codestral_ros2_gen.models.mistral_client.MistralClient method)</a>
 </li>
+      <li><a href="network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._prepare_results">_prepare_results() (codestral_ros2_gen.network_scan.scan_operation.ScanOperation method)</a>
+</li>
+      <li><a href="network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._receive_packet">_receive_packet() (codestral_ros2_gen.network_scan.scan_operation.ScanOperation method)</a>
+</li>
       <li><a href="generators/base_generator.html#codestral_ros2_gen.generators.base_generator.BaseGenerator._report_phase">_report_phase() (codestral_ros2_gen.generators.base_generator.BaseGenerator method)</a>
 </li>
       <li><a href="generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt._save">_save() (codestral_ros2_gen.generators.generation_attempt.GenerationAttempt method)</a>
 </li>
       <li><a href="utils/metrics_handler.html#codestral_ros2_gen.utils.metrics_handler.MetricsHandler._save_metrics">_save_metrics() (codestral_ros2_gen.utils.metrics_handler.MetricsHandler method)</a>
+</li>
+      <li><a href="network_scan/network_scanner.html#codestral_ros2_gen.network_scan.network_scanner.NetworkScanner._scan_async">_scan_async() (codestral_ros2_gen.network_scan.network_scanner.NetworkScanner method)</a>
+</li>
+      <li><a href="network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation._send_packets">_send_packets() (codestral_ros2_gen.network_scan.scan_operation.ScanOperation method)</a>
 </li>
       <li><a href="generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt._test">_test() (codestral_ros2_gen.generators.generation_attempt.GenerationAttempt method)</a>
 </li>
@@ -206,6 +237,36 @@
 </li>
       </ul></li>
       <li>
+    codestral_ros2_gen.network_scan.network_host
+
+      <ul>
+        <li><a href="network_scan/network_host.html#module-codestral_ros2_gen.network_scan.network_host">module</a>
+</li>
+      </ul></li>
+      <li>
+    codestral_ros2_gen.network_scan.network_parser
+
+      <ul>
+        <li><a href="network_scan/network_parser.html#module-codestral_ros2_gen.network_scan.network_parser">module</a>
+</li>
+      </ul></li>
+      <li>
+    codestral_ros2_gen.network_scan.network_scanner
+
+      <ul>
+        <li><a href="network_scan/network_scanner.html#module-codestral_ros2_gen.network_scan.network_scanner">module</a>
+</li>
+      </ul></li>
+      <li>
+    codestral_ros2_gen.network_scan.scan_operation
+
+      <ul>
+        <li><a href="network_scan/scan_operation.html#module-codestral_ros2_gen.network_scan.scan_operation">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
     codestral_ros2_gen.utils.code_parser
 
       <ul>
@@ -219,8 +280,6 @@
         <li><a href="utils/config_utils.html#module-codestral_ros2_gen.utils.config_utils">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     codestral_ros2_gen.utils.file_io
 
@@ -277,6 +336,12 @@
 </li>
       </ul></li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.HostState.ERROR">ERROR (codestral_ros2_gen.network_scan.network_host.HostState attribute)</a>
+</li>
+      <li><a href="network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation.execute">execute() (codestral_ros2_gen.network_scan.scan_operation.ScanOperation method)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="F">F</h2>
@@ -287,6 +352,8 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics.final_state">final_state (codestral_ros2_gen.generators.generation_attempt.AttemptMetrics attribute)</a>
+</li>
+      <li><a href="network_scan/network_scanner.html#codestral_ros2_gen.network_scan.network_scanner.NetworkScanner.format_results">format_results() (codestral_ros2_gen.network_scan.network_scanner.NetworkScanner method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -309,8 +376,24 @@
   </ul></td>
 </tr></table>
 
+<h2 id="H">H</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost.handle_response">handle_response() (codestral_ros2_gen.network_scan.network_host.NetworkHost method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.HostState">HostState (class in codestral_ros2_gen.network_scan.network_host)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.HostState.INIT">INIT (codestral_ros2_gen.network_scan.network_host.HostState attribute)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.AttemptState.INITIALIZE">INITIALIZE (codestral_ros2_gen.generators.generation_attempt.AttemptState attribute)</a>
 </li>
@@ -336,6 +419,14 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost.mark_error">mark_error() (codestral_ros2_gen.network_scan.network_host.NetworkHost method)</a>
+</li>
+      <li><a href="network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost.mark_responded">mark_responded() (codestral_ros2_gen.network_scan.network_host.NetworkHost method)</a>
+</li>
+      <li><a href="network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost.mark_sent">mark_sent() (codestral_ros2_gen.network_scan.network_host.NetworkHost method)</a>
+</li>
+      <li><a href="network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost.mark_timeout">mark_timeout() (codestral_ros2_gen.network_scan.network_host.NetworkHost method)</a>
+</li>
       <li><a href="utils/metrics_handler.html#codestral_ros2_gen.utils.metrics_handler.MetricsHandler">MetricsHandler (class in codestral_ros2_gen.utils.metrics_handler)</a>
 </li>
       <li><a href="generators/base_generator.html#codestral_ros2_gen.generators.base_generator.BaseGenerator.MetricsHandlerClass">MetricsHandlerClass (codestral_ros2_gen.generators.base_generator.BaseGenerator attribute)</a>
@@ -358,6 +449,14 @@
 </li>
         <li><a href="models/mistral_client.html#module-codestral_ros2_gen.models.mistral_client">codestral_ros2_gen.models.mistral_client</a>
 </li>
+        <li><a href="network_scan/network_host.html#module-codestral_ros2_gen.network_scan.network_host">codestral_ros2_gen.network_scan.network_host</a>
+</li>
+        <li><a href="network_scan/network_parser.html#module-codestral_ros2_gen.network_scan.network_parser">codestral_ros2_gen.network_scan.network_parser</a>
+</li>
+        <li><a href="network_scan/network_scanner.html#module-codestral_ros2_gen.network_scan.network_scanner">codestral_ros2_gen.network_scan.network_scanner</a>
+</li>
+        <li><a href="network_scan/scan_operation.html#module-codestral_ros2_gen.network_scan.scan_operation">codestral_ros2_gen.network_scan.scan_operation</a>
+</li>
         <li><a href="utils/code_parser.html#module-codestral_ros2_gen.utils.code_parser">codestral_ros2_gen.utils.code_parser</a>
 </li>
         <li><a href="utils/config_utils.html#module-codestral_ros2_gen.utils.config_utils">codestral_ros2_gen.utils.config_utils</a>
@@ -375,10 +474,14 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="utils/ros2_runner.html#codestral_ros2_gen.utils.ros2_runner.ROS2Runner.node_command">node_command (codestral_ros2_gen.utils.ros2_runner.ROS2Runner attribute)</a>
+      <li><a href="network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost">NetworkHost (class in codestral_ros2_gen.network_scan.network_host)</a>
+</li>
+      <li><a href="network_scan/network_scanner.html#codestral_ros2_gen.network_scan.network_scanner.NetworkScanner">NetworkScanner (class in codestral_ros2_gen.network_scan.network_scanner)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utils/ros2_runner.html#codestral_ros2_gen.utils.ros2_runner.ROS2Runner.node_command">node_command (codestral_ros2_gen.utils.ros2_runner.ROS2Runner attribute)</a>
+</li>
       <li><a href="utils/ros2_runner.html#codestral_ros2_gen.utils.ros2_runner.ROS2Runner.node_process">node_process (codestral_ros2_gen.utils.ros2_runner.ROS2Runner attribute)</a>
 </li>
       <li><a href="utils/code_parser.html#codestral_ros2_gen.utils.code_parser.ROS2CodeParser.None">None (codestral_ros2_gen.utils.code_parser.ROS2CodeParser attribute)</a>
@@ -392,6 +495,8 @@
       <li><a href="generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.AttemptState.PARSE">PARSE (codestral_ros2_gen.generators.generation_attempt.AttemptState attribute)</a>
 </li>
       <li><a href="utils/code_parser.html#codestral_ros2_gen.utils.code_parser.ROS2CodeParser.parse">parse() (codestral_ros2_gen.utils.code_parser.ROS2CodeParser static method)</a>
+</li>
+      <li><a href="network_scan/network_parser.html#codestral_ros2_gen.network_scan.network_parser.parse_network_targets">parse_network_targets() (in module codestral_ros2_gen.network_scan.network_parser)</a>
 </li>
       <li><a href="generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.parsed_code">parsed_code (codestral_ros2_gen.generators.generation_attempt.GenerationAttempt attribute)</a>
 </li>
@@ -414,6 +519,8 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="utils/metrics_handler.html#codestral_ros2_gen.utils.metrics_handler.MetricsHandler.record_attempt">record_attempt() (codestral_ros2_gen.utils.metrics_handler.MetricsHandler method)</a>
+</li>
+      <li><a href="network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.HostState.RESPONDED">RESPONDED (codestral_ros2_gen.network_scan.network_host.HostState attribute)</a>
 </li>
       <li><a href="utils/code_parser.html#codestral_ros2_gen.utils.code_parser.ROS2CodeParser">ROS2CodeParser (class in codestral_ros2_gen.utils.code_parser)</a>
 </li>
@@ -441,14 +548,24 @@
 </li>
       <li><a href="utils/file_io.html#codestral_ros2_gen.utils.file_io.save_code">save_code() (in module codestral_ros2_gen.utils.file_io)</a>
 </li>
-      <li><a href="utils/ros2_runner.html#codestral_ros2_gen.utils.ros2_runner.ROS2Runner.start_node">start_node() (codestral_ros2_gen.utils.ros2_runner.ROS2Runner method)</a>
+      <li><a href="network_scan/network_scanner.html#codestral_ros2_gen.network_scan.network_scanner.NetworkScanner.scan">scan() (codestral_ros2_gen.network_scan.network_scanner.NetworkScanner method)</a>
+</li>
+      <li><a href="network_scan/scan_operation.html#codestral_ros2_gen.network_scan.scan_operation.ScanOperation">ScanOperation (class in codestral_ros2_gen.network_scan.scan_operation)</a>
+</li>
+      <li><a href="network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.HostState.SENT">SENT (codestral_ros2_gen.network_scan.network_host.HostState attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utils/ros2_runner.html#codestral_ros2_gen.utils.ros2_runner.ROS2Runner.start_node">start_node() (codestral_ros2_gen.utils.ros2_runner.ROS2Runner method)</a>
+</li>
       <li><a href="generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.start_time">start_time (codestral_ros2_gen.generators.generation_attempt.GenerationAttempt attribute)</a>
 </li>
       <li><a href="generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.GenerationAttempt.state">state (codestral_ros2_gen.generators.generation_attempt.GenerationAttempt attribute)</a>
+
+      <ul>
+        <li><a href="network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.NetworkHost.state">(codestral_ros2_gen.network_scan.network_host.NetworkHost property)</a>
 </li>
+      </ul></li>
       <li><a href="generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics.success">success (codestral_ros2_gen.generators.generation_attempt.AttemptMetrics attribute)</a>
 </li>
       <li><a href="generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.AttemptState.SUCCESS">SUCCESS (codestral_ros2_gen.generators.generation_attempt.AttemptState attribute)</a>
@@ -489,6 +606,8 @@
         <li><a href="utils/ros2_runner.html#codestral_ros2_gen.utils.ros2_runner.ROS2Runner.tests_skipped">(codestral_ros2_gen.utils.ros2_runner.ROS2Runner attribute)</a>
 </li>
       </ul></li>
+      <li><a href="network_scan/network_host.html#codestral_ros2_gen.network_scan.network_host.HostState.TIMEOUT">TIMEOUT (codestral_ros2_gen.network_scan.network_host.HostState attribute)</a>
+</li>
       <li><a href="generators/generation_attempt.html#codestral_ros2_gen.generators.generation_attempt.AttemptMetrics.total_tokens">total_tokens (codestral_ros2_gen.generators.generation_attempt.AttemptMetrics attribute)</a>
 
       <ul>

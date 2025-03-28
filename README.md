@@ -48,7 +48,7 @@ pip install -e .
 
 ## Usage
 
-To use this project, you need to have ROS2 installed (it was designed for ROS2 Humble). Please refer to the [ROS 2 installation guide](https://docs.ros.org/en/humble/Installation.html) for instructions.
+To use this project, you need to have ROS2 installed (it was designed for ROS2 Humble) with [colcon](https://colcon.readthedocs.io/en/released/user/installation.html#installing-) and [rosdep](https://wiki.ros.org/rosdep) installed and initialized `sudo rosdep init && rosdep update`. Please refer to the [ROS 2 installation guide](https://docs.ros.org/en/humble/Installation.html) for instructions. You also need to have Python 3.10 or higher installed.
 
 ### Examples
 
